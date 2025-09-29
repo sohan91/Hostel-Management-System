@@ -1,14 +1,11 @@
-/* Global Styles */
 body {
   margin: 0;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   background: linear-gradient(to right, #757779, #e9ecef);
   color: #222;
   height: 100vh;
-  overflow: hidden; /* prevent body scroll */
+  overflow: hidden; 
 }
-
-/* Header */
 header {
   position: fixed;
   top: 0;
@@ -26,7 +23,6 @@ header {
   z-index: 1000;
 }
 
-/* Header Image */
 header img {
   position: absolute;
   left: 20px;
@@ -35,10 +31,9 @@ header img {
   width: 150px;
 }
 
-/* Sidebar */
 .sidebar {
   position: fixed;
-  top: 70px; /* below header */
+  top: 70px;
   left: 0;
   width: 180px;
   height: calc(100% - 80px);
@@ -77,8 +72,6 @@ header img {
   color: white;
   transform: scale(1.05);
 }
-
-/* Logout Button */
 #logout-btn {
   margin: 0 auto;
   width: 100px;
@@ -95,8 +88,6 @@ header img {
 #logout-btn:hover {
   transform: scale(1.1);
 }
-
-/* Search Box */
 .search {
   position: fixed;
   top: 100px;
@@ -110,30 +101,25 @@ header img {
   z-index: 900;
 }
 
-/* Middle container for content + button */
 .middle {
-  margin-top: 130px; /* below header + search */
-  margin-left: 200px; /* after sidebar */
+  margin-top: 130px;
+  margin-left: 200px; 
   padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  height: calc(100vh - 150px); /* fill remaining height */
+  height: calc(100vh - 150px);
   box-sizing: border-box;
-  overflow: hidden; /* hide overflow on middle */
+  overflow: hidden;
 }
-
-/* Content area */
 .content {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 25px;
-  overflow-y: auto;  /* scroll only inside content */
-  padding-right: 10px; /* prevent scrollbar overlap */
-  flex-grow: 1;       /* take all remaining vertical space */
+  overflow-y: auto; 
+  padding-right: 10px; 
+  flex-grow: 1;  
 }
-
-/* Room Card */
 .card {
   display: flex;
   align-items: center;
@@ -144,27 +130,22 @@ header img {
   box-shadow: 0 6px 12px rgba(0,0,0,0.2);
   transition: 0.3s;
 }
-
 .card:hover {
   transform: translateY(-5px);
   box-shadow: 0 10px 20px rgba(0,0,0,0.25);
 }
-
-/* Card Elements */
 .room {
   font-size: 55px;
   font-weight: bold;
   color: white;
   text-shadow: 1px 2px 4px rgba(0,0,0,0.5);
 }
-
 .share {
   font-size: 20px;
   font-weight: 500;
   color: white;
   margin-left: 20px;
 }
-
 .card a {
   margin-left: auto;
   font-size: 16px;
@@ -173,12 +154,10 @@ header img {
   text-decoration: none;
   transition: 0.3s;
 }
-
 .card a:hover {
   text-decoration: underline;
   color: #0dd106;
 }
-
 .more-btn {
   margin-left: 10px;
   padding: 6px 12px;
@@ -190,14 +169,12 @@ header img {
   background: white;
   transition: 0.2s;
 }
-
 .more-btn:hover {
   background: #04049e;
   color: white;
   transform: scale(1.1);
 }
 
-/* Add Student Button */
 .add {
   display: block;
   height: 70px;
