@@ -1,0 +1,11 @@
+
+body
+{
+    background-color: aqua;
+}
+footer{
+    align-content: center;
+    border: 2px solid black;
+    min-height: 400px;
+    max-width: 350px;
+}
