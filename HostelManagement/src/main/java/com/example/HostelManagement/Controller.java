@@ -6,12 +6,12 @@ import org.springframework.web.bind.annotation.Mapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@RestController()
+@org.springframework.stereotype.Controller
 public class Controller {
 
-    @GetMapping("/app")
-    public static String String()
+    @GetMapping("/login")
+    public String showLoginPage()
     {
-         return "hello";
+         return "mainpage/MAIN.html";
     }
 }
