@@ -3,23 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="login.css">
-    <title>Document</title>
+    <title>ADMIN Login</title>
+    <link rel="stylesheet" href="/login.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <header>
-        Hostel Management System
-    </header>
-    <footer>
-        <input type="text" placeholder="e-mail">
-        <input type="text" placeholder="password">
-     <div class="butn-list">
-        <li class="btn">Login</li>
-        <li class="btn">Header-Login</li>
-          <span>OR</span>
-        <li class="btn">Admin-Register</li>
-      </div>
+    <h1>HOSTEL MANAGEMENT SYSTEM</h1>
+    <div class="login-container">
+        <div class="avatar">
+            <i class="fa fa-user-circle"></i>
+        </div>
+        <h2>ADMIN-LOGIN</h2>
+        
+        <form>
+            <div class="input-box">
+                <i class="fa fa-user"></i>
+                <input type="text" placeholder="Username" required>
+            </div>
+            <div class="input-box">
+                <i class="fa fa-lock"></i>
+                <input type="password" placeholder="Password" required>
+            </div>
+            
+            <button type="submit" class="action-btn primary-btn">Login</button>
+            <button type="button" class="action-btn secondary-btn">Hosteller-login</button> 
+            <div class="separator">OR</div>
 
-    </footer>
-</body>
+            <div class="admin-register">
+                <a href="Admin-r.html" class="action-btn register-link">Admin Register</a>
+            </div>
+
+            <div class="forgot">
+                <a href="#">Forgot Username / Password?</a>
+            </div>
+        </form>
+    </div>
+  </body>
 </html>

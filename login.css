@@ -1,11 +1,247 @@
-
-body
-{
-    background-color: aqua;
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  margin: 0;
+  background: linear-gradient(135deg, #e3f2fd, #f0f4f8);
+  font-family: "Poppins", sans-serif;
+  overflow-y: hidden;
 }
-footer{
-    align-content: center;
-    border: 2px solid black;
-    min-height: 400px;
-    max-width: 350px;
+
+h1 {
+  text-align: center;
+  margin-bottom: 25px;
+  color: #2c3e50;
+  font-size: 46px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  position: relative;
+}
+
+h1::after {
+  content: "";
+  display: block;
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(90deg, #4a90e2, #00b894);
+  margin: 10px auto 0;
+  border-radius: 2px;
+}
+
+.login-container {
+  background: #ffffff;
+  width: 450px;
+  max-width: 80%;
+  height: auto;
+  padding: 40px 35px;
+  margin: 15px 0;
+  border-radius: 20px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-container::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle at top left,
+    rgba(74, 144, 226, 0.05),
+    transparent 60%
+  );
+  z-index: 0;
+}
+
+.login-container:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
+}
+
+.login-container h2 {
+  color: #222;
+  font-weight: 700;
+  margin-bottom: 25px;
+  font-size: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.avatar {
+  font-size: 70px;
+  color: #4a90e2;
+  margin-bottom: 15px;
+  transition: transform 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.avatar:hover {
+  transform: scale(1.1);
+}
+
+.input-box {
+  display: flex;
+  align-items: center;
+  margin: 18px 0;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 10px;
+  padding: 12px 14px;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.input-box:focus-within {
+  border-color: #4a90e2;
+  box-shadow: 0 0 8px rgba(74, 144, 226, 0.2);
+  transform: scale(1.02);
+}
+
+.input-box i {
+  color: #777;
+  margin-right: 12px;
+  font-size: 17px;
+}
+
+.input-box input {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 16px;
+  color: #333;
+  background: transparent;
+}
+
+.action-btn {
+  width: 100%;
+  color: white;
+  padding: 14px;
+  margin: 10px 0;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: block;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.action-btn::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.4s ease, height 0.4s ease;
+}
+.primary-btn {
+  background: linear-gradient(135deg, #4a90e2, #357ab8);
+}
+
+.secondary-btn {
+  background: linear-gradient(135deg, #5cb85c, #4cae4c);
+}
+
+.register-link {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  margin-top: 20px;
+}
+
+.primary-btn:hover,
+.secondary-btn:hover,
+.register-link:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.separator {
+  margin: 20px 0 10px;
+  color: #aaa;
+  font-size: 14px;
+  text-transform: uppercase;
+  position: relative;
+}
+
+.separator::before,
+.separator::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  height: 1px;
+  background: #ddd;
+}
+
+.separator::before {
+  left: 0;
+}
+
+.separator::after {
+  right: 0;
+}
+
+.forgot {
+  margin-top: 15px;
+}
+.register-link{
+    background-color: #007bff;
+    border: solid;
+    margin-left: -15px;
+}
+.forgot a {
+  text-decoration: none;
+  font-size: 14px;
+  color: #777;
+  transition: color 0.3s ease, text-decoration 0.3s ease;
+  cursor: pointer;
+}
+
+.forgot a:hover {
+  color: #246bbb;
+  text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+  h1 {
+    font-size: 32px;
+    letter-spacing: 1px;
+  }
+
+  .login-container {
+    width: 90%;
+    padding: 25px;
+  }
+
+  .avatar {
+    font-size: 60px;
+  }
+
+  .input-box {
+    padding: 10px;
+  }
+
+  .action-btn {
+    font-size: 15px;
+    padding: 12px;
+  }
 }
