@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hostel Management Login</title>
+  <link rel="stylesheet" href="/adminLoginPage/AdminLogin.css">
+  <style>
+    .error-message {
+      color: red;
+      font-size: 14px;
+      margin-top: 5px;
+    }
+    .password-group {
+      position: relative;
+    }
+    .password-toggle {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      z-index: 10;
+      color: #555;
+    }
+    .password-toggle input[type="checkbox"] {
+      margin-left: 5px;
+      cursor: pointer;
+      width: 12px;
+      height: 12px;
+    }
+    .success-box {
+      width: 150px;
+      height: 40px;
+      background: linear-gradient(135deg, #4CAF50, #45a049);
+      color: white;
+      padding: 0;
+      border-radius: 8px;
+      margin: 10px auto;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(76, 175, 80, 0.5);
+      border-left: 3px solid #2E7D32;
+      animation: fadeIn 0.5s ease-in;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .success-box h3 {
+      margin: 0;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .success-box p {
+      display: none;
+    }
+    .success-icon {
+      font-size: 20px;
+      margin-right: 5px;
+      margin-bottom: 0;
+    }
+    .loading {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+<div class="login-container">
+  <div id="messageArea"></div>
+  <h1 class="heading">Hostel Management System</h1>
+
+  <form class="login-form" id="loginForm" novalidate>
+    <div class="input-group">
+      <label for="email">Email ID</label>
+      <input type="email" id="email" name="email" placeholder="Enter your email" required>
+      <div class="error-message" id="emailError"></div>
+    </div>
+
+    <div class="input-group">
+      <label for="password">Password</label>
+      <div class="password-group">
+        <input type="password" id="password" name="password" placeholder="Enter your password" required>
+        <label for="showPassword" class="password-toggle">
+          Show
+          <input type="checkbox" id="showPassword">
+        </label>
+      </div>
+      <div class="error-message" id="passwordError"></div>
+    </div>
+
+    <div class="button-group">
+      <button type="submit" class="btn btn-primary" id="loginBtn">Login</button>
+      <button type="button" class="btn btn-secondary">Hostler Login</button>
+      <button type="button" class="btn btn-secondary">Admin Login</button>
+    </div>
+
+    <div class="links">
+      <a href="#" class="link-item">Create Register</a>
+      <span class="link-separator">|</span>
+      <a href="#" class="link-item">Forgot Password?</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  const passwordField = document.getElementById("password");
+  const showPasswordCheckbox = document.getElementById("showPassword");
+
+  showPasswordCheckbox.addEventListener("change", function() {
+    if (this.checked) {
+      passwordField.type = "text";
+      this.parentNode.firstChild.textContent = "Hide";
+    } else {
+      passwordField.type = "password";
+      this.parentNode.firstChild.textContent = "Show";
+    }
+  });
+
+  document.getElementById("loginForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const emailError = document.getElementById("emailError");
+    const passwordError = document.getElementById("passwordError");
+    const messageArea = document.getElementById("messageArea");
+    const loginBtn = document.getElementById("loginBtn");
+
+    emailError.textContent = "";
+    passwordError.textContent = "";
+    messageArea.innerHTML = "";
+
+    let isValid = true;
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (email === "") {
+      emailError.textContent = "Email is required.";
+      isValid = false;
+    } else if (!emailPattern.test(email)) {
+      emailError.textContent = "Please enter a valid email address.";
+      isValid = false;
+    }
+
+    if (password === "") {
+      passwordError.textContent = "Password is required.";
+      isValid = false;
+    } else if (password.length < 8) {
+      passwordError.textContent = "Password must be at least 8 characters long.";
+      isValid = false;
+    }
+
+    if (!isValid) return;
+
+    loginBtn.disabled = true;
+    loginBtn.textContent = "Logging in...";
+    document.getElementById("loginForm").classList.add("loading");
+
+    try {
+      const response = await fetch('http://localhost:8080/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        messageArea.innerHTML = `
+          <div class="success-box">
+            <div class="success-icon">✅</div>
+            <h3>LOGIN SUCCESS</h3>
+          </div>
+        `;
+        document.getElementById("loginForm").reset();
+
+        setTimeout(() => {
+          messageArea.innerHTML = "";
+        }, 3000);
+
+      } else {
+        messageArea.innerHTML = `<div class="error-message">${data.message}</div>`;
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      messageArea.innerHTML = `<div class="error-message">Network error. Please try again.</div>`;
+    } finally {
+      loginBtn.disabled = false;
+      loginBtn.textContent = "Login";
+      document.getElementById("loginForm").classList.remove("loading");
+    }
+  });
+</script>
+</body>
+</html>
