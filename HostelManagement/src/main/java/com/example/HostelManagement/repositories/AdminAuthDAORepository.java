@@ -19,7 +19,8 @@ public class AdminAuthDAORepository implements AdminAuthDAO {
     @Override
     public Admin findByAdminEmail(String email) {
         try {
-            String jpql = "SELECT a FROM Admin a WHERE a.adminEmail = :email";
+            // ✅ CORRECT - Use the actual field name 'email' from your entity
+            String jpql = "SELECT a FROM Admin a WHERE a.email = :email";
             TypedQuery<Admin> query = entityManager.createQuery(jpql, Admin.class);
             query.setParameter("email", email);
             return query.getSingleResult();
@@ -31,6 +32,7 @@ public class AdminAuthDAORepository implements AdminAuthDAO {
     @Override
     public boolean validateAdminCredentials(String email, String password) {
         Admin admin = findByAdminEmail(email);
-        return admin != null && admin.getAdminPassword().equals(password);
+        // ✅ CORRECT - Use getPassword() which matches your entity field
+        return admin != null && admin.getPassword().equals(password);
     }
 }

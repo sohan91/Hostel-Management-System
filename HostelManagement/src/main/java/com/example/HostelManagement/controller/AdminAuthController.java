@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController  // Important: @RestController returns JSON automatically
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "http://localhost:8080")
+@CrossOrigin(value = "http://localhost:8080")
 public class AdminAuthController {
 
     @Autowired

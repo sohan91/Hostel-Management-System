@@ -9,7 +9,7 @@
     .error-message {
       color: red;
       font-size: 14px;
-      margin-top: 5px;
+      margin-top: 2px;
     }
     .password-group {
       position: relative;
@@ -80,9 +80,9 @@
 
   <form class="login-form" id="loginForm" novalidate>
     <div class="input-group">
-      <label for="email">Email ID</label>
-      <input type="email" id="email" name="email" placeholder="Enter your email" required>
-      <div class="error-message" id="emailError"></div>
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" placeholder="Enter your username" required>
+      <div class="error-message" id="usernameError"></div>
     </div>
 
     <div class="input-group">
@@ -104,7 +104,7 @@
     </div>
 
     <div class="links">
-      <a href="#" class="link-item">Create Register</a>
+      <a href="#" class="link-item" id="createRegister">Create Register</a>
       <span class="link-separator">|</span>
       <a href="#" class="link-item">Forgot Password?</a>
     </div>
@@ -114,6 +114,12 @@
 <script>
   const passwordField = document.getElementById("password");
   const showPasswordCheckbox = document.getElementById("showPassword");
+  const createRegisterLink = document.getElementById("createRegister");
+
+  createRegisterLink.addEventListener("click", function(e) {
+    e.preventDefault();
+    window.location.href = "/hostel/registration";
+  });
 
   showPasswordCheckbox.addEventListener("change", function() {
     if (this.checked) {
@@ -128,25 +134,21 @@
   document.getElementById("loginForm").addEventListener("submit", async function (e) {
     e.preventDefault();
 
-    const email = document.getElementById("email").value.trim();
+    const username = document.getElementById("username").value.trim();
     const password = document.getElementById("password").value.trim();
-    const emailError = document.getElementById("emailError");
+    const usernameError = document.getElementById("usernameError");
     const passwordError = document.getElementById("passwordError");
     const messageArea = document.getElementById("messageArea");
     const loginBtn = document.getElementById("loginBtn");
 
-    emailError.textContent = "";
+    usernameError.textContent = "";
     passwordError.textContent = "";
     messageArea.innerHTML = "";
 
     let isValid = true;
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (email === "") {
-      emailError.textContent = "Email is required.";
-      isValid = false;
-    } else if (!emailPattern.test(email)) {
-      emailError.textContent = "Please enter a valid email address.";
+    if (username === "") {
+      usernameError.textContent = "Username is required.";
       isValid = false;
     }
 
@@ -165,34 +167,28 @@
     document.getElementById("loginForm").classList.add("loading");
 
     try {
-      const response = await fetch('http://localhost:8080/api/auth/login', {
+      const formData = new FormData();
+      formData.append('username', username);
+      formData.append('password', password);
+
+      const response = await fetch('/hostel/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email,
-          password: password
-        })
+        body: formData
       });
 
-      const data = await response.json();
-
-      if (data.success) {
-        messageArea.innerHTML = `
-          <div class="success-box">
-            <div class="success-icon">✅</div>
-            <h3>LOGIN SUCCESS</h3>
-          </div>
-        `;
-        document.getElementById("loginForm").reset();
-
-        setTimeout(() => {
-          messageArea.innerHTML = "";
-        }, 3000);
-
+      if (response.redirected) {
+        window.location.href = response.url;
       } else {
-        messageArea.innerHTML = `<div class="error-message">${data.message}</div>`;
+        const responseText = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(responseText, 'text/html');
+        const errorElement = doc.querySelector('[name="error"]');
+        
+        if (errorElement) {
+          messageArea.innerHTML = `<div class="error-message">${errorElement.value || 'Invalid username/password'}</div>`;
+        } else {
+          messageArea.innerHTML = `<div class="error-message">Login failed. Please try again.</div>`;
+        }
       }
     } catch (error) {
       console.error('Error:', error);

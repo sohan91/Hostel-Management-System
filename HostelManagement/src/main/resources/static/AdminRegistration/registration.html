@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Registration Form</title>
+<link rel="stylesheet" href="/AdminRegistration/style.css">
+<style>
+.hidden { display: none; }
+.error-message { color: red; font-size: 0.9em; }
+.success-message { color: green; font-size: 0.9em; }
+</style>
+</head>
+<body>
+<div class="registration-container">
+    <h1>ADMIN REGISTRATION FORM</h1>
+    <form id="registrationForm" novalidate>
+
+        <!-- STEP 1: EMAIL FIELD -->
+        <div id="stepEmail">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <div class="email-verification-group">
+                        <input type="email" id="email" placeholder="Enter Email">
+                        <button type="button" id="sendOtpBtn" class="otp-button">Send OTP</button>
+                    </div>
+                    <div class="error-message" id="emailError"></div>
+                    <span class="timer" id="otpTimer"></span>
+                </div>
+            </div>
+
+            <!-- OTP INPUT (HIDDEN INITIALLY) -->
+            <div id="otpSection" class="hidden">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="otp">Enter OTP</label>
+                        <div class="otp-verification-group">
+                            <input type="text" id="otp" placeholder="Enter OTP">
+                            <button type="button" id="verifyOtpBtn" class="otp-button">Verify</button>
+                        </div>
+                        <div class="error-message" id="otpError"></div>
+                        <span id="otpSuccess" class="success-message"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 2: REMAINING FORM (HIDDEN INITIALLY) -->
+        <div id="remainingFields" class="hidden">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="firstName">First Name</label>
+                    <input type="text" id="firstName" placeholder="Enter First Name" disabled>
+                    <div class="error-message" id="firstNameError"></div>
+                </div>
+                <div class="form-group">
+                    <label for="lastName">Last Name</label>
+                    <input type="text" id="lastName" placeholder="Enter Last Name" disabled>
+                    <div class="error-message" id="lastNameError"></div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="phoneNumber">Phone Number</label>
+                    <input type="tel" id="phoneNumber" placeholder="Enter Phone Number" disabled>
+                    <div class="error-message" id="phoneNumberError"></div>
+                </div>
+                <div class="form-group">
+                    <label for="hostelName">Hostel Name</label>
+                    <input type="text" id="hostelName" placeholder="Enter Hostel Name" disabled>
+                    <div class="error-message" id="hostelNameError"></div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter Password" disabled>
+                    <div class="error-message" id="passwordError"></div>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" placeholder="Confirm Password" disabled>
+                    <div class="error-message" id="confirmPasswordError"></div>
+                </div>
+            </div>
+
+            <div class="form-group full-width">
+                <label for="hostelAddress">Hostel Address</label>
+                <textarea id="hostelAddress" placeholder="Enter Hostel Address" disabled></textarea>
+                <div class="error-message" id="hostelAddressError"></div>
+            </div>
+
+            <button type="submit" class="register-btn" disabled>REGISTER</button>
+        </div>
+
+        <!-- LOGIN REDIRECT -->
+        <div id="loginRedirectContainer" class="hidden" style="text-align:center; margin-top:10px;">
+            <button type="button" id="loginRedirectBtn" class="register-btn">Go to Login</button>
+        </div>
+
+        <div id="formMessage"></div>
+    </form>
+</div>
+
+<script>
+const emailInput = document.getElementById("email");
+const sendOtpBtn = document.getElementById("sendOtpBtn");
+const otpTimer = document.getElementById("otpTimer");
+const otpSection = document.getElementById("otpSection");
+const otpInput = document.getElementById("otp");
+const verifyOtpBtn = document.getElementById("verifyOtpBtn");
+const otpSuccess = document.getElementById("otpSuccess");
+const remainingFields = document.getElementById("remainingFields");
+const registerBtn = remainingFields.querySelector("button[type=submit]");
+const formMessage = document.getElementById("formMessage");
+const loginRedirectContainer = document.getElementById("loginRedirectContainer");
+const loginRedirectBtn = document.getElementById("loginRedirectBtn");
+
+let otpVerified = false;
+let timerInterval;
+let currentEmail = "";
+
+// --- Helper Functions ---
+function showFormMessage(msg, isError) {
+    formMessage.textContent = msg;
+    formMessage.style.color = isError ? "red" : "green";
+}
+
+function validateEmail(email) {
+    return /\S+@\S+\.\S+/.test(email);
+}
+
+function validatePhone(phone) {
+    return /^\d{10,15}$/.test(phone);
+}
+
+function validateForm() {
+    let valid = true;
+
+    // Validate firstName
+    const firstName = document.getElementById("firstName");
+    const firstNameError = document.getElementById("firstNameError");
+    firstNameError.textContent = "";
+    if(!firstName.value.trim()) { firstNameError.textContent="First Name required"; valid=false; }
+
+    // Validate lastName
+    const lastName = document.getElementById("lastName");
+    const lastNameError = document.getElementById("lastNameError");
+    lastNameError.textContent = "";
+    if(!lastName.value.trim()) { lastNameError.textContent="Last Name required"; valid=false; }
+
+    // Validate phone
+    const phone = document.getElementById("phoneNumber");
+    const phoneError = document.getElementById("phoneNumberError");
+    phoneError.textContent = "";
+    if(!phone.value.trim()) { phoneError.textContent="Phone required"; valid=false; }
+    else if(!validatePhone(phone.value.trim())) { phoneError.textContent="Invalid phone number"; valid=false; }
+
+    // Validate hostelName
+    const hostelName = document.getElementById("hostelName");
+    const hostelNameError = document.getElementById("hostelNameError");
+    hostelNameError.textContent = "";
+    if(!hostelName.value.trim()) { hostelNameError.textContent="Hostel Name required"; valid=false; }
+
+    // Validate password
+    const password = document.getElementById("password");
+    const passwordError = document.getElementById("passwordError");
+    passwordError.textContent = "";
+    if(!password.value.trim()) { passwordError.textContent="Password required"; valid=false; }
+    else if(password.value.trim().length<8) { passwordError.textContent="Password must be 8+ chars"; valid=false; }
+
+    // Validate confirm password
+    const confirmPassword = document.getElementById("confirmPassword");
+    const confirmPasswordError = document.getElementById("confirmPasswordError");
+    confirmPasswordError.textContent="";
+    if(confirmPassword.value.trim() !== password.value.trim()) { confirmPasswordError.textContent="Passwords do not match"; valid=false; }
+
+    // Validate hostel address
+    const hostelAddress = document.getElementById("hostelAddress");
+    const hostelAddressError = document.getElementById("hostelAddressError");
+    hostelAddressError.textContent="";
+    if(!hostelAddress.value.trim()) { hostelAddressError.textContent="Hostel Address required"; valid=false; }
+
+    return valid;
+}
+
+// --- SEND OTP ---
+sendOtpBtn.addEventListener("click", async () => {
+    const email = emailInput.value.trim();
+    const emailError = document.getElementById("emailError");
+    emailError.textContent="";
+    if(!validateEmail(email)) { emailError.textContent="Enter valid email"; return; }
+
+    emailInput.disabled = true;
+    sendOtpBtn.disabled = true;
+    otpSection.classList.remove("hidden");
+    otpInput.value = "";
+    otpSuccess.textContent = "";
+    currentEmail = email;
+    showFormMessage("Sending OTP...", false);
+
+    let timer = 30;
+    otpTimer.textContent = `Time left: ${timer}s`;
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+        timer--;
+        otpTimer.textContent = `Time left: ${timer}s`;
+        if(timer<=0){
+            clearInterval(timerInterval);
+            otpTimer.textContent="OTP expired. Send again.";
+            emailInput.disabled=false;
+            sendOtpBtn.disabled=false;
+            otpSection.classList.add("hidden");
+        }
+    },1000);
+
+    try{
+        const response = await fetch("http://localhost:8080/email/send-otp", {
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body: JSON.stringify({to:email, subject:"OTP", body:"Your OTP"})
+        });
+        if(!response.ok) throw new Error();
+        showFormMessage("OTP sent! Enter OTP below.", false);
+    } catch{
+        showFormMessage("Error sending OTP.", true);
+        emailInput.disabled=false;
+        sendOtpBtn.disabled=false;
+    }
+});
+
+// --- VERIFY OTP ---
+verifyOtpBtn.addEventListener("click", async ()=>{
+    const otp = otpInput.value.trim();
+    const otpError = document.getElementById("otpError");
+    otpError.textContent="";
+    if(!otp){ otpError.textContent="Enter OTP"; return; }
+
+    verifyOtpBtn.disabled=true;
+    showFormMessage("Verifying OTP...", false);
+
+    try{
+        const response = await fetch(`http://localhost:8080/email/verify-otp?email=${encodeURIComponent(currentEmail)}&otp=${encodeURIComponent(otp)}`, {method:"POST"});
+        if(response.ok){
+            otpVerified=true;
+            clearInterval(timerInterval);
+            otpTimer.textContent = "";
+
+            otpSuccess.textContent="Email Verified ✅";
+            showFormMessage("", false);
+            remainingFields.classList.remove("hidden");
+
+            // Enable remaining form fields
+            const inputs = remainingFields.querySelectorAll("input, textarea, button");
+            inputs.forEach(el=>el.disabled=false);
+        } else {
+            otpError.textContent="Invalid or expired OTP.";
+            verifyOtpBtn.disabled=false;
+        }
+    } catch{
+        otpError.textContent="Error verifying OTP.";
+        verifyOtpBtn.disabled=false;
+    }
+});
+
+// --- FORM SUBMISSION ---
+document.getElementById("registrationForm").addEventListener("submit", (e)=>{
+    e.preventDefault();
+    if(!otpVerified){ showFormMessage("Verify your email first.", true); return; }
+
+    if(validateForm()){
+        showFormMessage("Form ready to submit!", false);
+        // Here you can submit via fetch/ajax to your backend
+    } else {
+        showFormMessage("Please fix the errors.", true);
+    }
+});
+
+// LOGIN REDIRECT
+loginRedirectBtn.addEventListener("click", ()=>{ window.location.href="/login"; });
+</script>
+</body>
+</html>
