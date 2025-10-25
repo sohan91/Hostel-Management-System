@@ -3,284 +3,627 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Registration Form</title>
-<link rel="stylesheet" href="/AdminRegistration/style.css">
+<title>Admin Registration</title>
 <style>
-.hidden { display: none; }
-.error-message { color: red; font-size: 0.9em; }
-.success-message { color: green; font-size: 0.9em; }
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f0f2f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 85vh;
+    margin: 0;
+}
+
+.registration-container {
+    margin-top: 10px;
+    max-width: 640px;
+    width: 90%;
+    box-sizing: border-box;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+/* HEADER */
+h1 {
+    text-align: center;
+    margin: 0;
+    padding: 15px 0;
+    font-size: 1.7em;
+    color: #ffffff;
+    background-color: #007bff;
+    letter-spacing: 1px;
+    box-sizing: border-box;
+}
+
+/* FORM CONTAINER */
+.form-content {
+    padding: 20px 25px;
+    box-sizing: border-box;
+}
+
+.form-group {
+    position: relative;
+    margin-bottom: 18px;
+    box-sizing: border-box;
+}
+
+.label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+.label-row .timer {
+    font-size: 13px;
+    color: #6c757d;
+}
+
+label {
+    font-weight: 500;
+    color: #333;
+    display: inline-block;
+    font-size: 0.96em;
+    margin-bottom: 4px;
+    white-space: nowrap;
+}
+
+input,
+textarea {
+    width: 100%;
+    padding: 9px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    transition: border-color 0.3s ease;
+}
+input:focus,
+textarea:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 1px #007bff;
+    outline: none;
+}
+input:disabled,
+textarea:disabled {
+    background-color: #f7f7f7;
+}
+#otp:disabled {
+    background-color: #ededed;
+}
+
+button {
+    width: 100%;
+    padding: 9px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+button:hover:not(:disabled) {
+    background-color: #0056b3;
+}
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+#verifyOtpBtn[disabled] {
+    background-color: #28a745;
+    opacity: 0.9;
+}
+
+.input-with-button {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.input-with-button input {
+    flex-grow: 1;
+    padding-right: 50px; /* Space for the button */
+}
+/* Style for Send/Verify OTP buttons */
+.input-with-button button:not(.password-toggle) {
+    position: absolute;
+    right: 1px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 100px;
+    font-size: 0.85em;
+}
+
+/* New style for the password visibility toggle button */
+.password-toggle {
+    position: absolute;
+    right: 1px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px; /* Smaller width for the icon button */
+    padding: 0;
+    background: none;
+    color: #6c757d;
+    border-radius: 0 6px 6px 0;
+    font-weight: normal;
+}
+.password-toggle:hover {
+    color: #007bff;
+    background: #f0f0f0;
+}
+/* Adjust input padding when a password toggle is present */
+.password-field input {
+    padding-right: 45px; 
+}
+/* END new style */
+
+
+.error-message {
+    position: absolute;
+    bottom: -16px;
+    left: 0;
+    font-size: 12px;
+    color: #dc3545;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.error-message.show {
+    opacity: 1;
+}
+
+.two-column-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+    column-gap: 22px;
+    row-gage: 12px;
+    box-sizing: border-box;
+}
+@media (max-width: 600px) {
+    .two-column-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.timer.success-message {
+    color: #28a745;
+    font-weight: 600;
+    font-style: italic;
+}
+
+#formMessage {
+    text-align: center;
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    margin-bottom: 10px;
+}
+#formMessage.success {
+    background: #e6ffed;
+    color: #155724;
+    border-color: #28a745;
+}
+#formMessage.error {
+    background: #f8d7da;
+    color: #721c24;
+    border-color: #dc3545;
+}
+
+.loader {
+    display: none;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid white;
+    border-radius: 50%;
+    width: 12px;
+    height: 12px;
+    animation: spin 1s linear infinite;
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#restOfForm {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-out;
+    margin-top: 10px;
+}
+.form-visible {
+    max-height: 850px !important;
+}
+
+.button-group {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+.button-group button {
+    flex: 1;
+    width: auto;
+}
+.login-btn {
+    background-color: #48af5f;
+}
+.login-btn:hover:not(:disabled) {
+    background-color: #5a6268;
+}
+.register-btn {
+    width: 100%;
+}
+#restOfForm .register-btn {
+    display: block;
+}
+
+.validation-message {
+    text-align: center;
+    padding: 8px;
+    border-radius: 6px;
+    margin: 10px 0;
+    font-size: 14px;
+    font-weight: 500;
+}
+.validation-message.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #dc3545;
+}
 </style>
 </head>
 <body>
 <div class="registration-container">
-    <h1>ADMIN REGISTRATION FORM</h1>
-    <form id="registrationForm" novalidate>
+<h1>ADMIN REGISTRATION</h1>
+<div class="form-content">
+<form id="registrationForm" novalidate>
+    <div class="form-group">
+        <div class="label-row">
+            <label for="email">Email Address</label>
+            <span class="timer" id="otpTimer"></span>
+        </div>
+        <div class="input-with-button">
+            <input type="email" id="email" name="email" placeholder="Enter Email" required>
+            <button type="button" id="sendOtpBtn">
+                Send OTP
+            <div id="sendOtpLoader" class="loader"></div>
+            </button>
+        </div>
+        <div class="error-message" id="emailError"></div>
+    </div>
 
-        <!-- STEP 1: EMAIL FIELD -->
-        <div id="stepEmail">
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="email">Email Address</label>
-                    <div class="email-verification-group">
-                        <input type="email" id="email" placeholder="Enter Email">
-                        <button type="button" id="sendOtpBtn" class="otp-button">Send OTP</button>
-                    </div>
-                    <div class="error-message" id="emailError"></div>
-                    <span class="timer" id="otpTimer"></span>
-                </div>
+    <div class="form-group">
+        <label for="otp">Enter OTP</label>
+        <div class="input-with-button">
+            <input type="text" id="otp" name="otp" placeholder="Enter OTP" disabled>
+            <button type="button" id="verifyOtpBtn" disabled>
+                Verify OTP
+                <div id="verifyOtpLoader" class="loader"></div>
+            </button>
+        </div>
+        <div class="error-message" id="otpError"></div>
+    </div>
+
+    <div id="formMessage" class="success"></div>
+
+    <!-- Login button moved here to be always visible -->
+    <div class="button-group">
+        <button type="button" class="login-btn" id="loginBtn">
+            GO TO LOGIN
+        </button>
+    </div>
+
+    <div id="restOfForm" style="display:none;">
+        <div class="two-column-grid">
+            <div class="form-group">
+                <label for="firstName">First Name</label>
+                <input type="text" id="firstName" name="firstName" placeholder="Enter First Name" disabled>
+                <div class="error-message" id="firstNameError"></div>
             </div>
-
-            <!-- OTP INPUT (HIDDEN INITIALLY) -->
-            <div id="otpSection" class="hidden">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="otp">Enter OTP</label>
-                        <div class="otp-verification-group">
-                            <input type="text" id="otp" placeholder="Enter OTP">
-                            <button type="button" id="verifyOtpBtn" class="otp-button">Verify</button>
-                        </div>
-                        <div class="error-message" id="otpError"></div>
-                        <span id="otpSuccess" class="success-message"></span>
-                    </div>
-                </div>
+            <div class="form-group">
+                <label for="lastName">Last Name</label>
+                <input type="text" id="lastName" name="lastName" placeholder="Enter Last Name" disabled>
+                <div class="error-message" id="lastNameError"></div>
             </div>
         </div>
-
-        <!-- STEP 2: REMAINING FORM (HIDDEN INITIALLY) -->
-        <div id="remainingFields" class="hidden">
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="firstName">First Name</label>
-                    <input type="text" id="firstName" placeholder="Enter First Name" disabled>
-                    <div class="error-message" id="firstNameError"></div>
-                </div>
-                <div class="form-group">
-                    <label for="lastName">Last Name</label>
-                    <input type="text" id="lastName" placeholder="Enter Last Name" disabled>
-                    <div class="error-message" id="lastNameError"></div>
-                </div>
+        <div class="two-column-grid">
+            <div class="form-group">
+                <label for="hostelName">Hostel Name</label>
+                <input type="text" id="hostelName" name="hostelName" placeholder="Enter Hostel Name" disabled>
+                <div class="error-message" id="hostelNameError"></div>
             </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="phoneNumber">Phone Number</label>
-                    <input type="tel" id="phoneNumber" placeholder="Enter Phone Number" disabled>
-                    <div class="error-message" id="phoneNumberError"></div>
-                </div>
-                <div class="form-group">
-                    <label for="hostelName">Hostel Name</label>
-                    <input type="text" id="hostelName" placeholder="Enter Hostel Name" disabled>
-                    <div class="error-message" id="hostelNameError"></div>
-                </div>
+            <div class="form-group">
+                <label for="phone">Phone Number</label>
+                <input type="tel" id="phone" name="phone" placeholder="Enter Phone Number" maxlength="10" pattern="[0-9]{10}" disabled>
+                <div class="error-message" id="phoneError"></div>
             </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" placeholder="Enter Password" disabled>
-                    <div class="error-message" id="passwordError"></div>
-                </div>
-                <div class="form-group">
-                    <label for="confirmPassword">Confirm Password</label>
-                    <input type="password" id="confirmPassword" placeholder="Confirm Password" disabled>
-                    <div class="error-message" id="confirmPasswordError"></div>
-                </div>
-            </div>
-
-            <div class="form-group full-width">
-                <label for="hostelAddress">Hostel Address</label>
-                <textarea id="hostelAddress" placeholder="Enter Hostel Address" disabled></textarea>
-                <div class="error-message" id="hostelAddressError"></div>
-            </div>
-
-            <button type="submit" class="register-btn" disabled>REGISTER</button>
         </div>
-
-        <!-- LOGIN REDIRECT -->
-        <div id="loginRedirectContainer" class="hidden" style="text-align:center; margin-top:10px;">
-            <button type="button" id="loginRedirectBtn" class="register-btn">Go to Login</button>
+        <div class="two-column-grid">
+            <div class="form-group password-field">
+                <label for="password">Password</label>
+                <div class="input-with-button">
+                    <input type="password" id="password" name="password" placeholder="Enter Password" disabled>
+                    <button type="button" class="password-toggle" data-target="password" disabled aria-label="Toggle password visibility">
+                        👁️
+                    </button>
+                </div>
+                <div class="error-message" id="passwordError"></div>
+            </div>
+            <div class="form-group password-field">
+                <label for="confirmPassword">Confirm Password</label>
+                <div class="input-with-button">
+                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Re-enter Password" disabled>
+                    <button type="button" class="password-toggle" data-target="confirmPassword" disabled aria-label="Toggle confirm password visibility">
+                        👁️
+                    </button>
+                </div>
+                <div class="error-message" id="confirmPasswordError"></div>
+            </div>
         </div>
-
-        <div id="formMessage"></div>
-    </form>
+        
+        <div class="form-group">
+            <label for="hostelAddress">Hostel Address</label>
+            <textarea id="hostelAddress" name="hostelAddress" placeholder="Enter Hostel Address" disabled></textarea>
+            <div class="error-message" id="hostelAddressError"></div>
+        </div>
+        
+        <!-- Validation message above register button -->
+        <div id="validationMessage" class="validation-message" style="display: none;"></div>
+        
+        <div class="button-group">
+            <button type="submit" class="register-btn" id="registerBtn" disabled>
+                REGISTER
+                <div id="registerLoader" class="loader"></div>
+            </button>
+        </div>
+    </div>
+</form>
+</div>
 </div>
 
 <script>
 const emailInput = document.getElementById("email");
-const sendOtpBtn = document.getElementById("sendOtpBtn");
-const otpTimer = document.getElementById("otpTimer");
-const otpSection = document.getElementById("otpSection");
 const otpInput = document.getElementById("otp");
+const sendOtpBtn = document.getElementById("sendOtpBtn");
 const verifyOtpBtn = document.getElementById("verifyOtpBtn");
-const otpSuccess = document.getElementById("otpSuccess");
-const remainingFields = document.getElementById("remainingFields");
-const registerBtn = remainingFields.querySelector("button[type=submit]");
+const passwordInput = document.getElementById("password");
+const confirmPasswordInput = document.getElementById("confirmPassword");
+const restOfForm = document.getElementById("restOfForm");
 const formMessage = document.getElementById("formMessage");
-const loginRedirectContainer = document.getElementById("loginRedirectContainer");
-const loginRedirectBtn = document.getElementById("loginRedirectBtn");
+const validationMessage = document.getElementById("validationMessage");
+const otpTimer = document.getElementById("otpTimer");
+const phoneInput = document.getElementById("phone");
+const registerBtn = document.getElementById("registerBtn");
+const loginBtn = document.getElementById("loginBtn");
+
+// Include password toggle buttons in the list of all form elements
+const restOfFormElements = document.querySelectorAll('#restOfForm input, #restOfForm textarea, #restOfForm .register-btn, #restOfForm .password-toggle');
+
+const sendOtpLoader = document.getElementById("sendOtpLoader");
+const verifyOtpLoader = document.getElementById("verifyOtpLoader");
+const registerLoader = document.getElementById("registerLoader");
+
+const inlineErrors = {};
+document.querySelectorAll('.error-message').forEach(el => { inlineErrors[el.id] = el; });
 
 let otpVerified = false;
 let timerInterval;
 let currentEmail = "";
 
-// --- Helper Functions ---
-function showFormMessage(msg, isError) {
-    formMessage.textContent = msg;
-    formMessage.style.color = isError ? "red" : "green";
-}
-
-function validateEmail(email) {
-    return /\S+@\S+\.\S+/.test(email);
-}
-
-function validatePhone(phone) {
-    return /^\d{10,15}$/.test(phone);
-}
-
-function validateForm() {
-    let valid = true;
-
-    // Validate firstName
-    const firstName = document.getElementById("firstName");
-    const firstNameError = document.getElementById("firstNameError");
-    firstNameError.textContent = "";
-    if(!firstName.value.trim()) { firstNameError.textContent="First Name required"; valid=false; }
-
-    // Validate lastName
-    const lastName = document.getElementById("lastName");
-    const lastNameError = document.getElementById("lastNameError");
-    lastNameError.textContent = "";
-    if(!lastName.value.trim()) { lastNameError.textContent="Last Name required"; valid=false; }
-
-    // Validate phone
-    const phone = document.getElementById("phoneNumber");
-    const phoneError = document.getElementById("phoneNumberError");
-    phoneError.textContent = "";
-    if(!phone.value.trim()) { phoneError.textContent="Phone required"; valid=false; }
-    else if(!validatePhone(phone.value.trim())) { phoneError.textContent="Invalid phone number"; valid=false; }
-
-    // Validate hostelName
-    const hostelName = document.getElementById("hostelName");
-    const hostelNameError = document.getElementById("hostelNameError");
-    hostelNameError.textContent = "";
-    if(!hostelName.value.trim()) { hostelNameError.textContent="Hostel Name required"; valid=false; }
-
-    // Validate password
-    const password = document.getElementById("password");
-    const passwordError = document.getElementById("passwordError");
-    passwordError.textContent = "";
-    if(!password.value.trim()) { passwordError.textContent="Password required"; valid=false; }
-    else if(password.value.trim().length<8) { passwordError.textContent="Password must be 8+ chars"; valid=false; }
-
-    // Validate confirm password
-    const confirmPassword = document.getElementById("confirmPassword");
-    const confirmPasswordError = document.getElementById("confirmPasswordError");
-    confirmPasswordError.textContent="";
-    if(confirmPassword.value.trim() !== password.value.trim()) { confirmPasswordError.textContent="Passwords do not match"; valid=false; }
-
-    // Validate hostel address
-    const hostelAddress = document.getElementById("hostelAddress");
-    const hostelAddressError = document.getElementById("hostelAddressError");
-    hostelAddressError.textContent="";
-    if(!hostelAddress.value.trim()) { hostelAddressError.textContent="Hostel Address required"; valid=false; }
-
-    return valid;
-}
-
-// --- SEND OTP ---
-sendOtpBtn.addEventListener("click", async () => {
-    const email = emailInput.value.trim();
-    const emailError = document.getElementById("emailError");
-    emailError.textContent="";
-    if(!validateEmail(email)) { emailError.textContent="Enter valid email"; return; }
-
-    emailInput.disabled = true;
-    sendOtpBtn.disabled = true;
-    otpSection.classList.remove("hidden");
-    otpInput.value = "";
-    otpSuccess.textContent = "";
-    currentEmail = email;
-    showFormMessage("Sending OTP...", false);
-
-    let timer = 30;
-    otpTimer.textContent = `Time left: ${timer}s`;
-    clearInterval(timerInterval);
-    timerInterval = setInterval(() => {
-        timer--;
-        otpTimer.textContent = `Time left: ${timer}s`;
-        if(timer<=0){
-            clearInterval(timerInterval);
-            otpTimer.textContent="OTP expired. Send again.";
-            emailInput.disabled=false;
-            sendOtpBtn.disabled=false;
-            otpSection.classList.add("hidden");
+function setLoading(button, loader, isLoading) { button.disabled = isLoading; loader.style.display = isLoading ? "block" : "none"; }
+function displayInlineError(errorElementId, message) { const errorEl = inlineErrors[errorElementId]; if (!errorEl) return; clearTimeout(errorEl.clearTimeoutId); errorEl.textContent = message; errorEl.classList.add('show'); errorEl.clearTimeoutId = setTimeout(() => { errorEl.classList.remove('show'); setTimeout(() => { errorEl.textContent = ""; }, 300); }, 1000); }
+function setFormEnabled(enabled) { 
+    restOfFormElements.forEach(el => { 
+        if (el.id !== 'loginBtn') {
+             // Only apply disabled if element isn't the login button
+            el.disabled = !enabled; 
         }
-    },1000);
+    }); 
+    if (enabled) restOfForm.classList.add('form-visible'); 
+    else restOfForm.classList.remove('form-visible'); 
+}
+function displayMessageAndClear(message, isError = true, duration = 1000) { clearTimeout(formMessage.clearTimeoutId); formMessage.textContent = message; formMessage.className = isError ? 'error' : 'success'; formMessage.style.opacity = 1; formMessage.clearTimeoutId = setTimeout(() => { formMessage.style.opacity = 0; setTimeout(() => { formMessage.textContent = ""; formMessage.className = ''; }, 300); }, duration); }
+function displayValidationMessage(message, isError = true) { 
+    validationMessage.textContent = message; 
+    validationMessage.className = isError ? 'validation-message error' : 'validation-message success'; 
+    validationMessage.style.display = 'block'; 
+    setTimeout(() => { 
+        validationMessage.style.display = 'none'; 
+    }, 3000); 
+}
+function goToLogin() { window.location.href = "/hostel/login"; }
+loginBtn.addEventListener('click', goToLogin);
+phoneInput.addEventListener('input', function(e){ e.target.value = e.target.value.replace(/\D/g,'').slice(0,10); });
+function validateEmail(email) { return /^[a-zA-Z0-9._%+-]+@gmail\.com$/i.test(email); }
 
-    try{
-        const response = await fetch("http://localhost:8080/email/send-otp", {
-            method:"POST",
-            headers:{"Content-Type":"application/json"},
-            body: JSON.stringify({to:email, subject:"OTP", body:"Your OTP"})
-        });
-        if(!response.ok) throw new Error();
-        showFormMessage("OTP sent! Enter OTP below.", false);
-    } catch{
-        showFormMessage("Error sending OTP.", true);
-        emailInput.disabled=false;
-        sendOtpBtn.disabled=false;
-    }
-});
-
-// --- VERIFY OTP ---
-verifyOtpBtn.addEventListener("click", async ()=>{
-    const otp = otpInput.value.trim();
-    const otpError = document.getElementById("otpError");
-    otpError.textContent="";
-    if(!otp){ otpError.textContent="Enter OTP"; return; }
-
-    verifyOtpBtn.disabled=true;
-    showFormMessage("Verifying OTP...", false);
-
-    try{
-        const response = await fetch(`http://localhost:8080/email/verify-otp?email=${encodeURIComponent(currentEmail)}&otp=${encodeURIComponent(otp)}`, {method:"POST"});
-        if(response.ok){
-            otpVerified=true;
-            clearInterval(timerInterval);
-            otpTimer.textContent = "";
-
-            otpSuccess.textContent="Email Verified ✅";
-            showFormMessage("", false);
-            remainingFields.classList.remove("hidden");
-
-            // Enable remaining form fields
-            const inputs = remainingFields.querySelectorAll("input, textarea, button");
-            inputs.forEach(el=>el.disabled=false);
-        } else {
-            otpError.textContent="Invalid or expired OTP.";
-            verifyOtpBtn.disabled=false;
-        }
-    } catch{
-        otpError.textContent="Error verifying OTP.";
-        verifyOtpBtn.disabled=false;
-    }
-});
-
-// --- FORM SUBMISSION ---
-document.getElementById("registrationForm").addEventListener("submit", (e)=>{
-    e.preventDefault();
-    if(!otpVerified){ showFormMessage("Verify your email first.", true); return; }
-
-    if(validateForm()){
-        showFormMessage("Form ready to submit!", false);
-        // Here you can submit via fetch/ajax to your backend
+// New function to toggle password visibility
+function togglePasswordVisibility(inputElement, buttonElement) {
+    if (inputElement.type === 'password') {
+        inputElement.type = 'text';
+        buttonElement.textContent = '🔒'; // Change to an appropriate 'hide' icon
+        buttonElement.setAttribute('aria-label', 'Hide password');
     } else {
-        showFormMessage("Please fix the errors.", true);
+        inputElement.type = 'password';
+        buttonElement.textContent = '👁️'; // Change to an appropriate 'show' icon
+        buttonElement.setAttribute('aria-label', 'Show password');
     }
+}
+
+// Add event listeners to all password toggle buttons
+document.querySelectorAll('.password-toggle').forEach(button => {
+    button.addEventListener('click', function() {
+        const targetId = this.getAttribute('data-target');
+        const targetInput = document.getElementById(targetId);
+        if (targetInput) {
+            togglePasswordVisibility(targetInput, this);
+        }
+    });
+});
+// END New password toggle logic
+
+
+async function sendOtp(email){ 
+    setLoading(sendOtpBtn, sendOtpLoader, true); 
+    otpInput.disabled = false; 
+    verifyOtpBtn.disabled = false; 
+    currentEmail = email; 
+    let timer = 30; 
+    otpTimer.textContent = `Time left: ${timer}s`; 
+    otpTimer.classList.remove('success-message'); 
+    clearInterval(timerInterval); 
+    timerInterval = setInterval(() => { 
+        timer--; 
+        otpTimer.textContent = `Time left: ${timer}s`; 
+        if (timer <= 0) { 
+            clearInterval(timerInterval); 
+            otpTimer.textContent = "OTP expired. Send again."; 
+            otpInput.disabled = true; 
+            verifyOtpBtn.disabled = true; 
+            sendOtpBtn.disabled = false; 
+        } 
+    }, 1000); 
+    try { 
+        const response = await fetch("http://localhost:8080/email/send-otp", { 
+            method: "POST", 
+            headers: { "Content-Type": "application/json" }, 
+            body: JSON.stringify({ to: email, subject: "Email Verification", body: "Please use the following OTP to verify your email." }) 
+        }); 
+        if (response.ok) displayMessageAndClear("OTP sent to your email.", false, 2000); 
+        else { 
+            const errorText = await response.text(); 
+            let errorMessage = "Failed to send OTP."; 
+            let isExistingUser = false; 
+            try { 
+                const errorData = JSON.parse(errorText); 
+                errorMessage = errorData.message || errorMessage; 
+                if (errorMessage.toLowerCase().includes("already registered") || errorMessage.toLowerCase().includes("exist")) isExistingUser = true; 
+            } catch {} 
+            displayMessageAndClear(errorMessage, true, 2000); 
+            sendOtpBtn.disabled = false; 
+            if(isExistingUser){ 
+                clearInterval(timerInterval); 
+                otpTimer.textContent = ""; 
+                otpInput.disabled = true; 
+                verifyOtpBtn.disabled = true; 
+                // Redirect to login page if user already exists
+                setTimeout(() => {
+                    goToLogin();
+                }, 2000);
+            } 
+        } 
+    } catch(e) { 
+        console.error(e); 
+        displayMessageAndClear("Error connecting to server.", true, 2500); 
+        sendOtpBtn.disabled = false; 
+    } finally { setLoading(sendOtpBtn, sendOtpLoader, false); } 
+}
+
+sendOtpBtn.addEventListener("click", function(){ 
+    if (otpVerified) return; 
+    const email = emailInput.value.trim(); 
+    document.querySelectorAll('.error-message').forEach(el => { el.textContent=""; el.classList.remove('show'); }); 
+    if (!validateEmail(email)) { 
+        displayMessageAndClear("Please enter a valid Gmail address.", true, 1000); 
+        displayInlineError("emailError", "Only @gmail.com addresses are allowed."); 
+        return; 
+    } 
+    sendOtpBtn.disabled = true; 
+    sendOtp(email); 
 });
 
-// LOGIN REDIRECT
-loginRedirectBtn.addEventListener("click", ()=>{ window.location.href="/login"; });
+verifyOtpBtn.addEventListener("click", async function(){ 
+    if (otpVerified) return; 
+    const otp = otpInput.value.trim(); 
+    inlineErrors["otpError"].textContent = ""; 
+    inlineErrors["otpError"].classList.remove('show'); 
+    if (!otp) { displayMessageAndClear("Please enter OTP.", true, 1000); displayInlineError("otpError", "OTP is required."); return; } 
+    setLoading(verifyOtpBtn, verifyOtpLoader, true); 
+    try { 
+        const response = await fetch(`http://localhost:8080/email/verify-otp?email=${encodeURIComponent(currentEmail)}&otp=${encodeURIComponent(otp)}`, { method: "POST" }); 
+        if (response.ok){ 
+            clearInterval(timerInterval); 
+            otpVerified=true; 
+            otpTimer.textContent="OTP verified!"; 
+            otpTimer.classList.add('success-message'); 
+            verifyOtpBtn.textContent='Verified 🎉'; 
+            displayMessageAndClear("OTP verified successfully.", false, 2500); 
+            sendOtpBtn.disabled=true; verifyOtpBtn.disabled=true; emailInput.disabled=true; otpInput.disabled=true; 
+            setFormEnabled(true); 
+            restOfForm.style.display="block"; 
+            registerBtn.style.display='block'; 
+            setTimeout(()=>{ restOfForm.classList.add('form-visible'); },10); 
+        } else { 
+            const errorText = await response.text(); 
+            let errorMessage = "Invalid or expired OTP."; 
+            try{ errorMessage = JSON.parse(errorText).message || errorMessage; } catch{} 
+            otpVerified=false; setFormEnabled(false); 
+            displayMessageAndClear(errorMessage,true,2000); displayInlineError("otpError","Invalid OTP."); 
+            verifyOtpBtn.innerHTML='Verify OTP<div id="verifyOtpLoader" class="loader"></div>'; 
+        } 
+    } catch(e){ 
+        console.error(e); 
+        setFormEnabled(false); 
+        displayMessageAndClear("Error connecting to server.", true, 2500); 
+        verifyOtpBtn.innerHTML='Verify OTP<div id="verifyOtpLoader" class="loader"></div>'; 
+    } finally{ setLoading(verifyOtpBtn, verifyOtpLoader,false); if(!otpVerified) verifyOtpBtn.disabled=false; } 
+});
+
+document.getElementById("registrationForm").addEventListener("submit", async function(e){ 
+    e.preventDefault(); 
+    if(!otpVerified){ 
+        displayValidationMessage("Please verify your email first.", true); 
+        return; 
+    } 
+    let valid = true; 
+    document.querySelectorAll('.error-message').forEach(el=>{ el.textContent=""; el.classList.remove('show'); }); 
+    if(!validateEmail(emailInput.value.trim())){ displayInlineError("emailError", "Only @gmail.com addresses are allowed."); valid=false; } 
+    if(passwordInput.value.length<8){ displayInlineError("passwordError","Password must be at least 8 characters."); valid=false; } 
+    if(passwordInput.value !== confirmPasswordInput.value){ displayInlineError("confirmPasswordError","Passwords do not match."); valid=false; } 
+    if(!/^\d{10}$/.test(phoneInput.value.trim())){ displayInlineError("phoneError","Phone number must be exactly 10 digits."); valid=false; } 
+    ["firstName","lastName","hostelName","hostelAddress"].forEach(f=>{ if(!document.getElementById(f).value.trim()){ displayInlineError(f+"Error","This field is required."); valid=false; } }); 
+    if(!valid){ 
+        displayValidationMessage("Please fix the highlighted errors.", true); 
+        return; 
+    } 
+    setLoading(registerBtn, registerLoader,true); 
+    const adminData={ 
+        firstName: document.getElementById("firstName").value.trim(), 
+        lastName: document.getElementById("lastName").value.trim(), 
+        email: currentEmail, 
+        phoneNumber: phoneInput.value.trim(), 
+        password: passwordInput.value, 
+        hostelName: document.getElementById("hostelName").value.trim(), 
+        hostelAddress: document.getElementById("hostelAddress").value.trim() 
+    }; 
+    try{ 
+        const response = await fetch("http://localhost:8080/admin/register",{ method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(adminData) }); 
+        const result = await response.json(); 
+        if(response.ok && result.status==="success"){ 
+            displayMessageAndClear(result.message + " 🎉", false, 5000); 
+            this.reset(); setFormEnabled(false); restOfForm.classList.remove('form-visible'); 
+            registerBtn.style.display='none'; 
+            setTimeout(()=>{ restOfForm.style.display="none"; },500); 
+            otpVerified=false; sendOtpBtn.disabled=false; emailInput.disabled=false; 
+            verifyOtpBtn.innerHTML='Verify OTP<div id="verifyOtpLoader" class="loader"></div>'; 
+            // Redirect to login page after successful registration
+            setTimeout(() => {
+                goToLogin();
+            }, 3000);
+        } else displayMessageAndClear(result.message + " ⛔", true,2000); 
+    } catch(e){ 
+        console.error(e); 
+        displayMessageAndClear("Error submitting form. Check network.",true,2000); 
+    } finally{ setLoading(registerBtn,registerLoader,false); } 
+});
+
+// Initial setup
+setFormEnabled(false); 
+restOfForm.style.display="none";
 </script>
 </body>
 </html>

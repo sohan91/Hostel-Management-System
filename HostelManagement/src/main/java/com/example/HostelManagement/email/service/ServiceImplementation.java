@@ -7,11 +7,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import com.example.HostelManagement.email.dao.MailDao;
+
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 
 @Service
 public class ServiceImplementation implements MailService {
@@ -33,26 +36,39 @@ public class ServiceImplementation implements MailService {
         return sendOtpEmail(dao);
     }
 
-    private String sendOtpEmail(MailDao dao) {
-        Random random = new Random();
-        int otp = 100000 + random.nextInt(900000); // 6-digit OTP
+   private String sendOtpEmail(MailDao dao) {
+    Random random = new Random();
+    int otp = 100000 + random.nextInt(900000); 
 
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(senderEmail);
-        message.setTo(dao.getTo());
-        message.setSubject(dao.getSubject());
-        message.setText("Your OTP is: " + otp);
+    try {
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-        try {
-            mailSender.send(message);
-            otpMap.put(dao.getTo(), new OTPEntry(String.valueOf(otp), LocalDateTime.now().plusSeconds(30)));
-            return "OTP sent successfully";
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "Failed to send OTP";
-        }
+        helper.setFrom("Email Verification <" + senderEmail + ">");
+        helper.setTo(dao.getTo());
+        helper.setSubject(dao.getSubject());
+
+        String htmlContent = "<html>" +
+                "<body style='font-family:Arial,sans-serif;'>" +
+                "<p>Hello,</p>" +   
+                "<p>You requested to verify your email for Hostel Management registration.</p>" +
+                "<h3 style='color:black;'>Your OTP is: <strong>" + otp + "</strong></h3>" +
+                "<p>This OTP is valid for 30 minutes. Please enter it in the registration form to verify your email.</p>" +
+                "<p>If you did not request this, please ignore this email.</p>" +
+                "<p>Thank you,<br>Hostel Management Team</p>" +
+                "</body></html>";
+
+        helper.setText(htmlContent, true); 
+
+        mailSender.send(message);
+
+        otpMap.put(dao.getTo(), new OTPEntry(String.valueOf(otp), LocalDateTime.now().plusMinutes(30)));
+        return "OTP sent successfully";
+    } catch (MessagingException e) {
+        e.printStackTrace();
+        return "Failed to send OTP";
     }
-
+}
     @Override
     public boolean verifyOTP(String email, String otp) {
         OTPEntry entry = otpMap.get(email);
