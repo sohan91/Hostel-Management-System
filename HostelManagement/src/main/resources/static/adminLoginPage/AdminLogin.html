@@ -5,73 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hostel Management Login</title>
   <link rel="stylesheet" href="/adminLoginPage/AdminLogin.css">
-  <style>
-    .error-message {
-      color: red;
-      font-size: 14px;
-      margin-top: 2px;
-    }
-    .password-group {
-      position: relative;
-    }
-    .password-toggle {
-      position: absolute;
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      cursor: pointer;
-      z-index: 10;
-      color: #555;
-    }
-    .password-toggle input[type="checkbox"] {
-      margin-left: 5px;
-      cursor: pointer;
-      width: 12px;
-      height: 12px;
-    }
-    .success-box {
-      width: 150px;
-      height: 40px;
-      background: linear-gradient(135deg, #4CAF50, #45a049);
-      color: white;
-      padding: 0;
-      border-radius: 8px;
-      margin: 10px auto;
-      text-align: center;
-      box-shadow: 0 2px 10px rgba(76, 175, 80, 0.5);
-      border-left: 3px solid #2E7D32;
-      animation: fadeIn 0.5s ease-in;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-    }
-    .success-box h3 {
-      margin: 0;
-      font-size: 10px;
-      font-weight: 700;
-      line-height: 1;
-    }
-    .success-box p {
-      display: none;
-    }
-    .success-icon {
-      font-size: 20px;
-      margin-right: 5px;
-      margin-bottom: 0;
-    }
-    .loading {
-      opacity: 0.7;
-      pointer-events: none;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-  </style>
 </head>
 <body>
 <div class="login-container">
@@ -106,98 +39,19 @@
     <div class="links">
       <a href="#" class="link-item" id="createRegister">Create Register</a>
       <span class="link-separator">|</span>
-      <a href="#" class="link-item">Forgot Password?</a>
+<a href="/login/password-reset" class="link-item" id="forgotPassword">Forgot Password?</a>
     </div>
   </form>
 </div>
 
+<script src="/adminLoginPage/script.js"></script>
+
 <script>
-  const passwordField = document.getElementById("password");
   const showPasswordCheckbox = document.getElementById("showPassword");
-  const createRegisterLink = document.getElementById("createRegister");
+  const passwordField = document.getElementById("password");
 
-  createRegisterLink.addEventListener("click", function(e) {
-    e.preventDefault();
-    window.location.href = "/hostel/registration";
-  });
-
-  showPasswordCheckbox.addEventListener("change", function() {
-    if (this.checked) {
-      passwordField.type = "text";
-      this.parentNode.firstChild.textContent = "Hide";
-    } else {
-      passwordField.type = "password";
-      this.parentNode.firstChild.textContent = "Show";
-    }
-  });
-
-  document.getElementById("loginForm").addEventListener("submit", async function (e) {
-    e.preventDefault();
-
-    const username = document.getElementById("username").value.trim();
-    const password = document.getElementById("password").value.trim();
-    const usernameError = document.getElementById("usernameError");
-    const passwordError = document.getElementById("passwordError");
-    const messageArea = document.getElementById("messageArea");
-    const loginBtn = document.getElementById("loginBtn");
-
-    usernameError.textContent = "";
-    passwordError.textContent = "";
-    messageArea.innerHTML = "";
-
-    let isValid = true;
-
-    if (username === "") {
-      usernameError.textContent = "Username is required.";
-      isValid = false;
-    }
-
-    if (password === "") {
-      passwordError.textContent = "Password is required.";
-      isValid = false;
-    } else if (password.length < 8) {
-      passwordError.textContent = "Password must be at least 8 characters long.";
-      isValid = false;
-    }
-
-    if (!isValid) return;
-
-    loginBtn.disabled = true;
-    loginBtn.textContent = "Logging in...";
-    document.getElementById("loginForm").classList.add("loading");
-
-    try {
-      const formData = new FormData();
-      formData.append('username', username);
-      formData.append('password', password);
-
-      const response = await fetch('/hostel/login', {
-        method: 'POST',
-        body: formData
-      });
-
-      if (response.redirected) {
-        window.location.href = response.url;
-      } else {
-        const responseText = await response.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(responseText, 'text/html');
-        const errorElement = doc.querySelector('[name="error"]');
-        
-        if (errorElement) {
-          messageArea.innerHTML = `<div class="error-message">${errorElement.value || 'Invalid username/password'}</div>`;
-        } else {
-          messageArea.innerHTML = `<div class="error-message">Login failed. Please try again.</div>`;
-        }
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      messageArea.innerHTML = `<div class="error-message">Network error. Please try again.</div>`;
-    } finally {
-      loginBtn.disabled = false;
-      loginBtn.textContent = "Login";
-      document.getElementById("loginForm").classList.remove("loading");
-    }
+  showPasswordCheckbox.addEventListener("change", () => {
+    passwordField.type = showPasswordCheckbox.checked ? "text" : "password";
   });
 </script>
 </body>
