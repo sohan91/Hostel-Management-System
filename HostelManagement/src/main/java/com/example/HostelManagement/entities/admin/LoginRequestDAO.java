@@ -1,5 +1,7 @@
 package com.example.HostelManagement.entities.admin;
 
+
+
 public class LoginRequestDAO {
     private String email;
     private String password;

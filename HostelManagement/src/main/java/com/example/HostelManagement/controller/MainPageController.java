@@ -25,9 +25,10 @@ public class MainPageController {
 
     @GetMapping("/login")
     public String login(HttpServletRequest request) {
-        // Check if already logged in
         Object user = request.getSession().getAttribute("loggedInUser");
+        System.out.println("User Logged");
         if (user != null) {
+            System.out.println("in dashbboard");
             return "redirect:/hostel/dashboard";
         }
         return "forward:/adminLoginPage/AdminLogin.html";
@@ -46,7 +47,7 @@ public class MainPageController {
 
         if (isValidUser) {
             request.getSession().setAttribute("loggedInUser", username);
-            request.getSession().setMaxInactiveInterval(30 * 60);
+            request.getSession().setMaxInactiveInterval(30 * 60);//set for 30min
             
             String redirectUrl = (String) request.getSession().getAttribute("redirectAfterLogin");
             if (redirectUrl != null) {
@@ -71,7 +72,22 @@ public class MainPageController {
     }
 
     @GetMapping("/registration")
-    public String registration() {
-        return "forward:/AdminRegistration/registration.html";
+    public String registration(HttpServletRequest request) {
+        String header = request.getHeader("Referer");
+        if(header != null && header.contains("/hostel/login")){
+            return "forward:/AdminRegistration/registration.html";
+        }
+        return "redirect:/hostel/login"; 
     }
+
+  @GetMapping("/password-reset")
+public String showForgotPasswordPage(HttpServletRequest request) {
+    String referer = request.getHeader("Referer");
+    
+    if (referer != null && referer.contains("/hostel/login")) {
+        return "forward:/AdminPasswordReset/forgotPassword.html";
+    }
+    loadAdminDashBoard(request);
+    return "redirect:/hostel/login";
+}
 }

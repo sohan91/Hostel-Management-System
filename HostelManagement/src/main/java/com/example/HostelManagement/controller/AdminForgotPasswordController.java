@@ -1,12 +1,17 @@
 package com.example.HostelManagement.controller;
 
-import com.example.HostelManagement.dao.AdminDAO;
-import com.example.HostelManagement.entities.admin.Admin;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.HostelManagement.dao.AdminDAO;
+import com.example.HostelManagement.entities.admin.Admin;
 
 @RestController
 @RequestMapping("/hostel/api")
@@ -16,9 +21,7 @@ public class AdminForgotPasswordController {
     @Autowired
     private AdminDAO adminDAO;
 
-    /**
-     * Step 1: Verify Email Existence
-     */
+
     @PostMapping("/verify-email")
     public Map<String, Object> verifyEmail(@RequestBody Map<String, String> request) {
         String email = request.get("email");

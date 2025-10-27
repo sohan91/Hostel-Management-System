@@ -2,7 +2,6 @@ const emailInput = document.getElementById("email");
 const otpInput = document.getElementById("otp");
 const sendOtpBtn = document.getElementById("sendOtpBtn");
 const verifyOtpBtn = document.getElementById("verifyOtpBtn");
-const resendOtpBtn = document.getElementById("resendOtpBtn");
 const passwordInput = document.getElementById("password");
 const confirmPasswordInput = document.getElementById("confirmPassword");
 const restOfForm = document.getElementById("restOfForm");
@@ -13,18 +12,14 @@ const phoneInput = document.getElementById("phone");
 const registerBtn = document.getElementById("registerBtn");
 const loginBtn = document.getElementById("loginBtn");
 
-// Include password toggle buttons in the list of all form elements
 const restOfFormElements = document.querySelectorAll('#restOfForm input, #restOfForm textarea, #restOfForm .register-btn, #restOfForm .password-toggle');
 
 const sendOtpLoader = document.getElementById("sendOtpLoader");
 const verifyOtpLoader = document.getElementById("verifyOtpLoader");
-const resendOtpLoader = document.getElementById("resendOtpLoader");
 const registerLoader = document.getElementById("registerLoader");
 
-window.onpageshow = function(event) {
-    if (event.persisted) {
-        window.location.reload();
-    }
+window.onpageshow = function (event) {
+    if (event.persisted) window.location.reload();
 };
 
 const inlineErrors = {};
@@ -34,98 +29,144 @@ let otpVerified = false;
 let timerInterval;
 let currentEmail = "";
 
-function setLoading(button, loader, isLoading) { button.disabled = isLoading; loader.style.display = isLoading ? "block" : "none"; }
-function displayInlineError(errorElementId, message) { const errorEl = inlineErrors[errorElementId]; if (!errorEl) return; clearTimeout(errorEl.clearTimeoutId); errorEl.textContent = message; errorEl.classList.add('show'); errorEl.clearTimeoutId = setTimeout(() => { errorEl.classList.remove('show'); setTimeout(() => { errorEl.textContent = ""; }, 300); }, 1000); }
-function setFormEnabled(enabled) { 
-    restOfFormElements.forEach(el => { 
-        if (el.id !== 'loginBtn') {
-             // Only apply disabled if element isn't the login button
-            el.disabled = !enabled; 
-        }
-    }); 
-    if (enabled) restOfForm.classList.add('form-visible'); 
-    else restOfForm.classList.remove('form-visible'); 
+function setLoading(button, loader, isLoading) {
+    button.disabled = isLoading;
+    loader.style.display = isLoading ? "block" : "none";
 }
-function displayMessageAndClear(message, isError = true, duration = 1000) { clearTimeout(formMessage.clearTimeoutId); formMessage.textContent = message; formMessage.className = isError ? 'error' : 'success'; formMessage.style.opacity = 1; formMessage.clearTimeoutId = setTimeout(() => { formMessage.style.opacity = 0; setTimeout(() => { formMessage.textContent = ""; formMessage.className = ''; }, 300); }, duration); }
-function displayValidationMessage(message, isError = true) { 
-    validationMessage.textContent = message; 
-    validationMessage.className = isError ? 'validation-message error' : 'validation-message success'; 
-    validationMessage.style.display = 'block'; 
-    setTimeout(() => { 
-        validationMessage.style.display = 'none'; 
-    }, 3000); 
+
+function displayInlineError(errorElementId, message) {
+    const errorEl = inlineErrors[errorElementId];
+    if (!errorEl) return;
+    clearTimeout(errorEl.clearTimeoutId);
+    errorEl.textContent = message;
+    errorEl.classList.add('show');
+    errorEl.clearTimeoutId = setTimeout(() => {
+        errorEl.classList.remove('show');
+        setTimeout(() => { errorEl.textContent = ""; }, 300);
+    }, 1000);
 }
+
+function setFormEnabled(enabled) {
+    restOfFormElements.forEach(el => {
+        if (el.id !== 'loginBtn') el.disabled = !enabled;
+    });
+    if (enabled) restOfForm.classList.add('form-visible');
+    else restOfForm.classList.remove('form-visible');
+}
+
+function displayMessageAndClear(message, isError = true, duration = 1000) {
+    clearTimeout(formMessage.clearTimeoutId);
+    formMessage.textContent = message;
+    formMessage.className = isError ? 'error' : 'success';
+    formMessage.style.opacity = 1;
+    formMessage.clearTimeoutId = setTimeout(() => {
+        formMessage.style.opacity = 0;
+        setTimeout(() => {
+            formMessage.textContent = "";
+            formMessage.className = '';
+        }, 300);
+    }, duration);
+}
+
+function displayValidationMessage(message, isError = true) {
+    validationMessage.textContent = message;
+    validationMessage.className = isError ? 'validation-message error' : 'validation-message success';
+    validationMessage.style.display = 'block';
+    setTimeout(() => {
+        validationMessage.style.display = 'none';
+    }, 3000);
+}
+
 function goToLogin() { window.location.href = "/hostel/login"; }
 loginBtn.addEventListener('click', goToLogin);
-phoneInput.addEventListener('input', function(e){ e.target.value = e.target.value.replace(/\D/g,'').slice(0,10); });
-function validateEmail(email) { return /^[a-zA-Z0-9._%+-]+@gmail\.com$/i.test(email); }
 
-// New function to toggle password visibility
+phoneInput.addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10); });
+
+function validateEmail(email) {
+    return /^[a-zA-Z0-9](?:[a-zA-Z0-9._%+-]*[a-zA-Z0-9])?@gmail\.com$/i.test(email);
+}
+
 function togglePasswordVisibility(inputElement, buttonElement) {
     if (inputElement.type === 'password') {
         inputElement.type = 'text';
-        buttonElement.textContent = '🔒'; // Change to an appropriate 'hide' icon
         buttonElement.setAttribute('aria-label', 'Hide password');
     } else {
         inputElement.type = 'password';
-        buttonElement.textContent = '👁️'; // Change to an appropriate 'show' icon
         buttonElement.setAttribute('aria-label', 'Show password');
     }
 }
 
-// Add event listeners to all password toggle buttons
 document.querySelectorAll('.password-toggle').forEach(button => {
-    button.addEventListener('click', function() {
-        const targetId = this.getAttribute('data-target');
-        const targetInput = document.getElementById(targetId);
-        if (targetInput) {
-            togglePasswordVisibility(targetInput, this);
-        }
+    button.addEventListener('click', function () {
+        const targetInput = document.getElementById(this.getAttribute('data-target'));
+        if (targetInput) togglePasswordVisibility(targetInput, this);
     });
 });
-// END New password toggle logic
 
-// Function to start OTP timer
 function startOtpTimer() {
     let timer = 30;
     otpTimer.textContent = `Time left: ${timer}s`;
     otpTimer.classList.remove('success-message');
+    otpTimer.style.cursor = 'default';
+    otpTimer.style.color = '';
+    
+    // Disable email input and send OTP button for 30 seconds
+    emailInput.disabled = true;
+    sendOtpBtn.disabled = true;
+
     clearInterval(timerInterval);
     timerInterval = setInterval(() => {
         timer--;
         otpTimer.textContent = `Time left: ${timer}s`;
         if (timer <= 0) {
             clearInterval(timerInterval);
-            otpTimer.textContent = "OTP expired. Send again.";
+            otpTimer.innerHTML = "OTP expired. <span style='color: #007bff; cursor: pointer; text-decoration: underline;'>Send again</span>.";
             otpInput.disabled = true;
             verifyOtpBtn.disabled = true;
+            
+            // Re-enable email input and send OTP button when timer expires
+            emailInput.disabled = false;
             sendOtpBtn.disabled = false;
-            resendOtpBtn.disabled = false;
+
+            const sendAgainSpan = otpTimer.querySelector('span');
+            sendAgainSpan.onclick = function () {
+                if (!otpVerified) {
+                    const email = emailInput.value.trim();
+                    if (!validateEmail(email)) {
+                        displayMessageAndClear("Please enter a valid Gmail address.", true, 1000);
+                        displayInlineError("emailError", "Only @gmail.com addresses are allowed.");
+                        return;
+                    }
+                    sendAgainSpan.textContent = "Sending...";
+                    sendOtp(email);
+                }
+            };
         }
     }, 1000);
 }
 
-// Function to send OTP
 async function sendOtp(email) {
     setLoading(sendOtpBtn, sendOtpLoader, true);
-    otpInput.disabled = false;
-    verifyOtpBtn.disabled = false;
-    resendOtpBtn.disabled = true;
+    
+    // Disable email input and verify OTP until email is sent
+    emailInput.disabled = true;
+    otpInput.disabled = true;
+    verifyOtpBtn.disabled = true;
+    
     currentEmail = email;
-    
-    // Show resend OTP button
-    resendOtpBtn.style.display = 'block';
-    
-    startOtpTimer();
-    
+
     try {
         const response = await fetch("http://localhost:8080/email/send-otp", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ to: email, subject: "Email Verification", body: "Please use the following OTP to verify your email." })
+            body: JSON.stringify({ to: email, subject: "Email Verification", body: "Use this OTP to verify your email." })
         });
         if (response.ok) {
             displayMessageAndClear("OTP sent to your email.", false, 2000);
+            // Start timer and enable OTP input only after successful send
+            startOtpTimer();
+            otpInput.disabled = false;
+            verifyOtpBtn.disabled = false;
         } else {
             const errorText = await response.text();
             let errorMessage = "Failed to send OTP.";
@@ -133,70 +174,34 @@ async function sendOtp(email) {
             try {
                 const errorData = JSON.parse(errorText);
                 errorMessage = errorData.message || errorMessage;
-                if (errorMessage.toLowerCase().includes("already registered") || errorMessage.toLowerCase().includes("exist")) isExistingUser = true;
-            } catch {}
+                if (errorMessage.toLowerCase().includes("already registered")) isExistingUser = true;
+            } catch { }
             displayMessageAndClear(errorMessage, true, 2000);
+            
+            // Re-enable email input if OTP send fails
+            emailInput.disabled = false;
             sendOtpBtn.disabled = false;
+            
             if (isExistingUser) {
                 clearInterval(timerInterval);
                 otpTimer.textContent = "";
                 otpInput.disabled = true;
                 verifyOtpBtn.disabled = true;
-                resendOtpBtn.style.display = 'none';
-                // Redirect to login page if user already exists
-                setTimeout(() => {
-                    goToLogin();
-                }, 2000);
+                setTimeout(goToLogin, 2000);
             }
         }
     } catch (e) {
         console.error(e);
         displayMessageAndClear("Error connecting to server.", true, 2500);
+        // Re-enable email input on network error
+        emailInput.disabled = false;
         sendOtpBtn.disabled = false;
     } finally {
         setLoading(sendOtpBtn, sendOtpLoader, false);
     }
 }
 
-// Function to resend OTP
-async function resendOtp() {
-    const email = emailInput.value.trim();
-    if (!validateEmail(email)) {
-        displayMessageAndClear("Please enter a valid Gmail address.", true, 1000);
-        displayInlineError("emailError", "Only @gmail.com addresses are allowed.");
-        return;
-    }
-    
-    setLoading(resendOtpBtn, resendOtpLoader, true);
-    
-    try {
-        const response = await fetch("http://localhost:8080/email/send-otp", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ to: email, subject: "Email Verification", body: "Please use the following OTP to verify your email." })
-        });
-        if (response.ok) {
-            displayMessageAndClear("New OTP sent to your email.", false, 2000);
-            startOtpTimer();
-        } else {
-            const errorText = await response.text();
-            let errorMessage = "Failed to resend OTP.";
-            try {
-                const errorData = JSON.parse(errorText);
-                errorMessage = errorData.message || errorMessage;
-            } catch {}
-            displayMessageAndClear(errorMessage, true, 2000);
-        }
-    } catch (e) {
-        console.error(e);
-        displayMessageAndClear("Error connecting to server.", true, 2500);
-    } finally {
-        setLoading(resendOtpBtn, resendOtpLoader, false);
-    }
-}
-
-// Event listeners
-sendOtpBtn.addEventListener("click", function() {
+sendOtpBtn.addEventListener("click", function () {
     if (otpVerified) return;
     const email = emailInput.value.trim();
     document.querySelectorAll('.error-message').forEach(el => { el.textContent = ""; el.classList.remove('show'); });
@@ -205,17 +210,13 @@ sendOtpBtn.addEventListener("click", function() {
         displayInlineError("emailError", "Only @gmail.com addresses are allowed.");
         return;
     }
-    sendOtpBtn.disabled = true;
     sendOtp(email);
 });
 
-resendOtpBtn.addEventListener("click", resendOtp);
-
-verifyOtpBtn.addEventListener("click", async function() {
+verifyOtpBtn.addEventListener("click", async function () {
     if (otpVerified) return;
     const otp = otpInput.value.trim();
     inlineErrors["otpError"].textContent = "";
-    inlineErrors["otpError"].classList.remove('show');
     if (!otp) {
         displayMessageAndClear("Please enter OTP.", true, 1000);
         displayInlineError("otpError", "OTP is required.");
@@ -235,47 +236,36 @@ verifyOtpBtn.addEventListener("click", async function() {
             verifyOtpBtn.disabled = true;
             emailInput.disabled = true;
             otpInput.disabled = true;
-            resendOtpBtn.style.display = 'none';
             setFormEnabled(true);
             restOfForm.style.display = "block";
             registerBtn.style.display = 'block';
-            setTimeout(() => {
-                restOfForm.classList.add('form-visible');
-            }, 10);
+            setTimeout(() => restOfForm.classList.add('form-visible'), 10);
         } else {
             const errorText = await response.text();
-            let errorMessage = "Invalid or expired OTP.";
-            try {
-                errorMessage = JSON.parse(errorText).message || errorMessage;
-            } catch {}
+             let errorMessage = "Invalid or expired OTP.";
+            try { errorMessage = JSON.parse(errorText).message || errorMessage; } catch { }
             otpVerified = false;
             setFormEnabled(false);
             displayMessageAndClear(errorMessage, true, 2000);
-            displayInlineError("otpError", "Invalid OTP.");
-            verifyOtpBtn.innerHTML = 'Verify OTP<div id="verifyOtpLoader" class="loader"></div>';
         }
     } catch (e) {
         console.error(e);
         setFormEnabled(false);
         displayMessageAndClear("Error connecting to server.", true, 2500);
-        verifyOtpBtn.innerHTML = 'Verify OTP<div id="verifyOtpLoader" class="loader"></div>';
     } finally {
         setLoading(verifyOtpBtn, verifyOtpLoader, false);
         if (!otpVerified) verifyOtpBtn.disabled = false;
     }
 });
 
-document.getElementById("registrationForm").addEventListener("submit", async function(e) {
+document.getElementById("registrationForm").addEventListener("submit", async function (e) {
     e.preventDefault();
     if (!otpVerified) {
         displayValidationMessage("Please verify your email first.", true);
         return;
     }
     let valid = true;
-    document.querySelectorAll('.error-message').forEach(el => {
-        el.textContent = "";
-        el.classList.remove('show');
-    });
+    document.querySelectorAll('.error-message').forEach(el => { el.textContent = ""; el.classList.remove('show'); });
     if (!validateEmail(emailInput.value.trim())) {
         displayInlineError("emailError", "Only @gmail.com addresses are allowed.");
         valid = false;
@@ -302,6 +292,7 @@ document.getElementById("registrationForm").addEventListener("submit", async fun
         displayValidationMessage("Please fix the highlighted errors.", true);
         return;
     }
+
     setLoading(registerBtn, registerLoader, true);
     const adminData = {
         firstName: document.getElementById("firstName").value.trim(),
@@ -312,6 +303,7 @@ document.getElementById("registrationForm").addEventListener("submit", async fun
         hostelName: document.getElementById("hostelName").value.trim(),
         hostelAddress: document.getElementById("hostelAddress").value.trim()
     };
+
     try {
         const response = await fetch("http://localhost:8080/admin/register", {
             method: "POST",
@@ -325,17 +317,12 @@ document.getElementById("registrationForm").addEventListener("submit", async fun
             setFormEnabled(false);
             restOfForm.classList.remove('form-visible');
             registerBtn.style.display = 'none';
-            setTimeout(() => {
-                restOfForm.style.display = "none";
-            }, 500);
+            setTimeout(() => { restOfForm.style.display = "none"; }, 500);
             otpVerified = false;
             sendOtpBtn.disabled = false;
             emailInput.disabled = false;
-            resendOtpBtn.style.display = 'none';
             verifyOtpBtn.innerHTML = 'Verify OTP<div id="verifyOtpLoader" class="loader"></div>';
-            setTimeout(() => {
-                goToLogin();
-            }, 3000);
+            setTimeout(goToLogin, 3000);
         } else displayMessageAndClear(result.message + " ⛔", true, 2000);
     } catch (e) {
         console.error(e);
