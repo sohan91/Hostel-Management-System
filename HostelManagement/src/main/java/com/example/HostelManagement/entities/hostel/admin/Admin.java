@@ -1,4 +1,4 @@
-package com.example.HostelManagement.entities.admin;
+package com.example.HostelManagement.entities.hostel.admin;
 
 import java.time.LocalDateTime;
 
@@ -22,7 +22,7 @@ public class Admin {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "admin_id")
-    private Long adminId;
+    private Integer adminId;
 
     @NotBlank
     @Size(max = 50)
@@ -73,11 +73,11 @@ public class Admin {
         this.hostelAddress = hostelAddress;
     }
 
-    public Long getAdminId()
+    public Integer getAdminId()
      {
          return adminId; 
         }
-    public void setAdminId(Long adminId) {
+    public void setAdminId(Integer adminId) {
          this.adminId = adminId; 
         }
     public String getFirstName() { 

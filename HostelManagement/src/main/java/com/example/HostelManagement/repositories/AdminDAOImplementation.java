@@ -1,12 +1,14 @@
 package com.example.HostelManagement.repositories;
 
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.HostelManagement.dao.AdminDAO;
-import com.example.HostelManagement.entities.admin.Admin;
+import com.example.HostelManagement.entities.hostel.admin.Admin;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.TypedQuery;
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public class AdminDAOImplementation implements AdminDAO {

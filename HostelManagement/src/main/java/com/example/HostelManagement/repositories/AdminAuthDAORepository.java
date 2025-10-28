@@ -1,11 +1,13 @@
 package com.example.HostelManagement.repositories;
 
+import org.springframework.stereotype.Repository;
+
 import com.example.HostelManagement.dao.AdminAuthDAO;
-import com.example.HostelManagement.entities.admin.Admin;
+import com.example.HostelManagement.entities.hostel.admin.Admin;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.TypedQuery;
-import org.springframework.stereotype.Repository;
 
 @Repository
 public class AdminAuthDAORepository implements AdminAuthDAO {

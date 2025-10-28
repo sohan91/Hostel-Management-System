@@ -11,6 +11,7 @@ import com.example.HostelManagement.repositories.AdminAuthDAORepository;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 @Controller
 @RequestMapping("/hostel")
@@ -25,12 +26,15 @@ public class MainPageController {
 
     @GetMapping("/login")
     public String login(HttpServletRequest request) {
-        Object user = request.getSession().getAttribute("loggedInUser");
-        System.out.println("User Logged");
-        if (user != null) {
-            System.out.println("in dashbboard");
+        HttpSession session = request.getSession(false);
+        
+        // If user has active session, redirect to dashboard
+        if (session != null && session.getAttribute("loggedInUser") != null) {
+            System.out.println("User already logged in, redirecting to dashboard");
             return "redirect:/hostel/dashboard";
         }
+        
+        System.out.println("Showing login page");
         return "forward:/adminLoginPage/AdminLogin.html";
     }
 
@@ -39,19 +43,24 @@ public class MainPageController {
                         HttpServletResponse response,
                         @RequestParam String username,
                         @RequestParam String password) {
-        Object user = request.getSession().getAttribute("loggedInUser");
-        if (user != null) {
+        
+        // Check existing session without creating new one
+        HttpSession existingSession = request.getSession(false);
+        if (existingSession != null && existingSession.getAttribute("loggedInUser") != null) {
             return "redirect:/hostel/dashboard";
         }
+        
         boolean isValidUser = adminAuthRepo.validateAdminCredentials(username, password);
 
         if (isValidUser) {
-            request.getSession().setAttribute("loggedInUser", username);
-            request.getSession().setMaxInactiveInterval(30 * 60);//set for 30min
+            // Create new session for authenticated user
+            HttpSession newSession = request.getSession();
+            newSession.setAttribute("loggedInUser", username);
+            newSession.setMaxInactiveInterval(30 * 60); // 30 minutes
             
-            String redirectUrl = (String) request.getSession().getAttribute("redirectAfterLogin");
+            String redirectUrl = (String) newSession.getAttribute("redirectAfterLogin");
             if (redirectUrl != null) {
-                request.getSession().removeAttribute("redirectAfterLogin");
+                newSession.removeAttribute("redirectAfterLogin");
                 return "redirect:" + redirectUrl;
             }
             return "redirect:/hostel/dashboard";
@@ -63,9 +72,11 @@ public class MainPageController {
 
     @GetMapping("/dashboard")
     public String loadAdminDashBoard(HttpServletRequest request) {
-        Object user = request.getSession().getAttribute("loggedInUser");
-        if (user == null) {
-            request.getSession().setAttribute("redirectAfterLogin", "/hostel/dashboard");
+        HttpSession session = request.getSession(false);
+        if (session == null || session.getAttribute("loggedInUser") == null) {
+            // Create session for redirect tracking
+            HttpSession newSession = request.getSession();
+            newSession.setAttribute("redirectAfterLogin", "/hostel/dashboard");
             return "redirect:/hostel/login";
         }
         return "forward:/AdminDashboard/adminDashboard.html";
@@ -80,14 +91,28 @@ public class MainPageController {
         return "redirect:/hostel/login"; 
     }
 
-  @GetMapping("/password-reset")
-public String showForgotPasswordPage(HttpServletRequest request) {
-    String referer = request.getHeader("Referer");
-    
-    if (referer != null && referer.contains("/hostel/login")) {
-        return "forward:/AdminPasswordReset/forgotPassword.html";
+    @GetMapping("/password-reset")
+    public String showForgotPasswordPage(HttpServletRequest request) {
+        String referer = request.getHeader("Referer");
+        
+        if (referer != null && referer.contains("/hostel/login")) {
+            return "forward:/AdminPasswordReset/forgotPassword.html";
+        }
+        return "redirect:/hostel/login";
     }
-    loadAdminDashBoard(request);
-    return "redirect:/hostel/login";
-}
+
+    // Logout endpoint - redirects to /hostel/login
+    @GetMapping("/logout")
+    public String logout(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        
+        if (session != null) {
+            String username = (String) session.getAttribute("loggedInUser");
+            session.invalidate();
+            System.out.println("User '" + username + "' logged out successfully");
+        }
+        
+        // Directly redirect to login URL after logout
+        return "redirect:/hostel/login";
+    }
 }

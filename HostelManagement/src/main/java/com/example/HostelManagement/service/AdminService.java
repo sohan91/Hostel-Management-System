@@ -1,9 +1,10 @@
 package com.example.HostelManagement.service;
 
-import com.example.HostelManagement.dao.AdminDAO;
-import com.example.HostelManagement.entities.admin.Admin;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.example.HostelManagement.dao.AdminDAO;
+import com.example.HostelManagement.entities.hostel.admin.Admin;
 
 @Service
 public class AdminService {

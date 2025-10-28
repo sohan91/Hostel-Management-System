@@ -1,11 +1,16 @@
 package com.example.HostelManagement.controller;
 
-import com.example.HostelManagement.entities.admin.LoginRequestDAO;
-import com.example.HostelManagement.entities.admin.LoginResponseDAO;
-import com.example.HostelManagement.service.AdminAuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.HostelManagement.entities.hostel.admin.LoginRequestDAO;
+import com.example.HostelManagement.entities.hostel.admin.LoginResponseDAO;
+import com.example.HostelManagement.service.AdminAuthService;
 
 @RestController  // Important: @RestController returns JSON automatically
 @RequestMapping("/api/auth")

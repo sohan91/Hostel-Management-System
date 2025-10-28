@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.HostelManagement.entities.admin.Admin;
+import com.example.HostelManagement.entities.hostel.admin.Admin;
 
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;

@@ -1,9 +1,10 @@
 package com.example.HostelManagement.service;
 
-import com.example.HostelManagement.dao.AdminAuthDAO;
-import com.example.HostelManagement.entities.admin.Admin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import com.example.HostelManagement.dao.AdminAuthDAO;
+import com.example.HostelManagement.entities.hostel.admin.Admin;
 
 @Service
 public class AdminAuthService {

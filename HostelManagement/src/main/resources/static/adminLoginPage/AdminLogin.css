@@ -86,6 +86,17 @@ body {
     max-width: 400px;
     text-align: center;
 }
+#usernameError,
+#passwordError {
+  opacity: 1;
+  transition: opacity 0.5s ease-in-out;
+  color: red;
+  font-size: 14px;
+}
+
+.show-error {
+  opacity: 1;
+}
 
 .heading {
     color: #004d40;

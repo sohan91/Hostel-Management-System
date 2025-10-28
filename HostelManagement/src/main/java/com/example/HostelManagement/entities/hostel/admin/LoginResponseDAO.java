@@ -1,4 +1,4 @@
-package com.example.HostelManagement.entities.admin;
+package com.example.HostelManagement.entities.hostel.admin;
 
 public class LoginResponseDAO {
     private boolean success;

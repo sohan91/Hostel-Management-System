@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.HostelManagement.dao.AdminDAO;
-import com.example.HostelManagement.entities.admin.Admin;
+import com.example.HostelManagement.entities.hostel.admin.Admin;
 
 @RestController
 @RequestMapping("/hostel/api")

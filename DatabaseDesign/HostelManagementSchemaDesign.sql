@@ -40,3 +40,19 @@ CREATE TABLE IF NOT EXISTS HostelManagement.Student (
     FOREIGN KEY (AdminId) REFERENCES Admin(admin_id) ON DELETE CASCADE,
     FOREIGN KEY (RoomNo) REFERENCES Rooms(RoomNo) ON DELETE CASCADE
 );
+CREATE TABLE IF NOT EXISTS HostelManagement.Payment (
+    PaymentId INT AUTO_INCREMENT PRIMARY KEY,
+    StudentId INT NOT NULL,
+    AdminId INT NOT NULL,
+    RoomNo INT NOT NULL,
+    SharingTypeId INT NOT NULL,
+    Amount DECIMAL(10,2) NOT NULL,
+    PaymentDate DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PaymentMode ENUM('Cash','Card','UPI','NetBanking') DEFAULT 'Cash',
+    PaymentStatus ENUM('Paid','Pending','Failed') DEFAULT 'Pending',
+    FOREIGN KEY (StudentId) REFERENCES HostelManagement.Student(StudentId) ON DELETE CASCADE,
+    FOREIGN KEY (AdminId) REFERENCES HostelManagement.Admin(admin_id) ON DELETE CASCADE,
+    FOREIGN KEY (RoomNo) REFERENCES HostelManagement.Rooms(RoomNo) ON DELETE CASCADE,
+    FOREIGN KEY (SharingTypeId) REFERENCES HostelManagement.SharingType(SharingTypeId) ON DELETE RESTRICT
+);
+
