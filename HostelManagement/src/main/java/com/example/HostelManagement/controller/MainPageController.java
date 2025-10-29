@@ -111,8 +111,13 @@ public class MainPageController {
             session.invalidate();
             System.out.println("User '" + username + "' logged out successfully");
         }
-        
-        // Directly redirect to login URL after logout
         return "redirect:/hostel/login";
+    }
+
+    @GetMapping("/admin-profile")
+    public String adminProfile()
+    {
+        System.out.println("In admnin profile");
+         return "forward:/AdminProfile/index.html";
     }
 }

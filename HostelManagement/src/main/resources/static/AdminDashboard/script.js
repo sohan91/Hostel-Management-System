@@ -51,3 +51,11 @@ document.addEventListener("DOMContentLoaded",function(){
       window.location.href = "/hostel/logout";   
    })
 });
+
+document.addEventListener("DOMContentLoaded",function(){
+  let logoutBtn = document.querySelector(".hover-reveal");
+   logoutBtn.addEventListener("click",function(e){
+    e.preventDefault();
+      window.location.href = "/hostel/admin-profile";   
+   })
+});

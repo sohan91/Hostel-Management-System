@@ -1,4 +1,4 @@
-package com.example.HostelManagement.controller;
+package com.example.HostelManagement.rest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
