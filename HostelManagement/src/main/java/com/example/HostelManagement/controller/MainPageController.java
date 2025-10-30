@@ -24,63 +24,75 @@ public class MainPageController {
         this.adminAuthRepo = adminAuthRepo;
     }
 
-    @GetMapping("/login")
-    public String login(HttpServletRequest request) {
-        HttpSession session = request.getSession(false);
+  @GetMapping("/login")
+public String login(HttpServletRequest request) {
+    HttpSession session = request.getSession(false);
+    
+    // If user has active session, redirect to dashboard
+    if (session != null && session.getAttribute("loggedInUser") != null) {
+        System.out.println("User already logged in, redirecting to dashboard");
         
-        // If user has active session, redirect to dashboard
-        if (session != null && session.getAttribute("loggedInUser") != null) {
-            System.out.println("User already logged in, redirecting to dashboard");
-            return "redirect:/hostel/dashboard";
+        // Check if this is causing redirect loop by checking referrer
+        String redirectUrl = (String) session.getAttribute("redirectAfterLogin");
+        if (redirectUrl != null) {
+            session.removeAttribute("redirectAfterLogin");
+            return "redirect:" + redirectUrl;
         }
+        return "redirect:/hostel/dashboard";
+    }
+    
+    System.out.println("Showing login page");
+    return "forward:/adminLoginPage/AdminLogin.html";
+}
+
+   @PostMapping("/login")
+public String showLogin(HttpServletRequest request,
+                    HttpServletResponse response,
+                    @RequestParam String username,
+                    @RequestParam String password) {
+    
+    HttpSession existingSession = request.getSession(false);
+    if (existingSession != null && existingSession.getAttribute("loggedInUser") != null) {
+        return "redirect:/hostel/dashboard";
+    }
+    
+    boolean isValidUser = adminAuthRepo.validateAdminCredentials(username, password);
+
+    if (isValidUser) {
+        HttpSession newSession = request.getSession();
+        newSession.setAttribute("loggedInUser", username);
+        newSession.setAttribute("email", username); // Add this line
+        newSession.setMaxInactiveInterval(30 * 60);
         
-        System.out.println("Showing login page");
+        String redirectUrl = (String) newSession.getAttribute("redirectAfterLogin");
+        if (redirectUrl != null) {
+            newSession.removeAttribute("redirectAfterLogin");
+            return "redirect:" + redirectUrl;
+        }
+        return "redirect:/hostel/dashboard";
+    } else {
+        request.setAttribute("error", "Invalid username/password");
         return "forward:/adminLoginPage/AdminLogin.html";
     }
+}
 
-    @PostMapping("/login")
-    public String showLogin(HttpServletRequest request,
-                        HttpServletResponse response,
-                        @RequestParam String username,
-                        @RequestParam String password) {
+  @GetMapping("/dashboard")
+public String loadAdminDashBoard(HttpServletRequest request) {
+    HttpSession session = request.getSession(false);
+    
+    // Check if user is NOT logged in
+    if (session == null || session.getAttribute("loggedInUser") == null) {
+        System.out.println("No active session, redirecting to login");
         
-        // Check existing session without creating new one
-        HttpSession existingSession = request.getSession(false);
-        if (existingSession != null && existingSession.getAttribute("loggedInUser") != null) {
-            return "redirect:/hostel/dashboard";
-        }
-        
-        boolean isValidUser = adminAuthRepo.validateAdminCredentials(username, password);
-
-        if (isValidUser) {
-            // Create new session for authenticated user
-            HttpSession newSession = request.getSession();
-            newSession.setAttribute("loggedInUser", username);
-            newSession.setMaxInactiveInterval(30 * 60); // 30 minutes
-            
-            String redirectUrl = (String) newSession.getAttribute("redirectAfterLogin");
-            if (redirectUrl != null) {
-                newSession.removeAttribute("redirectAfterLogin");
-                return "redirect:" + redirectUrl;
-            }
-            return "redirect:/hostel/dashboard";
-        } else {
-            request.setAttribute("error", "Invalid username/password");
-            return "forward:/adminLoginPage/AdminLogin.html";
-        }
+        // Create session for redirect tracking (only if session doesn't exist)
+        HttpSession newSession = request.getSession();
+        newSession.setAttribute("redirectAfterLogin", "/hostel/dashboard");
+        return "redirect:/hostel/login";
     }
-
-    @GetMapping("/dashboard")
-    public String loadAdminDashBoard(HttpServletRequest request) {
-        HttpSession session = request.getSession(false);
-        if (session == null || session.getAttribute("loggedInUser") == null) {
-            // Create session for redirect tracking
-            HttpSession newSession = request.getSession();
-            newSession.setAttribute("redirectAfterLogin", "/hostel/dashboard");
-            return "redirect:/hostel/login";
-        }
-        return "forward:/AdminDashboard/adminDashboard.html";
-    }
+    
+    System.out.println("Loading dashboard for user: " + session.getAttribute("loggedInUser"));
+    return "forward:/AdminDashboard/adminDashboard.html";
+}
 
     @GetMapping("/registration")
     public String registration(HttpServletRequest request) {
