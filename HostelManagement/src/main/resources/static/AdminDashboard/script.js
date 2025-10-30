@@ -1,53 +1,70 @@
-const sidebar = document.getElementById('sidebar');
+// === SIDEBAR TOGGLE ===
+document.addEventListener("DOMContentLoaded", () => {
+    const sidebar = document.querySelector(".sidebar");
+    const sidebarToggle = document.getElementById("sidebarToggle");
 
-document.getElementById('sidebarToggle').addEventListener('click', function() {
+    if (sidebar && sidebarToggle) {
+        let isSidebarHidden = localStorage.getItem("isSidebarHidden") === "true";
 
-    sidebar.classList.toggle('hidden');
-});
+        function toggleSidebar() {
+            isSidebarHidden = !isSidebarHidden;
+            localStorage.setItem("isSidebarHidden", isSidebarHidden);
+            applySidebarState();
+        }
 
-function toggleSection(sectionId) {
-    const section = document.getElementById(sectionId);
-    
-    const isExpanded = section.classList.contains('expanded');
-    
- 
-    section.classList.toggle('expanded');
-    
-    const header = section.querySelector('.room-section-header');
-    if (header) {
-        header.setAttribute('aria-expanded', !isExpanded);
-    }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    const floorContainers = document.querySelectorAll('.floor-rooms-container');
-
-    floorContainers.forEach(container => {
-        if (container.querySelector('.empty-floor-container')) return;
-
-        if (container.children.length === 0 || Array.from(container.children).every(child => !child.classList.contains('room-card'))) {
-            
-            const emptyMessage = document.createElement('div');
-            emptyMessage.className = 'empty-floor-container';
-            emptyMessage.innerHTML = `
-                <i class="fas fa-box-open"></i>
-                <p>No rooms found on this floor. Click 'Add Room' above to create one.</p>
-            `;
-            
-            container.appendChild(emptyMessage);
-            
-            const floorHeading = container.closest('.room-section-content').querySelector('.floor-heading');
-            if(floorHeading) {
-                floorHeading.style.display = 'none';
+        function applySidebarState() {
+            if (isSidebarHidden) {
+                sidebar.classList.add("hidden");
+                sidebarToggle.innerHTML = '<i class="fas fa-bars"></i>';
+                sidebarToggle.setAttribute("aria-label", "Expand sidebar");
+            } else {
+                sidebar.classList.remove("hidden");
+                sidebarToggle.innerHTML = '<i class="fas fa-times"></i>';
+                sidebarToggle.setAttribute("aria-label", "Collapse sidebar");
             }
         }
-    });
+
+        applySidebarState();
+        sidebarToggle.addEventListener("click", toggleSidebar);
+    } else {
+        console.error("Sidebar elements not found. Check your HTML structure.");
+    }
+    initializePage();
 });
 
-document.addEventListener("DOMContentLoaded",function(){
-  let logoutBtn = document.querySelector(".logout");
-   logoutBtn.addEventListener("click",function(e){
-    e.preventDefault();
-      window.location.href = "/hostel/logout";   
-   })
-});
+ 
+
+async function getAdminDetails() {
+    try {
+        const hostelNameElem = document.querySelector(".hostel-name");
+        const profileNameElem = document.querySelector(".profile-name");
+        if (hostelNameElem && profileNameElem) {
+            hostelNameElem.textContent = "Loading...";
+            profileNameElem.textContent = "Loading...";
+        }
+
+        const response = await fetch("http://localhost:8080/api/auth/admin-details", {
+            method: "GET",
+            credentials: "include"
+        });
+
+        if (!response.ok) {
+            if (response.status === 404) {
+                console.log("Admin not found in session, redirecting to login");
+                window.location.href = "/hostel/login";
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const admin = await response.json();
+        if (hostelNameElem) hostelNameElem.textContent = admin.hostelName || "Hostel Management";
+        if (profileNameElem) profileNameElem.textContent = admin.firstName || "Admin";
+    } catch (error) {
+        console.error("Failed to fetch admin details:", error);
+        const hostelNameElem = document.querySelector(".hostel-name");
+        const profileNameElem = document.querySelector(".profile-name");
+        if (hostelNameElem) hostelNameElem.textContent = "Hostel Management";
+        if (profileNameElem) profileNameElem.textContent = "Admin";
+    }
+}

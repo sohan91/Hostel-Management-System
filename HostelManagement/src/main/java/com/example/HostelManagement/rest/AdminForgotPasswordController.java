@@ -1,4 +1,4 @@
-package com.example.HostelManagement.controller;
+package com.example.HostelManagement.rest;
 
 import java.util.HashMap;
 import java.util.Map;

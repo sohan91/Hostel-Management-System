@@ -9,59 +9,49 @@
     <link rel="stylesheet" href="/AdminDashboard/style.css">
 </head>
 <body>
-
     <header class="navbar">
         <div class="navbar-left">
             <button class="sidebar-toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">
                 <i class="fas fa-bars"></i>
             </button>
             <div class="navbar-brand">
-                <span class="logo-icon">HM</span> HostelHub
+                <span class="hostel-name">Hostel Management</span>
             </div>
         </div>
-        
         <div class="navbar-right">
             <button class="nav-button add-type-btn">
                 <i class="fas fa-plus-circle"></i> <span>Add Sharing Type</span>
             </button>
-            
             <button class="nav-button" id="feedback">
                 <i class="fas fa-comment-dots"></i> <span>Feedback</span>
             </button>
-            
-            <div class="user-profile-info hover-reveal" role="button" aria-label="User Profile Menu">
-                <div class="profile-icon">
-                    <i class="fas fa-user-circle"></i>
-                </div>
-                <span class="profile-name">Hostel Manager</span>
+            <div class="user-profile-info hover-reveal" tabindex="0" aria-label="User Profile Menu">
+                <div class="profile-icon"><i class="fas fa-user-circle"></i></div>
+                <span class="profile-name">Admin</span>
             </div>
-            
             <button class="nav-button logout">
                 <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
             </button>
         </div>
     </header>
-
     <div class="main-wrapper">
-        <aside class="sidebar hidden" id="sidebar"> 
+        <aside class="sidebar" id="sidebar">
             <ul class="sidebar-menu">
-                <li class="sidebar-item active"> 
+                <li class="sidebar-item active" data-tooltip="Rooms">
                     <a href="#"><i class="fas fa-bed"></i> <span>Rooms</span></a>
                 </li>
-                <li class="sidebar-item">
+                <li class="sidebar-item" data-tooltip="Menus">
                     <a href="#"><i class="fas fa-utensils"></i> <span>Menus</span></a>
                 </li>
-                <li class="sidebar-item">
-                    <a href="#"><i class="fas fa-box"></i> <span>Complain Box</span></a>
+                <li class="sidebar-item" data-tooltip="Complain Box">
+                    <a href="#"><i class="fas fa-box"></i> <span>Complaint Box</span></a>
                 </li>
-                <li class="sidebar-item">
+                <li class="sidebar-item" data-tooltip="Payment">
                     <a href="#"><i class="fas fa-credit-card"></i> <span>Payment</span></a>
                 </li>
             </ul>
         </aside>
-
         <main class="content">
-            
             <div class="fixed-content-top" id="fixedContentTop">
                 <div class="content-header">
                     <h1 class="big-centered-title">Rooms</h1>
@@ -71,11 +61,9 @@
                     <input type="text" id="roomSearch" placeholder="Search by Room Number (e.g., 101) or Floor..." aria-label="Room search">
                 </div>
             </div>
-            
-            <div class="room-management-container" id="roomManagementContainer">
-                
-                <section class="room-section" data-sharing-type="2-Sharing" id="section-2-sharing"> 
-                    <div class="room-section-header" role="button" aria-expanded="false" aria-controls="content-2-sharing" onclick="toggleSection('section-2-sharing')">
+            <!-- <div class="room-management-container" id="roomManagementContainer">
+                <section class="room-section expanded" data-sharing-type="2-Sharing" id="section-2-sharing">
+                    <div class="room-section-header" tabindex="0" role="button" aria-expanded="true" aria-controls="content-2-sharing">
                         <h2>2-Sharing</h2>
                         <div class="header-controls">
                             <button class="btn-primary add-room-btn">
@@ -88,7 +76,6 @@
                     <div class="room-section-content" id="content-2-sharing">
                         <h3 class="floor-heading">Floor 1</h3>
                         <div class="floor-rooms-container">
-                            
                             <div class="room-card available-room" data-room-id="101" data-floor="1">
                                 <div class="room-card-header">
                                     <div class="room-number-group">
@@ -112,7 +99,6 @@
                                     </div>
                                 </div>
                             </div>
-
                             <div class="room-card full-room" data-room-id="102" data-floor="1">
                                 <div class="room-card-header">
                                     <div class="room-number-group">
@@ -136,13 +122,11 @@
                                     </div>
                                 </div>
                             </div>
-
-                        </div> 
+                        </div>
                     </div>
                 </section>
-                
-                <section class="room-section" data-sharing-type="3-Sharing" id="section-3-sharing"> 
-                    <div class="room-section-header" role="button" aria-expanded="false" aria-controls="content-3-sharing" onclick="toggleSection('section-3-sharing')">
+                <section class="room-section expanded" data-sharing-type="3-Sharing" id="section-3-sharing">
+                    <div class="room-section-header" tabindex="0" role="button" aria-expanded="true" aria-controls="content-3-sharing">
                         <h2>3-Sharing</h2>
                         <div class="header-controls">
                             <button class="btn-primary add-room-btn">
@@ -155,7 +139,6 @@
                     <div class="room-section-content" id="content-3-sharing">
                         <h3 class="floor-heading">Floor 2</h3>
                         <div class="floor-rooms-container">
-                            
                             <div class="room-card available-room fully-available" data-room-id="201" data-floor="2">
                                 <div class="room-card-header">
                                     <div class="room-number-group">
@@ -179,7 +162,6 @@
                                     </div>
                                 </div>
                             </div>
-                            
                             <div class="room-card full-room" data-room-id="202" data-floor="2">
                                 <div class="room-card-header">
                                     <div class="room-number-group">
@@ -203,13 +185,11 @@
                                     </div>
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 </section>
-                
-                <section class="room-section" data-sharing-type="4-Sharing" id="section-4-sharing"> 
-                    <div class="room-section-header" role="button" aria-expanded="false" aria-controls="content-4-sharing" onclick="toggleSection('section-4-sharing')">
+                <section class="room-section" data-sharing-type="4-Sharing" id="section-4-sharing">
+                    <div class="room-section-header" tabindex="0" role="button" aria-expanded="false" aria-controls="content-4-sharing">
                         <h2>4-Sharing</h2>
                         <div class="header-controls">
                             <button class="btn-primary add-room-btn">
@@ -229,13 +209,13 @@
                         </div>
                     </div>
                 </section>
-
-            </div>
-
+            </div> -->
+             <div class="empty-container">
+            <span>click on add sharing type to use start the applicatin</span>
+        </div>
         </main>
-
+       
     </div>
-    
     <script src="/AdminDashboard/script.js"></script>
 </body>
 </html>

@@ -2,6 +2,8 @@ package com.example.HostelManagement.entities.hostel.admin;
 
 import java.time.LocalDateTime;
 
+import org.aspectj.weaver.bcel.asm.AsmDetector;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -61,8 +63,9 @@ public class Admin {
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    public Admin() {}
+    public Admin(){
 
+    }
     public Admin(String firstName, String lastName, String email, String phoneNumber, String password, String hostelName, String hostelAddress) {
         this.firstName = firstName;
         this.lastName = lastName;
@@ -72,10 +75,21 @@ public class Admin {
         this.hostelName = hostelName;
         this.hostelAddress = hostelAddress;
     }
-
+ 
+    public Admin(Integer adminId,String firstName, String lastName, String email, String phoneNumber, String hostelName, String hostelAddress,LocalDateTime localDate) {
+        this.adminId = adminId;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+        this.hostelName = hostelName;
+        this.hostelAddress = hostelAddress;
+        this.createdAt = localDate;
+    }
+ 
     public Integer getAdminId()
      {
-         return adminId; 
+         return this.adminId; 
         }
     public void setAdminId(Integer adminId) {
          this.adminId = adminId; 
@@ -129,4 +143,5 @@ public class Admin {
     public void setCreatedAt(LocalDateTime createdAt) { 
         this.createdAt = createdAt; 
     }
+   
 }

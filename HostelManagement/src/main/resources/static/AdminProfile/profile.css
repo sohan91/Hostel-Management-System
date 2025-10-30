@@ -1,0 +1,153 @@
+
+:root {
+    --primary-blue: #0a66c2;
+    --primary-dark-blue: #07478d;
+    --secondary-gray: #f0f2f5;
+    --text-dark: #333;
+    --text-light-gray: #666;
+    --border-light: #e0e0e0;
+    --card-bg: #ffffff;
+    --success-green: #28a745;
+    --danger-red: #dc3545;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body::-webkit-scrollbar {
+    display: none;
+}
+
+body {
+    -ms-overflow-style: none;  
+
+    scroll-behavior: unset;    
+    font-family: "Poppins", sans-serif;
+    background-color: var(--secondary-gray);
+    color: var(--text-dark);
+     height: 70%;
+    display: flex;
+    justify-content: center;
+    padding: 40px 20px;
+}
+
+.profile-page-wrapper {
+    width: 100%;
+    max-width: 700px; 
+}
+
+.profile-card {
+    background-color: var(--card-bg);
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.profile-header-area {
+    background-color: var(--primary-dark-blue);
+    color: white;
+    padding: 25px;
+    text-align: center;
+}
+
+.profile-icon-large {
+    font-size: 2.2rem;
+    margin-bottom: 8px;
+}
+
+.admin-name-display {
+    font-size: 1.6rem;
+    font-weight: 600;
+}
+
+.hostel-name-display {
+    font-size: 0.95rem;
+    opacity: 0.9;
+}
+
+/* --- Details Grid --- */
+.profile-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px 30px;
+    padding: 25px;
+}
+
+.detail-group {
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.detail-group.wide {
+    grid-column: 1 / -1;
+}
+
+.detail-group label {
+    font-size: 0.8rem;
+    color: var(--text-light-gray);
+    font-weight: 500;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.detail-group p {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+/* --- Action Buttons (New button created) --- */
+.action-group {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    grid-column: 1 / -1;
+    border: none;
+    padding-top: 15px;
+}
+
+.profile-btn {
+    padding: 8px 15px;
+    border-radius: 5px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s;
+    border: none;
+    cursor: pointer;
+    color: white;
+}
+
+.profile-btn i {
+    margin-right: 6px;
+}
+
+.edit-profile-btn {
+    background-color: var(--primary-blue);
+}
+
+.edit-profile-btn:hover {
+    background-color: var(--primary-dark-blue);
+}
+
+.go-to-dashboard-btn {
+    background-color: var(--success-green);
+}
+
+.go-to-dashboard-btn:hover {
+    background-color: #1e7e34;
+}
+
+@media (max-width: 550px) {
+    .profile-details-grid {
+        grid-template-columns: 1fr;
+        padding: 20px;
+    }
+    .action-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

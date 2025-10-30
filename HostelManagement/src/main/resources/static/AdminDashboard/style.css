@@ -6,14 +6,14 @@
   --text-light-gray: #666;
   --border-light: #e0e0e0;
   --sidebar-bg: #283046;
-  --sidebar-active-item: #3e336e;
+  --sidebar-active-item: #154070;
   --card-bg: #ffffff;
   --success-green: #28a745;
   --danger-red: #dc3545;
   --warning-orange: #ff9800;
   --header-height: 60px;
   --content-header-fixed-height: 125px;
-  --sidebar-width: 220px;
+  --sidebar-width: 180px;
   --content-padding-h: 25px;
   --content-padding-t: 25px;
   --scrollbar-width: 15px;
@@ -49,8 +49,8 @@ button {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: var(--primary-blue);
-  padding: 10px 25px;
+  background-color: rgb(11, 22, 39);
+  padding: 5px 20px;
   color: white;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   position: fixed;
@@ -64,22 +64,28 @@ button {
 .navbar-left {
   display: flex;
   align-items: center;
+  margin-left: -15px;
 }
 .sidebar-toggle-btn {
   background: transparent;
   color: white;
   font-size: 1.5rem;
   margin-right: 15px;
-  padding: 5px 10px;
+  padding: 5px 15px;
   border-radius: 4px;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s ease-in-out, transform 0.3s ease;
   display: block;
 }
+.sidebar-toggle-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1); 
+}
+
 .navbar-brand {
   font-size: 1.5rem;
   font-weight: 600;
   display: flex;
   align-items: center;
+  margin-left: -10px;
 }
 .navbar-brand .logo-icon {
   background-color: white;
@@ -105,6 +111,10 @@ button {
   display: flex;
   align-items: center;
   white-space: nowrap;
+  transition: background-color 0.2s; /* Added transition */
+}
+.add-type-btn:hover {
+    background-color: rgb(48, 144, 140); /* Slightly darker on hover */
 }
 .add-type-btn i {
   margin-right: 5px;
@@ -118,13 +128,26 @@ button {
   display: flex;
   align-items: center;
   white-space: nowrap;
+  transition: background-color 0.2s; /* Added transition */
 }
 .nav-button.logout {
   background-color: var(--danger-red);
 }
-.nav-button.add-type-btn
-{
-  background-color: rgb(9, 20, 26);
+.nav-button.logout:hover {
+    background-color: #c82333; /* Darker red on hover */
+}
+.nav-button.add-type-btn {
+  background-color: rgb(181, 78, 13);
+}
+.add-type-btn:hover{
+  background-color: rgb(128, 56, 5);
+  box-shadow: 3px 3px 3px rgb(26, 26, 26);
+}
+#feedback {
+  background-color: var(--sidebar-active-item);
+}
+#feedback:hover {
+    background-color: #0b2f56; /* Darker color on hover */
 }
 .user-profile-info {
   display: flex;
@@ -133,14 +156,10 @@ button {
   padding: 5px 10px;
   border-radius: 20px;
   background-color: rgb(59, 58, 64);
-  color: rgb(21, 18, 18);
+  color: rgb(248, 240, 240);
 }
-.fas.fas.fa-comment-dots{
-    padding-right: 5px;
-}
-#feedback
-{
-    background-color: #3e336e;
+.fas.fas.fa-comment-dots {
+  padding-right: 5px;
 }
 .profile-icon {
   background-color: rgb(63, 64, 63);
@@ -166,7 +185,7 @@ button {
 
 .sidebar {
   width: var(--sidebar-width);
-  background-color: var(--sidebar-bg);
+  background-color: rgb(16, 44, 72);
   color: #dcdcdc;
   padding: 15px 0;
   flex-shrink: 0;
@@ -176,7 +195,8 @@ button {
   left: 0;
   height: calc(100vh - var(--header-height));
   overflow-y: auto;
-  transition: transform 0.3s ease, width 0.3s ease;
+  /* Kept existing transform/width transition and added opacity */
+  transition: transform 0.3s ease, width 0.3s ease, opacity 0.3s ease;
   transform: translateX(0);
   z-index: 990;
 }
@@ -185,6 +205,7 @@ button {
   width: 0;
   padding: 0;
   transform: translateX(-100%);
+  opacity: 0; /* Added opacity to ensure a smoother vanish */
 }
 
 .sidebar-item > a {
@@ -194,19 +215,23 @@ button {
   color: #dcdcdc;
   font-weight: 500;
   white-space: nowrap;
+  transition: color 0.2s; /* Added transition for link color */
 }
 
+/* MODIFIED: Uses the updated variable --sidebar-active-item which is no longer purple */
 .sidebar-item.active > a {
   background-color: var(--sidebar-active-item);
   color: white;
 }
-.sidebar-item:hover
-{
+/* MODIFIED: Added transition to the hover state */
+.sidebar-item:hover {
   background-color: #121415;
   height: 50px;
-   width: var(--sidebar-width);
-   border-radius: 3px;
+  width: var(--sidebar-width);
+  border-radius: 3px;
+  transition: background-color 0.2s, height 0.2s;
 }
+
 .content {
   flex-grow: 1;
   padding: 0 var(--content-padding-h);
@@ -243,10 +268,11 @@ button {
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   margin-bottom: 30px;
+  transition: box-shadow 0.3s; 
 }
 
 .room-section:first-of-type {
-  /* Corrects the large initial gap between search bar and first room section */
+ 
   margin-top: 0;
 }
 
@@ -254,7 +280,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  height: 50px;
+  height: 35px;
   padding-bottom: 5px;
   margin-bottom: 5px;
   border-bottom: 2px solid var(--border-light);
@@ -262,7 +288,7 @@ button {
 .big-centered-title {
   font-size: 1.5rem;
   font-weight: 600;
-  color: var(--primary-dark-blue);
+  color: rgb(7, 7, 18);
   text-transform: none;
   letter-spacing: 0;
   margin-right: 20px;
@@ -274,17 +300,26 @@ button {
   border: 1px solid var(--border-light);
   border-radius: 8px;
   padding: 10px 15px;
+  padding-left: 10px;
   background-color: white;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+.search-container:focus-within {
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(10, 102, 194, 0.2); 
 }
 .search-container i {
   color: var(--text-light-gray);
   margin-right: 10px;
+  margin-left: 10px;
+  font-size: 20px;
 }
 .search-container input {
   flex-grow: 1;
   border: none;
-  padding: 5px 0;
+  padding: 5px 0px;
+  
   font-size: 1rem;
   outline: none;
 }
@@ -296,8 +331,12 @@ button {
   padding: 18px var(--content-padding-h);
   z-index: 10;
   border-bottom: 1px solid var(--border-light);
-  background-color: rgb(61, 41, 107);
+  background-color: rgb(20, 10, 43);
   cursor: pointer;
+  transition: background-color 0.2s; /* Added transition */
+}
+.room-section-header:hover {
+    background-color: rgb(25, 12, 53); /* Slightly darker on hover */
 }
 .room-section-header h2 {
   font-size: 1.3rem;
@@ -318,16 +357,21 @@ button {
   font-size: 0.95rem;
   display: flex;
   align-items: center;
+  transition: background-color 0.2s; /* Added transition */
+}
+.add-room-btn:hover {
+    background-color: #1e7e34; /* Darker green on hover */
 }
 .add-room-btn i {
   margin-right: 5px;
 }
-.toggle-icon.up
-{
-   color: white;
+.toggle-icon.up {
+  color: white;
+  transition: transform 0.3s ease; /* Added transition */
 }
-.toggle-icon.down{
-color: #f8f4f4;
+.toggle-icon.down {
+  color: #f8f4f4;
+  transition: transform 0.3s ease; /* Added transition */
 }
 .toggle-icon.down {
   display: none;
@@ -365,20 +409,23 @@ color: #f8f4f4;
   gap: 25px;
   padding: 25px;
 }
-.book-now-btn
-{  background-color: #101b27;
+.book-now-btn {
+  background-color: #101b27;
   color: white;
+  transition: background-color 0.2s; /* Added transition */
 }
 
-.book-now-btn:hover{
+.book-now-btn:hover {
   background-color: #154070;
-  
 }
-.details-btn
-{
-   background-color: #60cc9f;
-   width: 100px;
-   border-radius: 5px;
+.details-btn {
+  background-color: #60cc9f;
+  width: 100px;
+  border-radius: 5px;
+  transition: background-color 0.2s; /* Added transition */
+}
+.details-btn:hover {
+    background-color: #4db383; /* Darker on hover */
 }
 .room-card {
   background-color: var(--card-bg);
@@ -388,6 +435,11 @@ color: #f8f4f4;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  transition: transform 0.2s, box-shadow 0.2s; /* Added transition for hover effect */
+}
+.room-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .room-card-header {
@@ -481,44 +533,51 @@ color: #f8f4f4;
 }
 
 .user-profile-info {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    padding: 5px 10px;
-    border-radius: 50px;
-    transition: background-color 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 50px;
+  transition: background-color 0.2s ease-in-out;
 }
 
 .user-profile-info:hover {
-    background-color: #f0f0f0;
+  background-color: rgba(255, 255, 255, 0.1); /* Changed hover color for navbar */
 }
 
 .user-profile-info .profile-icon {
-    font-size: 24px;
-    color: var(--primary-blue, #007bff);
-    width: auto;
-    height: auto;
-    margin-right: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  font-size: 24px;
+  color: var(--primary-blue, #007bff);
+  width: auto;
+  height: auto;
+  margin-right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .user-profile-info .profile-name {
-    max-width: 0;
-    opacity: 0;
-    overflow: hidden;
-    white-space: nowrap;
-    transition: max-width 0.3s ease-in-out, opacity 0.3s ease-in-out, margin-left 0.3s ease-in-out;
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: max-width 0.3s ease-in-out, opacity 0.3s ease-in-out, margin-left 0.3s ease-in-out;
 }
 
 .user-profile-info.hover-reveal:hover .profile-name {
-    max-width: 200px;
-    opacity: 1;
-    margin-left: 10px;
+  max-width: 200px;
+  opacity: 1;
+  margin-left: 10px;
 }
 
-
+.empty-container {
+  text-align: center;
+  align-items: center;
+  /* display: flex;
+  flex-wrap: wrap; */
+  margin-top: 150px;
+  color: grey;
+}
 @media (max-width: 992px) {
   .sidebar {
     position: fixed;
@@ -539,6 +598,17 @@ color: #f8f4f4;
   .fixed-content-top {
     width: 100%;
     margin-right: 0;
+  }
+  .sidebar {
+    width: 250px;
+
+    transition: width 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+    overflow: hidden;
+  }
+
+  .sidebar.hidden {
+    width: 0;
+    opacity: 0;
   }
   .fixed-content-top .content-header,
   .fixed-content-top .search-container {
