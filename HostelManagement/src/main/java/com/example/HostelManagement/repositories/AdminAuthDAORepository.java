@@ -34,7 +34,6 @@ public class AdminAuthDAORepository implements AdminAuthDAO {
     @Override
     public boolean validateAdminCredentials(String email, String password) {
         Admin admin = findByAdminEmail(email);
-        // ✅ CORRECT - Use getPassword() which matches your entity field
         return admin != null && admin.getPassword().equals(password);
     }
 }

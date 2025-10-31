@@ -8,14 +8,16 @@
 </head>
 <body>
 <div class="login-container">
-  <div id="messageArea"></div>
+  <!-- Make sure this message area exists and is visible -->
+  <div id="messageArea" style="display: none; padding: 12px; margin-bottom: 15px; border-radius: 4px; text-align: center; font-weight: bold;"></div>
+  
   <h1 class="heading">Hostel Management System</h1>
 
   <form class="login-form" id="loginForm" novalidate>
     <div class="input-group">
-      <label for="username">Username</label>
-      <input type="text" id="username" name="username" placeholder="Enter your username" required>
-      <div class="error-message" id="usernameError"></div>
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" placeholder="Enter your email" required>
+      <div class="error-message" id="emailError" style="color: red; font-size: 12px; min-height: 18px;"></div>
     </div>
 
     <div class="input-group">
@@ -27,32 +29,25 @@
           <input type="checkbox" id="showPassword">
         </label>
       </div>
-      <div class="error-message" id="passwordError"></div>
+      <div class="error-message" id="passwordError" style="color: red; font-size: 12px; min-height: 18px;"></div>
     </div>
 
     <div class="button-group">
       <button type="submit" class="btn btn-primary" id="loginBtn">Login</button>
-      <button type="button" class="btn btn-secondary">Hostler Login</button>
-      <button type="button" class="btn btn-secondary">Admin Login</button>
+      <button type="button" class="btn btn-secondary" id="hostlerLoginBtn">Hostler Login</button>
+      <button type="button" class="btn btn-secondary" id="adminLoginBtn">Admin Login</button>
     </div>
 
     <div class="links">
-      <a href="#" class="link-item" id="createRegister">Create Register</a>
+      <a href="/hostel/registration" class="link-item" id="createRegister">Create New Account</a>
       <span class="link-separator">|</span>
-<a href="password-reset" class="link-item" id="forgotPassword">Forgot Password?</a>
+      <a href="/hostel/password-reset" class="link-item" id="forgotPassword">Forgot Password?</a>
     </div>
   </form>
 </div>
 
-<script src="/adminLoginPage/script.js"></script>
-
-<script>
-  const showPasswordCheckbox = document.getElementById("showPassword");
-  const passwordField = document.getElementById("password");
-
-  showPasswordCheckbox.addEventListener("change", () => {
-    passwordField.type = showPasswordCheckbox.checked ? "text" : "password";
-  });
+<script src="/adminLoginPage/script.js">
+// The JavaScript code above goes here
 </script>
 </body>
 </html>

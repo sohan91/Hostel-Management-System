@@ -1,13 +1,10 @@
 package com.example.HostelManagement.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-
-import com.example.HostelManagement.repositories.AdminAuthDAORepository;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,119 +14,200 @@ import jakarta.servlet.http.HttpSession;
 @RequestMapping("/hostel")
 public class MainPageController {
 
-    private final AdminAuthDAORepository adminAuthRepo;
-
-    @Autowired
-    public MainPageController(AdminAuthDAORepository adminAuthRepo) {
-        this.adminAuthRepo = adminAuthRepo;
-    }
-
-  @GetMapping("/login")
-public String login(HttpServletRequest request) {
-    HttpSession session = request.getSession(false);
-    
-    // If user has active session, redirect to dashboard
-    if (session != null && session.getAttribute("loggedInUser") != null) {
-        System.out.println("User already logged in, redirecting to dashboard");
+    @GetMapping("/login")
+    public String loginPage(HttpServletRequest request, HttpServletResponse response) {
+        System.out.println("=== LOGIN PAGE CONTROLLER ===");
+        setNoCacheHeaders(response);
         
-        // Check if this is causing redirect loop by checking referrer
-        String redirectUrl = (String) session.getAttribute("redirectAfterLogin");
-        if (redirectUrl != null) {
-            session.removeAttribute("redirectAfterLogin");
-            return "redirect:" + redirectUrl;
+        // If user is already authenticated, redirect to dashboard
+        if (isAuthenticated()) {
+            System.out.println("User already authenticated, redirecting to dashboard");
+            return "redirect:/hostel/dashboard";
         }
-        return "redirect:/hostel/dashboard";
-    }
-    
-    System.out.println("Showing login page");
-    return "forward:/adminLoginPage/AdminLogin.html";
-}
-
-   @PostMapping("/login")
-public String showLogin(HttpServletRequest request,
-                    HttpServletResponse response,
-                    @RequestParam String username,
-                    @RequestParam String password) {
-    
-    HttpSession existingSession = request.getSession(false);
-    if (existingSession != null && existingSession.getAttribute("loggedInUser") != null) {
-        return "redirect:/hostel/dashboard";
-    }
-    
-    boolean isValidUser = adminAuthRepo.validateAdminCredentials(username, password);
-
-    if (isValidUser) {
-        HttpSession newSession = request.getSession();
-        newSession.setAttribute("loggedInUser", username);
-        newSession.setAttribute("email", username); // Add this line
-        newSession.setMaxInactiveInterval(30 * 60);
         
-        String redirectUrl = (String) newSession.getAttribute("redirectAfterLogin");
-        if (redirectUrl != null) {
-            newSession.removeAttribute("redirectAfterLogin");
-            return "redirect:" + redirectUrl;
-        }
-        return "redirect:/hostel/dashboard";
-    } else {
-        request.setAttribute("error", "Invalid username/password");
+        System.out.println("User not authenticated, serving login page");
         return "forward:/adminLoginPage/AdminLogin.html";
     }
-}
 
-  @GetMapping("/dashboard")
-public String loadAdminDashBoard(HttpServletRequest request) {
-    HttpSession session = request.getSession(false);
-    
-    // Check if user is NOT logged in
-    if (session == null || session.getAttribute("loggedInUser") == null) {
-        System.out.println("No active session, redirecting to login");
+    @GetMapping("/dashboard")
+    public String dashboardPage(HttpServletRequest request, HttpServletResponse response) {
+        System.out.println("=== DASHBOARD PAGE CONTROLLER ===");
+        setNoCacheHeaders(response);
         
-        // Create session for redirect tracking (only if session doesn't exist)
-        HttpSession newSession = request.getSession();
-        newSession.setAttribute("redirectAfterLogin", "/hostel/dashboard");
-        return "redirect:/hostel/login";
+        // Check if user is authenticated
+        if (isAuthenticated()) {
+            System.out.println("User authenticated, serving dashboard");
+            
+            // Create or update session for dashboard
+            HttpSession session = request.getSession();
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getPrincipal() instanceof String) {
+                String email = (String) auth.getPrincipal();
+                session.setAttribute("authenticated", true);
+                session.setAttribute("email", email);
+                session.setAttribute("lastAccess", System.currentTimeMillis());
+                System.out.println("Dashboard session created/updated for: " + email);
+            }
+            
+            return "forward:/AdminDashboard/adminDashboard.html";
+        } else {
+            System.out.println("User not authenticated, redirecting to login");
+            return "redirect:/hostel/login";
+        }
     }
-    
-    System.out.println("Loading dashboard for user: " + session.getAttribute("loggedInUser"));
-    return "forward:/AdminDashboard/adminDashboard.html";
-}
 
     @GetMapping("/registration")
-    public String registration(HttpServletRequest request) {
-        String header = request.getHeader("Referer");
-        if(header != null && header.contains("/hostel/login")){
-            return "forward:/AdminRegistration/registration.html";
+    public String registrationPage(HttpServletRequest request, HttpServletResponse response) {
+        System.out.println("=== REGISTRATION PAGE CONTROLLER ===");
+        setNoCacheHeaders(response);
+        
+        // If user is authenticated, redirect to dashboard
+        if (isAuthenticated()) {
+            System.out.println("Authenticated user trying to access registration, redirecting to dashboard");
+            return "redirect:/hostel/dashboard";
         }
-        return "redirect:/hostel/login"; 
+        
+        // Check if request came from login page (referrer validation)
+        String referer = request.getHeader("Referer");
+        System.out.println("Registration page referer: " + referer);
+        
+        if (referer != null && referer.contains("/hostel/login")) {
+            System.out.println("Valid referral from login page, serving registration");
+            return "forward:/AdminRegistration/registration.html";
+        } else {
+            System.out.println("Invalid referral or direct access to registration, redirecting to login");
+            return "redirect:/hostel/login";
+        }
     }
 
     @GetMapping("/password-reset")
-    public String showForgotPasswordPage(HttpServletRequest request) {
+    public String passwordResetPage(HttpServletRequest request, HttpServletResponse response) {
+        System.out.println("=== PASSWORD RESET PAGE CONTROLLER ===");
+        setNoCacheHeaders(response);
+        
+        // If user is authenticated, redirect to dashboard
+        if (isAuthenticated()) {
+            System.out.println("Authenticated user trying to access password reset, redirecting to dashboard");
+            return "redirect:/hostel/dashboard";
+        }
+        
+        // Check if request came from login page (referrer validation)
         String referer = request.getHeader("Referer");
+        System.out.println("Password reset page referer: " + referer);
         
         if (referer != null && referer.contains("/hostel/login")) {
+            System.out.println("Valid referral from login page, serving password reset");
             return "forward:/AdminPasswordReset/forgotPassword.html";
+        } else {
+            System.out.println("Invalid referral or direct access to password reset, redirecting to login");
+            return "redirect:/hostel/login";
         }
-        return "redirect:/hostel/login";
-    }
-
-    // Logout endpoint - redirects to /hostel/login
-    @GetMapping("/logout")
-    public String logout(HttpServletRequest request) {
-        HttpSession session = request.getSession(false);
-        
-        if (session != null) {
-            String username = (String) session.getAttribute("loggedInUser");
-            session.invalidate();
-            System.out.println("User '" + username + "' logged out successfully");
-        }
-        return "redirect:/hostel/login";
     }
 
     @GetMapping("/admin-profile")
-    public String adminProfile()
-    {
-        System.out.println("In admnin profile");
-         return "forward:/AdminProfile/index.html";
+    public String adminProfilePage(HttpServletRequest request, HttpServletResponse response) {
+        System.out.println("=== ADMIN PROFILE PAGE CONTROLLER ===");
+        setNoCacheHeaders(response);
+        
+        // Check if user is authenticated
+        if (isAuthenticated()) {
+            System.out.println("User authenticated, serving admin profile");
+            return "forward:/AdminProfile/index.html";
+        } else {
+            System.out.println("User not authenticated, redirecting to login");
+            return "redirect:/hostel/login";
+        }
+    }
+
+    // Session-based logout endpoint
+    @GetMapping("/logout-session")
+    public String logoutSession(HttpServletRequest request, HttpServletResponse response) {
+        System.out.println("=== SESSION LOGOUT ===");
+        
+        // Invalidate session
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            System.out.println("Invalidating session: " + session.getId());
+            session.invalidate();
+        }
+        
+        // Clear security context
+        SecurityContextHolder.clearContext();
+        
+        System.out.println("Session logout completed");
+        return "redirect:/hostel/login";
+    }
+
+    @RequestMapping("/")
+    public String rootRedirect(HttpServletRequest request, HttpServletResponse response) {
+        System.out.println("=== ROOT REDIRECT ===");
+        setNoCacheHeaders(response);
+        
+        // Redirect to dashboard if authenticated, otherwise to login
+        if (isAuthenticated()) {
+            return "redirect:/hostel/dashboard";
+        } else {
+            return "redirect:/hostel/login";
+        }
+    }
+
+    @GetMapping("/health")
+    public String healthCheck() {
+        System.out.println("=== HEALTH CHECK ===");
+        return "PageController is working";
+    }
+
+    // Check session status - for debugging
+    @GetMapping("/session-status")
+    public String sessionStatus(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        StringBuilder status = new StringBuilder();
+        status.append("=== SESSION STATUS ===\n");
+        
+        if (session != null) {
+            status.append("Session ID: ").append(session.getId()).append("\n");
+            status.append("Authenticated: ").append(session.getAttribute("authenticated")).append("\n");
+            status.append("Email: ").append(session.getAttribute("email")).append("\n");
+            status.append("Last Access: ").append(session.getAttribute("lastAccess")).append("\n");
+        } else {
+            status.append("No active session\n");
+        }
+        
+        status.append("Security Context Auth: ").append(isAuthenticated()).append("\n");
+        
+        // Check authentication details
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null) {
+            status.append("Auth Name: ").append(auth.getName()).append("\n");
+            status.append("Auth Principal: ").append(auth.getPrincipal()).append("\n");
+            status.append("Auth Details: ").append(auth.getDetails()).append("\n");
+        }
+        
+        return status.toString();
+    }
+
+    // Quick session check endpoint
+    @GetMapping("/check-auth")
+    public String checkAuth() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (isAuthenticated()) {
+            return "Authenticated as: " + auth.getPrincipal();
+        } else {
+            return "Not authenticated";
+        }
+    }
+
+    private boolean isAuthenticated() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && 
+               auth.isAuthenticated() && 
+               !"anonymousUser".equals(auth.getPrincipal()) &&
+               auth.getPrincipal() instanceof String;
+    }
+
+    private void setNoCacheHeaders(HttpServletResponse response) {
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        response.setHeader("Pragma", "no-cache");
+        response.setDateHeader("Expires", 0);
     }
 }

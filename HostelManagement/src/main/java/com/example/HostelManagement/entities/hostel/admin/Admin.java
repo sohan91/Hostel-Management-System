@@ -2,8 +2,6 @@ package com.example.HostelManagement.entities.hostel.admin;
 
 import java.time.LocalDateTime;
 
-import org.aspectj.weaver.bcel.asm.AsmDetector;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

@@ -40,7 +40,7 @@ public class MailController {
         if (valid) {
             return ResponseEntity.ok("OTP verified");
         } else {
-            return ResponseEntity.badRequest().body("Invalid or expired OTP");
+    return ResponseEntity.badRequest().body("Invalid or expired OTP");
         }
     }
 }
