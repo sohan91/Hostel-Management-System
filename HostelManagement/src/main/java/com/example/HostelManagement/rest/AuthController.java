@@ -162,50 +162,50 @@ public class AuthController {
     }
 
     // SESSION CHECK (verify JWT token is valid)
-    @GetMapping("/check-session")
-    public ResponseEntity<?> checkSession() {
-        System.out.println("=== CHECK SESSION API CALLED ===");
+    // @GetMapping("/check-session")
+    // public ResponseEntity<?> checkSession() {
+    //     System.out.println("=== CHECK SESSION API CALLED ===");
         
-        // Get authentication from SecurityContext
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = getEmailFromSecurityContext(auth);
-        System.out.println("Session check - email from SecurityContext: " + email);
+    //     // Get authentication from SecurityContext
+    //     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    //     String email = getEmailFromSecurityContext(auth);
+    //     System.out.println("Session check - email from SecurityContext: " + email);
         
-        Map<String, Object> sessionInfo = new HashMap<>();
+    //     Map<String, Object> sessionInfo = new HashMap<>();
         
-        if (email != null) {
-            try {
-                // Verify admin still exists in database
-                Admin admin = authService.getAdminByEmail(email);
-                if (admin != null) {
-                    sessionInfo.put("authenticated", true);
-                    sessionInfo.put("email", email);
-                    sessionInfo.put("role", "admin");
-                    sessionInfo.put("message", "Valid JWT session");
-                    sessionInfo.put("admin", Map.of(
-                        "firstName", admin.getFirstName(),
-                        "lastName", admin.getLastName(),
-                        "hostelName", admin.getHostelName()
-                    ));
-                    System.out.println("Valid session for: " + email);
-                } else {
-                    sessionInfo.put("authenticated", false);
-                    sessionInfo.put("message", "Admin account not found");
-                    System.out.println("Admin account not found for: " + email);
-                }
-            } catch (Exception e) {
-                sessionInfo.put("authenticated", false);
-                sessionInfo.put("message", "Error checking session");
-                System.out.println("Error checking session: " + e.getMessage());
-            }
-        } else {
-            sessionInfo.put("authenticated", false);
-            sessionInfo.put("message", "No valid JWT session");
-            System.out.println("No valid JWT session found");
-        }
+    //     if (email != null) {
+    //         try {
+    //             // Verify admin still exists in database
+    //             Admin admin = authService.getAdminByEmail(email);
+    //             if (admin != null) {
+    //                 sessionInfo.put("authenticated", true);
+    //                 sessionInfo.put("email", email);
+    //                 sessionInfo.put("role", "admin");
+    //                 sessionInfo.put("message", "Valid JWT session");
+    //                 sessionInfo.put("admin", Map.of(
+    //                     "firstName", admin.getFirstName(),
+    //                     "lastName", admin.getLastName(),
+    //                     "hostelName", admin.getHostelName()
+    //                 ));
+    //                 System.out.println("Valid session for: " + email);
+    //             } else {
+    //                 sessionInfo.put("authenticated", false);
+    //                 sessionInfo.put("message", "Admin account not found");
+    //                 System.out.println("Admin account not found for: " + email);
+    //             }
+    //         } catch (Exception e) {
+    //             sessionInfo.put("authenticated", false);
+    //             sessionInfo.put("message", "Error checking session");
+    //             System.out.println("Error checking session: " + e.getMessage());
+    //         }
+    //     } else {
+    //         sessionInfo.put("authenticated", false);
+    //         sessionInfo.put("message", "No valid JWT session");
+    //         System.out.println("No valid JWT session found");
+    //     }
         
-        return ResponseEntity.ok(sessionInfo);
-    }
+    //     return ResponseEntity.ok(sessionInfo);
+    // }
 
     // ADMIN PROFILE DETAILS
     @GetMapping("/admin-profile-details")

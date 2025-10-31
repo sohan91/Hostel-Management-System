@@ -3,7 +3,6 @@ package com.example.HostelManagement.config;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -22,7 +21,6 @@ public class JwtAuthFilter extends OncePerRequestFilter//
 
     private final JwtUtil jwtUtil;
 
-    @Autowired
     public JwtAuthFilter(JwtUtil jwtUtil) {
 
         this.jwtUtil = jwtUtil;
@@ -73,7 +71,11 @@ public class JwtAuthFilter extends OncePerRequestFilter//
                path.equals("/admin/check-mail")||
                path.equals("/admin/register")||
                path.equals("/hostel/api/**")||
-               path.startsWith("/css/") || 
+               path.equals("/email/send-otp")||
+               path.equals("/email/verify-otp")||
+               path.equals("/hostel/api/verfigy-email")||
+               path.equals("/hostel/api/reset-password")||
+               path.startsWith("/css/") ||
                path.startsWith("/js/") ||
                path.startsWith("/images/") ||
                path.startsWith("/assets/") ||

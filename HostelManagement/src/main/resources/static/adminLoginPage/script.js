@@ -360,24 +360,24 @@ function addRealTimeValidation() {
 }
 
 // Check if user already has session
-function checkExistingSession() {
-    fetch('/api/auth/check-session')
-        .then(response => response.json())
-        .then(data => {
-            if (data.authenticated) {
-                console.log('User already authenticated, redirecting to dashboard');
-                window.location.href = '/hostel/dashboard';
-            }
-        })
-        .catch(error => {
-            console.log('No active session, showing login form');
-        });
-}
+// function checkExistingSession() {
+//     fetch('/api/auth/check-session')
+//         .then(response => response.json())
+//         .then(data => {
+//             if (data.authenticated) {
+//                 console.log('User already authenticated, redirecting to dashboard');
+//                 window.location.href = '/hostel/dashboard';
+//             }
+//         })
+//         .catch(error => {
+//             console.log('No active session, showing login form');
+//         });
+// }
 
 // Call this when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    checkExistingSession();
-});
+// document.addEventListener('DOMContentLoaded', function() {
+//     checkExistingSession();
+// });
 
 // Update login success handler
 function handleLoginSuccess(data) {

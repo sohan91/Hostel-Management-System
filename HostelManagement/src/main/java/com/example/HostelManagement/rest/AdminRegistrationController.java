@@ -3,7 +3,6 @@ package com.example.HostelManagement.rest;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,8 +22,7 @@ public class AdminRegistrationController {
    
    private final EntityManager entityManager;
 
-   @Autowired
-    public AdminRegistrationController(EntityManager entityManager)
+   public AdminRegistrationController(EntityManager entityManager)
     {
         this.entityManager = entityManager;
     }

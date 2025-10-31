@@ -3,6 +3,10 @@ const resetPasswordBtn = document.getElementById("resetPasswordBtn");
 const messageArea = document.getElementById("messageArea");
 const emailStep = document.getElementById("emailStep");
 const resetStep = document.getElementById("resetStep");
+const passwordInput = document.getElementById("password");
+const confirmPasswordInput = document.getElementById("confirmPassword");
+const showPasswordCheckbox = document.getElementById("showPassword");
+const showConfirmPasswordCheckbox = document.getElementById("showConfirmPassword");
 
 function showMessage(msg, type) {
     messageArea.textContent = msg;
@@ -11,6 +15,24 @@ function showMessage(msg, type) {
         messageArea.classList.remove('show');
     }, 5000); 
 }
+
+// Function to toggle password visibility
+function togglePasswordVisibility(checkbox, input) {
+    if (checkbox.checked) {
+        input.type = "text";
+    } else {
+        input.type = "password";
+    }
+}
+
+// Event listeners for password visibility
+showPasswordCheckbox.addEventListener("change", () => {
+    togglePasswordVisibility(showPasswordCheckbox, passwordInput);
+});
+
+showConfirmPasswordCheckbox.addEventListener("change", () => {
+    togglePasswordVisibility(showConfirmPasswordCheckbox, confirmPasswordInput);
+});
 
 verifyEmailBtn.addEventListener("click", async () => {
     const email = document.getElementById("email").value.trim();
@@ -34,8 +56,8 @@ verifyEmailBtn.addEventListener("click", async () => {
 
 resetPasswordBtn.addEventListener("click", async () => {
     const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value.trim();
-    const confirmPassword = document.getElementById("confirmPassword").value.trim();
+    const password = passwordInput.value.trim();
+    const confirmPassword = confirmPasswordInput.value.trim();
 
     if (!password || !confirmPassword) { 
         showMessage("Please fill out both password fields.", "error"); 
@@ -60,7 +82,7 @@ resetPasswordBtn.addEventListener("click", async () => {
     const data = await response.json();
     if (data.status === "success") {
         showMessage(data.message || "Password reset successful!", "success");
-  
+ 
         resetStep.innerHTML = `<p class="success" style="padding: 15px; margin-bottom: 10px;">Password reset successful! You can now log in.</p>
                                <a href="/hostel/login" class="btn" style="text-decoration: none; display: block;">Go to Login</a>`;
     } else {

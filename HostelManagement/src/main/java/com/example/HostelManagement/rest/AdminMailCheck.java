@@ -3,7 +3,6 @@ package com.example.HostelManagement.rest;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,8 +17,7 @@ import com.example.HostelManagement.dao.AdminMailExistCheckDao;
 public class AdminMailCheck {
  private final AdminMailExistCheckDao mailCheckDao;
  
- @Autowired
-  public AdminMailCheck(AdminMailExistCheckDao mailCheckDao)
+ public AdminMailCheck(AdminMailExistCheckDao mailCheckDao)
   {
      this.mailCheckDao = mailCheckDao;
   

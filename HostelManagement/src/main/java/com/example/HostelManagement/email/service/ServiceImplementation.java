@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -26,7 +25,6 @@ public class ServiceImplementation implements MailService {
 
     private final Map<String, OTPEntry> otpMap = new ConcurrentHashMap<>();
 
-    @Autowired
     public ServiceImplementation(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }

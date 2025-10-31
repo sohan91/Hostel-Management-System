@@ -120,23 +120,23 @@ public class MainPageController {
     }
 
     // Session-based logout endpoint
-    @GetMapping("/logout-session")
-    public String logoutSession(HttpServletRequest request, HttpServletResponse response) {
-        System.out.println("=== SESSION LOGOUT ===");
+    // @GetMapping("/logout-session")
+    // public String logoutSession(HttpServletRequest request, HttpServletResponse response) {
+    //     System.out.println("=== SESSION LOGOUT ===");
         
-        // Invalidate session
-        HttpSession session = request.getSession(false);
-        if (session != null) {
-            System.out.println("Invalidating session: " + session.getId());
-            session.invalidate();
-        }
+    //     // Invalidate session
+    //     HttpSession session = request.getSession(false);
+    //     if (session != null) {
+    //         System.out.println("Invalidating session: " + session.getId());
+    //         session.invalidate();
+    //     }
         
-        // Clear security context
-        SecurityContextHolder.clearContext();
+    //     // Clear security context
+    //     SecurityContextHolder.clearContext();
         
-        System.out.println("Session logout completed");
-        return "redirect:/hostel/login";
-    }
+    //     System.out.println("Session logout completed");
+    //     return "redirect:/hostel/login";
+    // }
 
     @RequestMapping("/")
     public String rootRedirect(HttpServletRequest request, HttpServletResponse response) {
@@ -151,51 +151,51 @@ public class MainPageController {
         }
     }
 
-    @GetMapping("/health")
-    public String healthCheck() {
-        System.out.println("=== HEALTH CHECK ===");
-        return "PageController is working";
-    }
+    // @GetMapping("/health")
+    // public String healthCheck() {
+    //     System.out.println("=== HEALTH CHECK ===");
+    //     return "PageController is working";
+    // }
 
     // Check session status - for debugging
-    @GetMapping("/session-status")
-    public String sessionStatus(HttpServletRequest request) {
-        HttpSession session = request.getSession(false);
-        StringBuilder status = new StringBuilder();
-        status.append("=== SESSION STATUS ===\n");
+    // @GetMapping("/session-status")
+    // public String sessionStatus(HttpServletRequest request) {
+    //     HttpSession session = request.getSession(false);
+    //     StringBuilder status = new StringBuilder();
+    //     status.append("=== SESSION STATUS ===\n");
         
-        if (session != null) {
-            status.append("Session ID: ").append(session.getId()).append("\n");
-            status.append("Authenticated: ").append(session.getAttribute("authenticated")).append("\n");
-            status.append("Email: ").append(session.getAttribute("email")).append("\n");
-            status.append("Last Access: ").append(session.getAttribute("lastAccess")).append("\n");
-        } else {
-            status.append("No active session\n");
-        }
+    //     if (session != null) {
+    //         status.append("Session ID: ").append(session.getId()).append("\n");
+    //         status.append("Authenticated: ").append(session.getAttribute("authenticated")).append("\n");
+    //         status.append("Email: ").append(session.getAttribute("email")).append("\n");
+    //         status.append("Last Access: ").append(session.getAttribute("lastAccess")).append("\n");
+    //     } else {
+    //         status.append("No active session\n");
+    //     }
         
-        status.append("Security Context Auth: ").append(isAuthenticated()).append("\n");
+    //     status.append("Security Context Auth: ").append(isAuthenticated()).append("\n");
         
-        // Check authentication details
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null) {
-            status.append("Auth Name: ").append(auth.getName()).append("\n");
-            status.append("Auth Principal: ").append(auth.getPrincipal()).append("\n");
-            status.append("Auth Details: ").append(auth.getDetails()).append("\n");
-        }
+    //     // Check authentication details
+    //     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    //     if (auth != null) {
+    //         status.append("Auth Name: ").append(auth.getName()).append("\n");
+    //         status.append("Auth Principal: ").append(auth.getPrincipal()).append("\n");
+    //         status.append("Auth Details: ").append(auth.getDetails()).append("\n");
+    //     }
         
-        return status.toString();
-    }
+    //     return status.toString();
+    // }
 
     // Quick session check endpoint
-    @GetMapping("/check-auth")
-    public String checkAuth() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (isAuthenticated()) {
-            return "Authenticated as: " + auth.getPrincipal();
-        } else {
-            return "Not authenticated";
-        }
-    }
+    // @GetMapping("/check-auth")
+    // public String checkAuth() {
+    //     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    //     if (isAuthenticated()) {
+    //         return "Authenticated as: " + auth.getPrincipal();
+    //     } else {
+    //         return "Not authenticated";
+    //     }
+    // }
 
     private boolean isAuthenticated() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();

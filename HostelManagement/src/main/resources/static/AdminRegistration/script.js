@@ -224,7 +224,8 @@ verifyOtpBtn.addEventListener("click", async function () {
     }
     setLoading(verifyOtpBtn, verifyOtpLoader, true);
     try {
-        const response = await fetch(`http://localhost:8080/email/verify-otp?email=${encodeURIComponent(currentEmail)}&otp=${encodeURIComponent(otp)}`, { method: "POST" });
+        const response = await fetch(`http://localhost:8080/email/verify-otp?email=${encodeURIComponent(currentEmail)}&otp=${encodeURIComponent(otp)}`, 
+        { method: "POST" });
         if (response.ok) {
             clearInterval(timerInterval);
             otpVerified = true;

@@ -19,7 +19,7 @@ public class SecurityConfig implements WebMvcConfigurer {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session
@@ -36,7 +36,10 @@ public class SecurityConfig implements WebMvcConfigurer {
                     "/api/auth/logout",
                     "/admin/check-mail",
                     "/admin/register",
+                    "/email/send-otp",
+                    "/email/verify-otp",
                     "/hostel/api/reset-password",
+                    "/hostel/api/verify-email",
                     "/css/**",
                     "/js/**", 
                     "/images/**",

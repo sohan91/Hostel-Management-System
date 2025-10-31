@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initializeDashboardUI();
     
     // 3. Start ALL API calls in parallel (no sequential waiting)
-    loadAllDataInParallel();
+    //loadAllDataInParallel();
 });
 
 // Set default values INSTANTLY
@@ -37,43 +37,6 @@ function initializeDashboardUI() {
     
     // Initialize any other UI components
     console.log("UI components initialized");
-}
-
-// Load all data in PARALLEL (not sequentially)
-function loadAllDataInParallel() {
-    console.log("Starting parallel data loading");
-    
-    // Start all API calls simultaneously
-    const sessionPromise = checkSession();
-    const adminDetailsPromise = getAdminDetails();
-    
-    // Wait for all promises to complete
-    Promise.all([sessionPromise, adminDetailsPromise])
-        .then(([sessionResult, adminDetailsResult]) => {
-            console.log("All data loaded successfully");
-            // Both API calls completed
-        })
-        .catch(error => {
-            console.error("Error loading data:", error);
-        });
-}
-
-// Session check - optimized
-async function checkSession() {
-    try {
-        const response = await fetch("/api/auth/check-session", {
-            method: "GET",
-            credentials: "include"
-        });
-
-        if (response.ok) {
-            const sessionInfo = await response.json();
-            console.log("Session check completed:", sessionInfo.authenticated);
-            return sessionInfo;
-        }
-    } catch (error) {
-        console.error("Session check error:", error);
-    }
 }
 
 // Admin details - optimized with localStorage cache
