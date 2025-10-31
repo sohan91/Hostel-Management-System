@@ -13,7 +13,8 @@
   --warning-orange: #ff9800;
   --header-height: 60px;
   --content-header-fixed-height: 125px;
-  --sidebar-width: 180px;
+  --sidebar-width: 180px; /* Base width for desktop */
+  --mobile-sidebar-width: 250px; /* New variable for mobile width */
   --content-padding-h: 25px;
   --content-padding-t: 25px;
   --scrollbar-width: 15px;
@@ -111,10 +112,10 @@ button {
   display: flex;
   align-items: center;
   white-space: nowrap;
-  transition: background-color 0.2s; /* Added transition */
+  transition: background-color 0.2s;
 }
 .add-type-btn:hover {
-    background-color: rgb(48, 144, 140); /* Slightly darker on hover */
+    background-color: rgb(48, 144, 140);
 }
 .add-type-btn i {
   margin-right: 5px;
@@ -128,13 +129,13 @@ button {
   display: flex;
   align-items: center;
   white-space: nowrap;
-  transition: background-color 0.2s; /* Added transition */
+  transition: background-color 0.2s;
 }
 .nav-button.logout {
   background-color: var(--danger-red);
 }
 .nav-button.logout:hover {
-    background-color: #c82333; /* Darker red on hover */
+    background-color: #c82333;
 }
 .nav-button.add-type-btn {
   background-color: rgb(181, 78, 13);
@@ -147,7 +148,7 @@ button {
   background-color: var(--sidebar-active-item);
 }
 #feedback:hover {
-    background-color: #0b2f56; /* Darker color on hover */
+    background-color: #0b2f56;
 }
 .user-profile-info {
   display: flex;
@@ -183,6 +184,10 @@ button {
   min-height: calc(100vh - var(--header-height));
 }
 
+/* ---------------------------------------------------------------- */
+/* CORE SIDEBAR & CONTENT FIXES (Desktop First) */
+/* ---------------------------------------------------------------- */
+
 .sidebar {
   width: var(--sidebar-width);
   background-color: rgb(16, 44, 72);
@@ -195,18 +200,34 @@ button {
   left: 0;
   height: calc(100vh - var(--header-height));
   overflow-y: auto;
-  /* Kept existing transform/width transition and added opacity */
-  transition: transform 0.3s ease, width 0.3s ease, opacity 0.3s ease;
+  /* Use transform for smooth slide */
+  transition: transform 0.3s ease; 
   transform: translateX(0);
   z-index: 990;
 }
 
 .sidebar.hidden {
-  width: 0;
-  padding: 0;
-  transform: translateX(-100%);
-  opacity: 0; /* Added opacity to ensure a smoother vanish */
+  /* Hide smoothly by sliding left */
+  transform: translateX(calc(-1 * var(--sidebar-width)));
 }
+
+
+.content {
+  flex-grow: 1;
+  padding: 0 var(--content-padding-h);
+  /* Ensures content starts beside the sidebar width */
+  margin-left: var(--sidebar-width); 
+  /* Animate the margin for smooth content shifting */
+  transition: margin-left 0.3s ease; 
+  overflow-y: auto;
+  height: calc(100vh - var(--header-height));
+}
+
+.sidebar.hidden ~ .content {
+  /* Content margin is 0 when sidebar is hidden */
+  margin-left: 0; 
+}
+/* ---------------------------------------------------------------- */
 
 .sidebar-item > a {
   display: flex;
@@ -215,34 +236,19 @@ button {
   color: #dcdcdc;
   font-weight: 500;
   white-space: nowrap;
-  transition: color 0.2s; /* Added transition for link color */
+  transition: color 0.2s;
 }
 
-/* MODIFIED: Uses the updated variable --sidebar-active-item which is no longer purple */
 .sidebar-item.active > a {
   background-color: var(--sidebar-active-item);
   color: white;
 }
-/* MODIFIED: Added transition to the hover state */
 .sidebar-item:hover {
   background-color: #121415;
   height: 50px;
   width: var(--sidebar-width);
   border-radius: 3px;
   transition: background-color 0.2s, height 0.2s;
-}
-
-.content {
-  flex-grow: 1;
-  padding: 0 var(--content-padding-h);
-  margin-left: var(--sidebar-width);
-  transition: margin-left 0.3s ease;
-  overflow-y: auto;
-  height: calc(100vh - var(--header-height));
-}
-
-.sidebar.hidden ~ .content {
-  margin-left: 0;
 }
 
 .fixed-content-top {
@@ -272,7 +278,7 @@ button {
 }
 
 .room-section:first-of-type {
- 
+  
   margin-top: 0;
 }
 
@@ -333,10 +339,10 @@ button {
   border-bottom: 1px solid var(--border-light);
   background-color: rgb(20, 10, 43);
   cursor: pointer;
-  transition: background-color 0.2s; /* Added transition */
+  transition: background-color 0.2s;
 }
 .room-section-header:hover {
-    background-color: rgb(25, 12, 53); /* Slightly darker on hover */
+    background-color: rgb(25, 12, 53);
 }
 .room-section-header h2 {
   font-size: 1.3rem;
@@ -357,21 +363,21 @@ button {
   font-size: 0.95rem;
   display: flex;
   align-items: center;
-  transition: background-color 0.2s; /* Added transition */
+  transition: background-color 0.2s;
 }
 .add-room-btn:hover {
-    background-color: #1e7e34; /* Darker green on hover */
+    background-color: #1e7e34;
 }
 .add-room-btn i {
   margin-right: 5px;
 }
 .toggle-icon.up {
   color: white;
-  transition: transform 0.3s ease; /* Added transition */
+  transition: transform 0.3s ease;
 }
 .toggle-icon.down {
   color: #f8f4f4;
-  transition: transform 0.3s ease; /* Added transition */
+  transition: transform 0.3s ease;
 }
 .toggle-icon.down {
   display: none;
@@ -412,7 +418,7 @@ button {
 .book-now-btn {
   background-color: #101b27;
   color: white;
-  transition: background-color 0.2s; /* Added transition */
+  transition: background-color 0.2s;
 }
 
 .book-now-btn:hover {
@@ -422,10 +428,10 @@ button {
   background-color: #60cc9f;
   width: 100px;
   border-radius: 5px;
-  transition: background-color 0.2s; /* Added transition */
+  transition: background-color 0.2s;
 }
 .details-btn:hover {
-    background-color: #4db383; /* Darker on hover */
+    background-color: #4db383;
 }
 .room-card {
   background-color: var(--card-bg);
@@ -435,7 +441,7 @@ button {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: transform 0.2s, box-shadow 0.2s; /* Added transition for hover effect */
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 .room-card:hover {
     transform: translateY(-2px);
@@ -542,7 +548,7 @@ button {
 }
 
 .user-profile-info:hover {
-  background-color: rgba(255, 255, 255, 0.1); /* Changed hover color for navbar */
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .user-profile-info .profile-icon {
@@ -573,11 +579,14 @@ button {
 .empty-container {
   text-align: center;
   align-items: center;
-  /* display: flex;
-  flex-wrap: wrap; */
   margin-top: 150px;
   color: grey;
 }
+
+/* ---------------------------------------------------------------- */
+/* MOBILE SPECIFIC FIXES */
+/* ---------------------------------------------------------------- */
+
 @media (max-width: 992px) {
   .sidebar {
     position: fixed;
@@ -590,26 +599,39 @@ button {
   :root {
     --content-padding-h: 20px;
   }
+  
+  /* Reset content margin for mobile, as sidebar is fixed */
   .content {
     margin-left: 0;
     padding-left: var(--content-padding-h);
     padding-right: var(--content-padding-h);
   }
+  
   .fixed-content-top {
     width: 100%;
     margin-right: 0;
   }
+  
   .sidebar {
-    width: 250px;
-
-    transition: width 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
-    overflow: hidden;
+    /* Use mobile-specific width */
+    width: var(--mobile-sidebar-width); 
+    /* The top position should start below the navbar */
+    top: var(--header-height); 
+    height: calc(100vh - var(--header-height));
+    /* Reset transitions, but transform remains the key for animation */
+    transition: transform 0.3s ease; 
   }
 
+  /* The smooth hidden state on mobile */
   .sidebar.hidden {
-    width: 0;
-    opacity: 0;
+    transform: translateX(calc(-1 * var(--mobile-sidebar-width)));
   }
+
+  /* Ensure content margin remains 0 on mobile even when sidebar is hidden */
+  .sidebar.hidden ~ .content {
+    margin-left: 0; 
+  }
+
   .fixed-content-top .content-header,
   .fixed-content-top .search-container {
     padding-right: var(--content-padding-h);

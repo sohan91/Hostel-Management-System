@@ -1,6 +1,5 @@
 package com.example.HostelManagement.email.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,7 +18,6 @@ public class MailController {
 
     private final ServiceImplementation service;
 
-    @Autowired
     public MailController(ServiceImplementation service) {
         this.service = service;
     }
@@ -40,7 +38,7 @@ public class MailController {
         if (valid) {
             return ResponseEntity.ok("OTP verified");
         } else {
-            return ResponseEntity.badRequest().body("Invalid or expired OTP");
+    return ResponseEntity.badRequest().body("Invalid or expired OTP");
         }
     }
 }

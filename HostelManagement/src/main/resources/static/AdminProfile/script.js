@@ -1,143 +1,66 @@
-document.addEventListener('DOMContentLoaded', function() {
-    loadAdminProfile();
-    addEventListeners();
-});
+document.addEventListener("DOMContentLoaded", async () => {
+    console.log("=== Admin Profile Page Loaded ===");
 
-async function loadAdminProfile() {
+    // Selectors
+    const nameDisplay = document.querySelector(".admin-name-display");
+    const hostelDisplay = document.querySelector(".hostel-name-display");
+    const goToDashboardBtn = document.querySelector(".go-to-dashboard-btn");
+
+    // Fetch admin profile details from backend with JWT
     try {
-        showLoadingState();
-        
-        const response = await fetch('http://localhost:8080/api/auth/admin-profile', {
-            method: 'GET',
-            credentials: 'include'
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert("Session expired. Please login again.");
+            window.location.href = "/hostel/login";
+            return;
+        }
+
+        const response = await fetch("http://localhost:8080/api/auth/admin-profile-details", {
+            method: "GET",
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+            }
         });
 
         if (!response.ok) {
-            if (response.status === 401 || response.status === 404) {
-                window.location.href = '/hostel/login';
-                return;
-            }
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error("Failed to fetch admin profile. Status: " + response.status);
         }
 
-        const adminData = await response.json();
-        populateProfileData(adminData);
-        
-    } catch (error) {
-        console.error('Error loading admin profile:', error);
-        showErrorState();
-    }
-}
+        const admin = await response.json();
+        console.log("Admin Profile Data:", admin);
 
-function populateProfileData(adminData) {
-    try {
-        const fieldMapping = {
-            'admin_id': adminData.adminId || 'N/A',
-            'first_name': adminData.firstName || 'Not specified',
-            'last_name': adminData.lastName || 'Not specified',
-            'email': adminData.email || 'Not specified',
-            'phone_number': adminData.phoneNumber || 'Not specified',
-            'created_at': formatDate(adminData.createdAt) || 'Not available',
-            'hostel_name': adminData.hostelName || 'Not specified',
-            'hostel_address': adminData.hostelAddress || 'Not specified'
+        // ✅ Fill profile info in UI
+        nameDisplay.textContent = `${admin.firstName} ${admin.lastName}`;
+        hostelDisplay.textContent = admin.hostelName || "HostelHub - Branch";
+
+        // Fill all <p data-field="...">
+        const fieldMap = {
+            "admin_id": admin.adminId,
+            "first_name": admin.firstName,
+            "last_name": admin.lastName,
+            "email": admin.email,
+            "phone_number": admin.phoneNumber || "N/A",
+            "created_at": new Date(admin.createdAt).toLocaleDateString(),
+            "hostel_name": admin.hostelName,
+            "hostel_address": admin.hostelAddress
         };
 
-        Object.keys(fieldMapping).forEach(fieldName => {
-            const elements = document.querySelectorAll(`[data-field="${fieldName}"]`);
-            elements.forEach(element => {
-                element.textContent = fieldMapping[fieldName];
-                element.setAttribute('data-value', fieldMapping[fieldName]);
-            });
+        Object.entries(fieldMap).forEach(([key, value]) => {
+            const fieldElement = document.querySelector(`[data-field='${key}']`);
+            if (fieldElement) fieldElement.textContent = value ?? "N/A";
         });
 
-        updateProfileHeader(adminData);
-        removeLoadingState();
-        
     } catch (error) {
-        console.error('Error populating profile data:', error);
-        showErrorState();
+        console.error("Error loading profile:", error);
+        alert("Error loading profile details. Please login again.");
+        window.location.href = "/hostel/login";
     }
-}
 
-function updateProfileHeader(adminData) {
-    const adminNameElement = document.querySelector('.admin-name-display');
-    const hostelNameElement = document.querySelector('.hostel-name-display');
-    
-    if (adminData.firstName && adminData.lastName) {
-        adminNameElement.textContent = `${adminData.firstName} ${adminData.lastName}`;
-    } else if (adminData.firstName) {
-        adminNameElement.textContent = adminData.firstName;
-    } else {
-        adminNameElement.textContent = 'Administrator';
-    }
-    
-    if (adminData.hostelName) {
-        hostelNameElement.textContent = adminData.hostelName;
-    }
-}
-
-function formatDate(dateString) {
-    if (!dateString) return 'Not available';
-    
-    try {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-    } catch (error) {
-        return 'Invalid date';
-    }
-}
-
-function showLoadingState() {
-    const dataFields = document.querySelectorAll('[data-field]');
-    dataFields.forEach(field => {
-        field.innerHTML = '<span class="loading-dots">Loading</span>';
-        field.classList.add('loading');
-    });
-    
-    document.querySelector('.admin-name-display').textContent = 'Loading...';
-    document.querySelector('.hostel-name-display').textContent = 'Loading...';
-}
-
-function removeLoadingState() {
-    const dataFields = document.querySelectorAll('[data-field]');
-    dataFields.forEach(field => {
-        field.classList.remove('loading');
-    });
-}
-
-function showErrorState() {
-    const dataFields = document.querySelectorAll('[data-field]');
-    dataFields.forEach(field => {
-        field.textContent = 'Error loading data';
-        field.classList.add('error');
-    });
-    
-    document.querySelector('.admin-name-display').textContent = 'Error Loading Profile';
-    document.querySelector('.hostel-name-display').textContent = 'Please try again later';
-}
-
-function addEventListeners() {
-    const editProfileBtn = document.querySelector('.edit-profile-btn');
-    if (editProfileBtn) {
-        editProfileBtn.addEventListener('click', function() {
-            alert('Edit profile functionality would open here');
-        });
-    }
-    
-    const goToDashboardBtn = document.querySelector('.go-to-dashboard-btn');
+    // === Go To Dashboard Button ===
     if (goToDashboardBtn) {
-        goToDashboardBtn.addEventListener('click', function() {
-            window.location.href = '/hostel/dashboard';
+        goToDashboardBtn.addEventListener("click", () => {
+            window.location.href = "/hostel/dashboard";
         });
     }
-    
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Escape') {
-            window.location.href = '/hostel/dashboard';
-        }
-    });
-}
+});

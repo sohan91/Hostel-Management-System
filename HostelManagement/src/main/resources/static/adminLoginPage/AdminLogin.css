@@ -11,7 +11,42 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+}.message-area {
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    display: none;
 }
+
+.message-area.fade-in {
+    opacity: 1;
+    display: block;
+}
+
+.message-area.fade-out {
+    opacity: 0;
+    display: block;
+}
+
+/* .error-message {
+    color: #e74c3c;
+    font-size: 0.875em;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    display:block;
+    margin-top: 4px;
+} */
+
+.error-message.fade-in-error {
+    opacity: 1;
+    background-color: #45a049;
+    display: block;
+}
+
+.error-message.fade-out-error {
+    opacity: 0;
+    display: block;
+}
+
  .error-message {
       color: red;
       font-size: 14px;
