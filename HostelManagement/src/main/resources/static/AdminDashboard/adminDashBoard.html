@@ -53,166 +53,21 @@
         </aside>
         <main class="content">
             <div class="fixed-content-top" id="fixedContentTop">
-                <div class="content-header">
+                <!-- <div class="content-header">
                     <h1 class="big-centered-title">Rooms</h1>
-                </div>
+                </div> -->
                 <div class="search-container">
                     <i class="fas fa-search"></i>
                     <input type="text" id="roomSearch" placeholder="Search by Room Number (e.g., 101) or Floor..." aria-label="Room search">
                 </div>
             </div>
-            <!-- <div class="room-management-container" id="roomManagementContainer">
+            <div class="room-management-container" id="roomManagementContainer">
                 <section class="room-section expanded" data-sharing-type="2-Sharing" id="section-2-sharing">
-                    <div class="room-section-header" tabindex="0" role="button" aria-expanded="true" aria-controls="content-2-sharing">
-                        <h2>2-Sharing</h2>
-                        <div class="header-controls">
-                            <button class="btn-primary add-room-btn">
-                                <i class="fas fa-plus"></i> <span>Add Room</span>
-                            </button>
-                            <i class="fas fa-chevron-up toggle-icon up"></i>
-                            <i class="fas fa-chevron-down toggle-icon down"></i>
-                        </div>
-                    </div>
-                    <div class="room-section-content" id="content-2-sharing">
-                        <h3 class="floor-heading">Floor 1</h3>
-                        <div class="floor-rooms-container">
-                            <div class="room-card available-room" data-room-id="101" data-floor="1">
-                                <div class="room-card-header">
-                                    <div class="room-number-group">
-                                        <span class="room-number">101</span>
-                                        <span class="beds-info">Available: <span class="beds-available-count">1/2</span> beds</span>
-                                    </div>
-                                </div>
-                                <div class="room-details-content">
-                                    <ul class="room-meta-list">
-                                        <li><strong>Sharing Type:</strong> <span>2-Sharing</span></li>
-                                        <li><strong>Availability:</strong> <span class="available-status">1 spot available</span></li>
-                                        <li><strong>Price:</strong> <span class="price">₹500 <span class="price-unit">/Bed</span></span></li>
-                                    </ul>
-                                    <div class="room-actions">
-                                        <button class="btn-primary book-now-btn" data-room="101">
-                                            <i class="fas fa-bookmark"></i> Book Now
-                                        </button>
-                                        <button class="btn-secondary details-btn" data-room="101">
-                                            <i class="fas fa-info-circle"></i> Details
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="room-card full-room" data-room-id="102" data-floor="1">
-                                <div class="room-card-header">
-                                    <div class="room-number-group">
-                                        <span class="room-number">102</span>
-                                        <span class="beds-info">Filled: <span class="beds-filled-count">2/2</span> beds</span>
-                                    </div>
-                                </div>
-                                <div class="room-details-content">
-                                    <ul class="room-meta-list">
-                                        <li><strong>Sharing Type:</strong> <span>2-Sharing</span></li>
-                                        <li><strong>Availability:</strong> <span class="full-status">Full</span></li>
-                                        <li><strong>Price:</strong> <span class="price">₹500 <span class="price-unit">/Bed</span></span></li>
-                                    </ul>
-                                    <div class="room-actions">
-                                        <button class="btn-primary book-now-btn" data-room="102" disabled>
-                                            <i class="fas fa-bookmark"></i> Book Now
-                                        </button>
-                                        <button class="btn-secondary details-btn" data-room="102">
-                                            <i class="fas fa-info-circle"></i> Details
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                   <!-- add room details over here -->
                 </section>
-                <section class="room-section expanded" data-sharing-type="3-Sharing" id="section-3-sharing">
-                    <div class="room-section-header" tabindex="0" role="button" aria-expanded="true" aria-controls="content-3-sharing">
-                        <h2>3-Sharing</h2>
-                        <div class="header-controls">
-                            <button class="btn-primary add-room-btn">
-                                <i class="fas fa-plus"></i> <span>Add Room</span>
-                            </button>
-                            <i class="fas fa-chevron-up toggle-icon up"></i>
-                            <i class="fas fa-chevron-down toggle-icon down"></i>
-                        </div>
-                    </div>
-                    <div class="room-section-content" id="content-3-sharing">
-                        <h3 class="floor-heading">Floor 2</h3>
-                        <div class="floor-rooms-container">
-                            <div class="room-card available-room fully-available" data-room-id="201" data-floor="2">
-                                <div class="room-card-header">
-                                    <div class="room-number-group">
-                                        <span class="room-number">201</span>
-                                        <span class="beds-info">Available: <span class="beds-available-count">3/3</span> beds</span>
-                                    </div>
-                                </div>
-                                <div class="room-details-content">
-                                    <ul class="room-meta-list">
-                                        <li><strong>Sharing Type:</strong> <span>3-Sharing</span></li>
-                                        <li><strong>Availability:</strong> <span class="available-status">3 spots available</span></li>
-                                        <li><strong>Price:</strong> <span class="price">₹450 <span class="price-unit">/Bed</span></span></li>
-                                    </ul>
-                                    <div class="room-actions">
-                                        <button class="btn-primary book-now-btn" data-room="201">
-                                            <i class="fas fa-bookmark"></i> Book Now
-                                        </button>
-                                        <button class="btn-secondary details-btn" data-room="201">
-                                            <i class="fas fa-info-circle"></i> Details
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="room-card full-room" data-room-id="202" data-floor="2">
-                                <div class="room-card-header">
-                                    <div class="room-number-group">
-                                        <span class="room-number">202</span>
-                                        <span class="beds-info">Filled: <span class="beds-filled-count">3/3</span> beds</span>
-                                    </div>
-                                </div>
-                                <div class="room-details-content">
-                                    <ul class="room-meta-list">
-                                        <li><strong>Sharing Type:</strong> <span>3-Sharing</span></li>
-                                        <li><strong>Availability:</strong> <span class="full-status">Full</span></li>
-                                        <li><strong>Price:</strong> <span class="price">₹450 <span class="price-unit">/Bed</span></span></li>
-                                    </ul>
-                                    <div class="room-actions">
-                                        <button class="btn-primary book-now-btn" data-room="202" disabled>
-                                            <i class="fas fa-bookmark"></i> Book Now
-                                        </button>
-                                        <button class="btn-secondary details-btn" data-room="202">
-                                            <i class="fas fa-info-circle"></i> Details
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-                <section class="room-section" data-sharing-type="4-Sharing" id="section-4-sharing">
-                    <div class="room-section-header" tabindex="0" role="button" aria-expanded="false" aria-controls="content-4-sharing">
-                        <h2>4-Sharing</h2>
-                        <div class="header-controls">
-                            <button class="btn-primary add-room-btn">
-                                <i class="fas fa-plus"></i> <span>Add Room</span>
-                            </button>
-                            <i class="fas fa-chevron-up toggle-icon up"></i>
-                            <i class="fas fa-chevron-down toggle-icon down"></i>
-                        </div>
-                    </div>
-                    <div class="room-section-content" id="content-4-sharing">
-                        <h3 class="floor-heading">Floor 3</h3>
-                        <div class="floor-rooms-container">
-                            <div class="empty-floor-container">
-                                <i class="fas fa-box-open"></i>
-                                <p>No rooms found on this floor. Click 'Add Room' above to create one.</p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            </div> -->
+            </div>
              <div class="empty-container">
-            <span>click on add sharing type to use start the applicatin</span>
-        </div>
+            
         </main>
        
     <script src="/AdminDashboard/script.js"></script>

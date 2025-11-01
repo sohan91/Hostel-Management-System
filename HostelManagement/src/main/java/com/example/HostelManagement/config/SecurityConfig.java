@@ -37,6 +37,7 @@ public class SecurityConfig implements WebMvcConfigurer {
                     "/admin/check-mail",
                     "/admin/register",
                     "/email/send-otp",
+                    
                     "/email/verify-otp",
                     "/hostel/api/reset-password",
                     "/hostel/api/verify-email",

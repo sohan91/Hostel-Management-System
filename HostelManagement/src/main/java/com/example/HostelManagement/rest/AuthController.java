@@ -2,9 +2,15 @@ package com.example.HostelManagement.rest;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.Collections;
+import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,9 +21,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.HostelManagement.config.JwtUtil;
 import com.example.HostelManagement.dto.DashboardAdminDTO;
+import com.example.HostelManagement.dto.RoomDTO;
+import com.example.HostelManagement.dto.SharingDetailsDTO;
+import com.example.HostelManagement.entities.hostel.SharingType;
 import com.example.HostelManagement.entities.hostel.admin.Admin;
 import com.example.HostelManagement.entities.hostel.admin.LoginRequestDAO;
 import com.example.HostelManagement.service.AdminAuthService;
+import com.example.HostelManagement.service.RoomService;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,15 +38,73 @@ import jakarta.servlet.http.HttpSession;
 @RequestMapping("/api/auth")
 public class AuthController {
 
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+    
     private final AdminAuthService authService;
     private final JwtUtil jwtUtil;
+    private final RoomService roomService; // Add RoomService dependency
 
-    public AuthController(AdminAuthService authService, JwtUtil jwtUtil) {
+    public AuthController(AdminAuthService authService, JwtUtil jwtUtil, RoomService roomService) {
         this.authService = authService;
         this.jwtUtil = jwtUtil;
+        this.roomService = roomService; // Initialize RoomService
     }
 
-    // LOGIN - returns JWT token
+    // Add the new room-details endpoint
+    @GetMapping("/room-details")
+    public ResponseEntity<?> getRoomDetails() {
+        System.out.println("=== ROOM DETAILS API CALLED ===");
+        
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = getEmailFromSecurityContext(auth);
+        System.out.println("Room details - email from SecurityContext: " + email);
+        
+        if (email == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Collections.singletonMap("error", "Authentication required"));
+        }
+
+        try {
+            Admin admin = authService.getAdminByEmail(email);
+            System.out.println("Found admin for room details: " + (admin != null ? admin.getAdminId() : "null"));
+            
+            if (admin == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Collections.singletonMap("error", "Admin not found"));
+            }
+
+            // Get room details using RoomService
+            List<RoomDTO> roomDetails = roomService.getAllRooms(admin.getAdminId());
+            System.out.println("Found rooms: " + roomDetails.size());
+            
+            // Debug: Print each room detail
+            for (RoomDTO room : roomDetails) {
+                System.out.println("Room - ID: " + room.getRoomId() + 
+                                 ", Number: " + room.getRoomNumber() + 
+                                 ", Floor: " + room.getFloorNumber() +
+                                 ", Status: " + room.getRoomStatus() +
+                                 ", Occupancy: " + room.getOccupancyStatus() +
+                                 ", Type: " + room.getSharingTypeName() +
+                                 ", Price: " + room.getPrice());
+            }
+            
+            if (roomDetails.isEmpty()) {
+                System.out.println("No rooms found for admin");
+                return ResponseEntity.ok(Collections.singletonMap("message", "No rooms found for this admin"));
+            }
+
+            System.out.println("Returning room details: " + roomDetails.size() + " rooms");
+            return ResponseEntity.ok(roomDetails);
+            
+        } catch (Exception e) {
+            System.out.println("Error in room-details: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "An error occurred while fetching room details"));
+        }
+    }
+
+    // Existing endpoints remain the same...
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(@RequestBody LoginRequestDAO loginRequest, 
                                                    HttpServletResponse response) {
@@ -49,19 +117,16 @@ public class AuthController {
             System.out.println("Authentication result: " + isAuthenticated);
 
             if (isAuthenticated) {
-                // Generate JWT token
                 String jwtToken = jwtUtil.generateToken(loginRequest.getEmail());
                 System.out.println("JWT Token generated successfully");
                 
-                // Set JWT as HTTP-only cookie
                 Cookie jwtCookie = new Cookie("jwtToken", jwtToken);
                 jwtCookie.setHttpOnly(true);
                 jwtCookie.setSecure(false);
                 jwtCookie.setPath("/");
-                jwtCookie.setMaxAge(24 * 60 * 60);//for 24 hours
+                jwtCookie.setMaxAge(24 * 60 * 60);
                 response.addCookie(jwtCookie);
                 
-                // Get admin details for response
                 Admin admin = authService.getAdminByEmail(loginRequest.getEmail());
                 
                 responseBody.put("success", true);
@@ -91,12 +156,10 @@ public class AuthController {
         }
     }
 
-    // SINGLE LOGOUT METHOD - Fixed duplicate issue
     @PostMapping("/logout")
     public ResponseEntity<Map<String, Object>> logout(HttpServletRequest request, HttpServletResponse response) {
         System.out.println("=== LOGOUT API CALLED ===");
         
-        // Clear the JWT cookie
         Cookie jwtCookie = new Cookie("jwtToken", null);
         jwtCookie.setHttpOnly(true);
         jwtCookie.setSecure(false);
@@ -104,14 +167,12 @@ public class AuthController {
         jwtCookie.setMaxAge(0);
         response.addCookie(jwtCookie);
         
-        // Invalidate session
         HttpSession session = request.getSession(false);
         if (session != null) {
             System.out.println("Invalidating session during logout: " + session.getId());
             session.invalidate();
         }
         
-        // Clear security context
         SecurityContextHolder.clearContext();
         
         Map<String, Object> responseBody = new HashMap<>();
@@ -122,12 +183,72 @@ public class AuthController {
         return ResponseEntity.ok(responseBody);
     }
 
-    // ADMIN DETAILS
+   @GetMapping("/sharing-details")
+public ResponseEntity<?> getSharingDetails() {
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    String email = getEmailFromSecurityContext(auth);
+    
+    System.out.println("=== SHARING DETAILS API CALLED ===");
+    System.out.println("Extracted email: " + email);
+
+    if (email == null) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Collections.singletonMap("error", "Authentication required"));
+    }
+
+    try {
+        Admin admin = authService.getAdminByEmail(email);
+        System.out.println("Found admin: " + (admin != null ? admin.getAdminId() : "null"));
+        
+        if (admin == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Collections.singletonMap("error", "Admin not found"));
+        }
+
+        List<SharingType> sharingTypes = authService.sharingTypesList(admin.getAdminId());
+        System.out.println("Found sharing types: " + sharingTypes.size());
+        
+        // Debug: Print each sharing type
+        for (SharingType sharingType : sharingTypes) {
+            System.out.println("SharingType - ID: " + sharingType.getSharingTypeId() + 
+                             ", Capacity: " + sharingType.getCapacity() +  // ✅ Use getCapacity()
+                             ", Name: " + sharingType.getTypeName() +
+                             ", Fee: " + sharingType.getSharingFee());
+        }
+        
+        if (sharingTypes.isEmpty()) {
+            System.out.println("No sharing types found for admin");
+            return ResponseEntity.ok(Collections.singletonMap("message", "No sharing types found for this admin"));
+        }
+
+        List<SharingDetailsDTO> sharingDetails = sharingTypes.stream()
+                .map(this::convertToSharingDetailsDTO)
+                .collect(Collectors.toList());
+
+        System.out.println("Returning sharing details: " + sharingDetails.size() + " items");
+        return ResponseEntity.ok(sharingDetails);
+        
+    } catch (Exception e) {
+        System.out.println("Error in sharing-details: " + e.getMessage());
+        e.printStackTrace();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Collections.singletonMap("error", "An error occurred while fetching sharing details"));
+    }
+  }
+
+    private SharingDetailsDTO convertToSharingDetailsDTO(SharingType sharingType) {
+        return new SharingDetailsDTO(
+            sharingType.getCapacity(),
+            sharingType.getSharingFee(),
+            "Success"
+        );
+    }
+
+
     @GetMapping("/admin-details")
     public ResponseEntity<?> getAdminDetails() {
         System.out.println("=== ADMIN DETAILS API CALLED ===");
         
-        // Extract email from SecurityContext
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = getEmailFromSecurityContext(auth);
         System.out.println("Extracted email from SecurityContext: " + email);
@@ -161,58 +282,10 @@ public class AuthController {
         }
     }
 
-    // SESSION CHECK (verify JWT token is valid)
-    // @GetMapping("/check-session")
-    // public ResponseEntity<?> checkSession() {
-    //     System.out.println("=== CHECK SESSION API CALLED ===");
-        
-    //     // Get authentication from SecurityContext
-    //     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-    //     String email = getEmailFromSecurityContext(auth);
-    //     System.out.println("Session check - email from SecurityContext: " + email);
-        
-    //     Map<String, Object> sessionInfo = new HashMap<>();
-        
-    //     if (email != null) {
-    //         try {
-    //             // Verify admin still exists in database
-    //             Admin admin = authService.getAdminByEmail(email);
-    //             if (admin != null) {
-    //                 sessionInfo.put("authenticated", true);
-    //                 sessionInfo.put("email", email);
-    //                 sessionInfo.put("role", "admin");
-    //                 sessionInfo.put("message", "Valid JWT session");
-    //                 sessionInfo.put("admin", Map.of(
-    //                     "firstName", admin.getFirstName(),
-    //                     "lastName", admin.getLastName(),
-    //                     "hostelName", admin.getHostelName()
-    //                 ));
-    //                 System.out.println("Valid session for: " + email);
-    //             } else {
-    //                 sessionInfo.put("authenticated", false);
-    //                 sessionInfo.put("message", "Admin account not found");
-    //                 System.out.println("Admin account not found for: " + email);
-    //             }
-    //         } catch (Exception e) {
-    //             sessionInfo.put("authenticated", false);
-    //             sessionInfo.put("message", "Error checking session");
-    //             System.out.println("Error checking session: " + e.getMessage());
-    //         }
-    //     } else {
-    //         sessionInfo.put("authenticated", false);
-    //         sessionInfo.put("message", "No valid JWT session");
-    //         System.out.println("No valid JWT session found");
-    //     }
-        
-    //     return ResponseEntity.ok(sessionInfo);
-    // }
-
-    // ADMIN PROFILE DETAILS
     @GetMapping("/admin-profile-details")
     public ResponseEntity<?> getProfileDetails() {
         System.out.println("=== ADMIN PROFILE DETAILS API CALLED ===");
         
-        // Get authentication from SecurityContext
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = getEmailFromSecurityContext(auth);
         System.out.println("Profile details - email from SecurityContext: " + email);
@@ -248,12 +321,10 @@ public class AuthController {
         }
     }
 
-    // REFRESH TOKEN (optional - for extending session)
     @PostMapping("/refresh-token")
     public ResponseEntity<?> refreshToken(HttpServletRequest request, HttpServletResponse response) {
         System.out.println("=== REFRESH TOKEN API CALLED ===");
         
-        // Get authentication from SecurityContext
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = getEmailFromSecurityContext(auth);
         System.out.println("Refresh token - email from SecurityContext: " + email);
@@ -264,15 +335,13 @@ public class AuthController {
         }
 
         try {
-            // Generate new token
             String newToken = jwtUtil.generateToken(email);
             
-            // Update cookie
             Cookie jwtCookie = new Cookie("jwtToken", newToken);
             jwtCookie.setHttpOnly(true);
             jwtCookie.setSecure(false);
             jwtCookie.setPath("/");
-            jwtCookie.setMaxAge(24 * 60 * 60); // 24 hours
+            jwtCookie.setMaxAge(24 * 60 * 60);
             response.addCookie(jwtCookie);
             
             Map<String, Object> responseBody = new HashMap<>();
@@ -289,7 +358,6 @@ public class AuthController {
         }
     }
 
-    // HEALTH CHECK
     @GetMapping("/health")
     public ResponseEntity<Map<String, String>> healthCheck() {
         System.out.println("=== AUTH HEALTH CHECK ===");
@@ -300,10 +368,9 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    // HELPER METHOD to extract email from SecurityContext
     private String getEmailFromSecurityContext(Authentication auth) {
-        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
-            return (String) auth.getPrincipal();
+        if (auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)) {
+            return auth.getName();
         }
         return null;
     }
