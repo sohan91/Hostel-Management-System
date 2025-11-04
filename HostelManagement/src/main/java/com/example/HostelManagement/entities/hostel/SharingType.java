@@ -48,4 +48,60 @@ public class SharingType {
         this.description = description;
         this.createdAt = LocalDateTime.now();
     }
+
+    public Integer getSharingTypeId() {
+        return sharingTypeId;
+    }
+
+    public void setSharingTypeId(Integer sharingTypeId) {
+        this.sharingTypeId = sharingTypeId;
+    }
+
+    public Admin getAdmin() {
+        return admin;
+    }
+
+    public void setAdmin(Admin admin) {
+        this.admin = admin;
+    }
+
+    public BigDecimal getSharingFee() {
+        return sharingFee;
+    }
+
+    public void setSharingFee(BigDecimal sharingFee) {
+        this.sharingFee = sharingFee;
+    }
+
+    public String getTypeName() {
+        return typeName;
+    }
+
+    public void setTypeName(String typeName) {
+        this.typeName = typeName;
+    }
+
+    public Integer getCapacity() {
+        return capacity;
+    }
+
+    public void setCapacity(Integer capacity) {
+        this.capacity = capacity;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 }

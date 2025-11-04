@@ -9,7 +9,6 @@ public class RoomDTO {
     private String roomStatus;
     private Integer currentOccupancy;
     private String createdAt;
-    
     // Additional fields for display
     private String sharingTypeName;
     private Integer sharingCapacity;

@@ -1,9 +1,10 @@
 package com.example.HostelManagement.service;
 
 import java.util.List;
+
+import com.example.HostelManagement.dto.SharingDetailsDTO;
 import org.springframework.stereotype.Service;
 import com.example.HostelManagement.dao.AdminAuthDAO;
-import com.example.HostelManagement.entities.hostel.SharingType;
 import com.example.HostelManagement.entities.hostel.admin.Admin;
 
 @Service
@@ -44,10 +45,10 @@ public class AdminAuthService {
         }
     }
 
-    public List<SharingType> sharingTypesList(Integer id) {
+    public List<SharingDetailsDTO> sharingTypesList(Integer id) {
         try {
             System.out.println("Getting sharing types for admin ID: " + id);
-            List<SharingType> sharingTypes = adminAuthDAO.sharingTypesList(id);
+            List<SharingDetailsDTO> sharingTypes = adminAuthDAO.sharingTypesList(id);
             System.out.println("Found sharing types: " + (sharingTypes != null ? sharingTypes.size() : "null"));
             return sharingTypes;
         } catch (Exception e) {
@@ -56,18 +57,5 @@ public class AdminAuthService {
             return List.of();
         }
     }
-    
-    // Optional: Add method to use getSharingTypesByAdminId if needed
-    public List<SharingType> getSharingTypesByAdminEmail(String email) {
-        try {
-            System.out.println("Getting sharing types by email: " + email);
-            List<SharingType> sharingTypes = adminAuthDAO.getSharingTypesByAdminId(email);
-            System.out.println("Found sharing types by email: " + (sharingTypes != null ? sharingTypes.size() : "null"));
-            return sharingTypes;
-        } catch (Exception e) {
-            System.out.println("Error getting sharing types by email: " + e.getMessage());
-            e.printStackTrace();
-            return List.of();
-        }
-    }
+
 }

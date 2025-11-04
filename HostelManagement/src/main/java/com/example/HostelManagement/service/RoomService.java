@@ -15,6 +15,52 @@ public class RoomService {
     @Autowired
     private RoomDAO roomDAO;
 
+    public boolean createRoom(RoomDTO roomDTO) {
+        System.out.println("🚀 RoomService.createRoom() called for room: " + roomDTO.getRoomNumber());
+
+        try {
+            // Validate required fields
+            if (roomDTO.getRoomNumber() == null || roomDTO.getRoomNumber().trim().isEmpty()) {
+                System.out.println("❌ Room number is required");
+                return false;
+            }
+
+            if (roomDTO.getFloorNumber() == null) {
+                System.out.println("❌ Floor number is required");
+                return false;
+            }
+
+            if (roomDTO.getSharingTypeId() == null) {
+                System.out.println("❌ Sharing type ID is required");
+                return false;
+            }
+
+            // Save the room
+            boolean success = roomDAO.saveRoom(roomDTO);
+            System.out.println("✅ Room creation result: " + (success ? "SUCCESS" : "FAILED"));
+
+            return success;
+
+        } catch (Exception e) {
+            System.out.println("❌ Error in RoomService.createRoom(): " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean isRoomNumberExists(Integer adminId, String roomNumber, Integer floorNumber, Integer sharingTypeId) {
+        System.out.println("🔍 RoomService.isRoomNumberExists() called for room: " + roomNumber + ", floor: " + floorNumber);
+
+        try {
+            boolean exists = roomDAO.isRoomNumberExists(adminId, roomNumber, floorNumber, sharingTypeId);
+            System.out.println("🔍 Room uniqueness check result: " + (exists ? "EXISTS" : "UNIQUE"));
+            return exists;
+
+        } catch (Exception e) {
+            System.out.println("❌ Error checking room uniqueness: " + e.getMessage());
+            return false;
+        }
+    }
+
     public List<RoomDTO> getAllRooms(Integer adminId) {
         System.out.println("🚀 RoomService.getAllRooms() called with adminId: " + adminId);
         
