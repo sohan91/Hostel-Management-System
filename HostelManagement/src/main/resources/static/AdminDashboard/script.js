@@ -1,48 +1,59 @@
-// === DASHBOARD OPTIMIZED LOADING ===
 document.addEventListener("DOMContentLoaded", () => {
-    console.log("Dashboard loading - starting parallel operations");
-    
-    // 1. IMMEDIATELY set default values (no waiting)
+    console.log("Dashboard loading - starting sequential operations");
     setDefaultDashboardValues();
-    
-    // 2. Initialize UI components immediately
     initializeDashboardUI();
-    
-    // 3. Load dynamic data from APIs
-    loadAllDataInParallel();
+    loadDataSequentially();
 });
 
 function setDefaultDashboardValues() {
     console.log("Setting default dashboard values immediately");
-    
     const hostelNameElem = document.querySelector(".hostel-name");
     const profileNameElem = document.querySelector(".profile-name");
-
     if (hostelNameElem) hostelNameElem.textContent = "Loading...";
     if (profileNameElem) profileNameElem.textContent = "Loading...";
 }
 
 function initializeDashboardUI() {
     console.log("Initializing UI components immediately");
-    
     initializeSidebar();
     initializeProfileNavigation();
     initializeSearch();
+    initializeAddSharingTypeNavButton();
     console.log("UI components initialized");
 }
 
-// === HELPER: Aggressive Content Clear ===
-function clearMainContentContainer() {
-    // Target the main container where all rooms/empty states are displayed
-    const container = document.querySelector('.room-section.expanded'); 
-    
-    if (container) {
-        container.innerHTML = ''; // Clear all inner HTML
-        container.style.display = 'block'; // Ensure it's visible
-        console.log("🧹 Main content container aggressively cleared.");
+function initializeAddSharingTypeNavButton() {
+    const addTypeBtn = document.querySelector('.nav-button.add-type-btn');
+
+    if (addTypeBtn) {
+        console.log("➕ Add Sharing Type nav button found");
+
+        addTypeBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log("➕ Add Sharing Type nav button clicked");
+            showAddSharingTypeModal();
+        });
+
+        addTypeBtn.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                console.log("➕ Add Sharing Type nav button activated via keyboard");
+                showAddSharingTypeModal();
+            }
+        });
+    } else {
+        console.log("❌ Add Sharing Type nav button not found");
     }
-    
-    // Also, clear any global empty state container if it exists outside the main section
+}
+
+function clearMainContentContainer() {
+    const container = document.querySelector('.room-section.expanded');
+    if (container) {
+        container.innerHTML = '';
+        container.style.display = 'block';
+        console.log("🧹 Main content container cleared.");
+    }
     const globalContainer = document.querySelector('.empty-state-global-container');
     if (globalContainer) {
         globalContainer.remove();
@@ -50,31 +61,36 @@ function clearMainContentContainer() {
     }
 }
 
-// === DYNAMIC DATA LOADING (PARALLEL) ===
-async function loadAllDataInParallel() {
-    console.log("Starting parallel data fetching: Admin Details and Room Details");
-    
-    // Clear the container before showing any content (including loading states)
-    clearMainContentContainer(); 
-    
-    try {
-        // Use Promise.all to fetch both data sets concurrently
-        const [adminDetails, roomDetails] = await Promise.all([
-            getAdminDetails(),
-            getRoomDetails()
-        ]);
+async function loadDataSequentially() {
+    console.log("Starting sequential data loading");
 
-        console.log("✅ All initial data loaded successfully in parallel.");
+    clearMainContentContainer();
+
+    try {
+        // Step 1: Load admin details first
+        const adminDetails = await getAdminDetails();
+        console.log("✅ Admin details loaded");
+
+        // Step 2: Load sharing types
+        const sharingTypes = await getSharingTypes();
+        console.log("✅ Sharing types loaded:", sharingTypes.length);
+
+        // Step 3: Load room details (passing required sharingTypes)
+        const roomDetails = await getRoomDetails(sharingTypes);
+        console.log("✅ Room details loaded:", roomDetails ? roomDetails.length : 0);
+
+        console.log("✅ All data loaded successfully in sequence");
 
     } catch (error) {
-        console.error("❌ An overall error occurred during parallel data loading:", error);
+        console.error("❌ An overall error occurred during data loading:", error);
+        showNotification("Error loading dashboard data", "error");
     }
 }
 
-// Admin details function (No changes needed here)
+// Admin details function
 async function getAdminDetails() {
     console.log("Fetching admin details...");
-    
+
     try {
         const response = await fetch("/api/auth/admin-details", {
             method: "GET",
@@ -83,7 +99,6 @@ async function getAdminDetails() {
                 'Content-Type': 'application/json',
             }
         });
-
         if (response.ok) {
             const adminData = await response.json();
             updateDashboardUI(adminData);
@@ -91,17 +106,53 @@ async function getAdminDetails() {
         } else {
             console.error("Failed to fetch admin details:", response.status);
             showNotification("Failed to load admin details", "error");
+            throw new Error("Failed to load admin details");
         }
     } catch (error) {
         console.error("Error fetching admin details:", error);
         showNotification("Error loading admin details", "error");
+        throw error;
     }
 }
 
-// Room details function - Fetches real data from API
-async function getRoomDetails() {
+// Get sharing types
+async function getSharingTypes() {
+    console.log("🔄 Fetching sharing types...");
+
+    try {
+        const response = await fetch("/api/auth/sharing-details?" + new Date().getTime(), {
+            method: "GET",
+            credentials: "include",
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        if (response.ok) {
+            const sharingData = await response.json();
+            console.log("Sharing types loaded from API:", sharingData);
+
+            if (Array.isArray(sharingData) && sharingData.length > 0) {
+                sharingData.sort((a, b) => (a.capacity || 99) - (b.capacity || 99));
+                return sharingData;
+            } else {
+                console.log("No sharing types found");
+                return [];
+            }
+        } else {
+            console.error("Failed to fetch sharing types:", response.status);
+            return [];
+        }
+    } catch (error) {
+        console.error("Error fetching sharing types:", error);
+        return [];
+    }
+}
+
+// Get room details (Accepts pre-fetched sharing types) - FIXED VERSION
+async function getRoomDetails(sharingTypes) {
     console.log("Fetching room details from API...");
-    
+
     try {
         const response = await fetch("/api/auth/room-details", {
             method: "GET",
@@ -114,66 +165,784 @@ async function getRoomDetails() {
         if (response.ok) {
             const roomsData = await response.json();
             console.log("Room details loaded from API:", roomsData);
-            
-            // Handle both array response and message response
+
             if (Array.isArray(roomsData) && roomsData.length > 0) {
-                displayRoomsWithSharingHeaders(roomsData);
+                displayDashboardStructure(sharingTypes, roomsData);
                 return roomsData;
             } else {
-                // Rooms array is empty, check for sharing types
-                await showSharingTypesForEmptyRooms();
+                // No rooms but sharing types exist
+                displayDashboardStructure(sharingTypes, []);
                 return [];
             }
         } else {
             console.error("Failed to fetch room details:", response.status);
             showNotification("Failed to load room details", "error");
-            showGlobalEmptyState(); 
+
+            // Still try to show structure if sharing types were loaded
+            if (sharingTypes && sharingTypes.length > 0) {
+                displayDashboardStructure(sharingTypes, []);
+                return [];
+            } else {
+                showGlobalEmptyState();
+                return [];
+            }
         }
     } catch (error) {
         console.error("Error fetching room details:", error);
         showNotification("Error loading room details", "error");
-        showGlobalEmptyState();
+
+        // Still try to show structure if sharing types were loaded
+        if (sharingTypes && sharingTypes.length > 0) {
+            displayDashboardStructure(sharingTypes, []);
+            return [];
+        } else {
+            showGlobalEmptyState();
+            return [];
+        }
     }
 }
 
-// Fetch sharing types when no rooms exist
-async function showSharingTypesForEmptyRooms() {
-    console.log("🔄 Fetching sharing types since no rooms exist");
-    
-    try {
-        const response = await fetch("/api/auth/sharing-details", {
-            method: "GET",
-            credentials: "include",
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        });
+function displayDashboardStructure(sharingTypes, rooms) {
+    console.log("🎨 Building dashboard structure:", {
+        sharingTypesCount: sharingTypes.length,
+        roomsCount: rooms.length
+    });
 
-        if (response.ok) {
-            const sharingData = await response.json();
-            console.log("Sharing types loaded from API:", sharingData);
-            
-            if (Array.isArray(sharingData) && sharingData.length > 0) {
-                // Sharing types exist, display them with empty room states
-                sharingData.sort((a, b) => (a.capacity || 99) - (b.capacity || 99));
-                displaySharingTypesWithoutRooms(sharingData);
+    const roomSection = document.querySelector('.room-section.expanded');
+
+    if (!roomSection) {
+        console.error("❌ Room section not found!");
+        return;
+    }
+
+    clearMainContentContainer();
+
+    if (sharingTypes.length === 0) {
+        console.log("No sharing types configured");
+        showGlobalEmptyState();
+        return;
+    }
+
+    console.log("✅ Displaying dashboard with", sharingTypes.length, "sharing types");
+
+    // Group rooms by sharing type and floor
+    const roomsBySharingAndFloor = groupRoomsBySharingTypeAndFloor(rooms);
+    console.log("📊 Rooms grouped by sharing type:", roomsBySharingAndFloor);
+
+    // Create sections for each sharing type
+    sharingTypes.forEach(sharingType => {
+        // Use capacity to generate sharing type name
+        const capacity = sharingType.capacity || 1;
+        const sharingTypeName = `${capacity}-Sharing`;
+        console.log(`🔄 Processing sharing type: ${sharingTypeName} (ID: ${sharingType.sharingTypeId})`);
+
+        const sharingRooms = roomsBySharingAndFloor[sharingTypeName] || {};
+        console.log(`📦 Rooms for ${sharingTypeName}:`, sharingRooms);
+
+        const sharingSection = createSharingTypeSection(sharingType, sharingRooms);
+        roomSection.appendChild(sharingSection);
+        console.log(`✅ Added sharing type section: ${sharingTypeName}`);
+    });
+
+    // Initialize interactions
+    initializeRoomCardInteractions();
+    initializeDropdownToggles();
+    initializeAddRoomButtons();
+    initializeAddSharingTypeButton();
+
+    console.log("✅ Dashboard structure built successfully");
+}
+
+function groupRoomsBySharingTypeAndFloor(rooms) {
+    const grouped = {};
+
+    if (!rooms || !Array.isArray(rooms)) {
+        console.log("⚠️ No rooms provided for grouping");
+        return grouped;
+    }
+
+    console.log("🔍 Grouping", rooms.length, "rooms by sharing type and floor");
+
+    rooms.forEach(room => {
+        // Use capacity to generate sharing type name for grouping
+        const sharingCapacity = room.sharingCapacity || 1;
+        const sharingType = `${sharingCapacity}-Sharing`;
+        const floorNumber = String(room.floorNumber || 1);
+
+        console.log(`🏠 Processing room: ${room.roomNumber}, Sharing: ${sharingType}, Floor: ${floorNumber}`);
+
+        if (!grouped[sharingType]) {
+            grouped[sharingType] = {};
+            console.log(`📁 Created new sharing type group: ${sharingType}`);
+        }
+
+        if (!grouped[sharingType][floorNumber]) {
+            grouped[sharingType][floorNumber] = [];
+            console.log(`📂 Created new floor group: ${sharingType} - Floor ${floorNumber}`);
+        }
+
+        grouped[sharingType][floorNumber].push(room);
+        console.log(`✅ Added room ${room.roomNumber} to ${sharingType} - Floor ${floorNumber}`);
+    });
+
+    console.log("📊 Final grouped structure:", grouped);
+    return grouped;
+}
+
+function createSharingTypeSection(sharingType, floorsData) {
+    const capacity = sharingType.capacity || 1;
+    const price = sharingType.sharingFee || 5000;
+    const sharingTypeName = `${capacity}-Sharing`;
+
+    console.log(`🏗️ Creating section for: ${sharingTypeName} (Capacity: ${capacity}, Price: ${price})`);
+
+    const floorNumbers = Object.keys(floorsData);
+    const totalRooms = Object.values(floorsData).reduce((total, floorRooms) => total + floorRooms.length, 0);
+
+    console.log(`📊 Section stats - Floors: ${floorNumbers.length}, Total Rooms: ${totalRooms}`);
+
+    const sharingDiv = document.createElement('div');
+    sharingDiv.className = 'sharing-type-section';
+    sharingDiv.setAttribute('data-sharing-type', sharingTypeName);
+    sharingDiv.setAttribute('data-sharing-id', sharingType.sharingTypeId || '');
+    sharingDiv.setAttribute('data-capacity', capacity);
+
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'sharing-type-header';
+    headerDiv.innerHTML = `
+        <div class="sharing-type-info">
+            <button class="dropdown-toggle" data-sharing-type="${sharingTypeName}">
+                <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="sharing-type-details">
+                <h2>${sharingTypeName}</h2>
+                <div class="sharing-type-stats">
+                    <span class="floor-count">${floorNumbers.length} ${floorNumbers.length === 1 ? 'floor' : 'floors'}</span>
+                    <span class="room-count">${totalRooms} ${totalRooms === 1 ? 'room' : 'rooms'}</span>
+                    <span class="price-info">₹${price} / bed</span>
+                </div>
+            </div>
+        </div>
+        <div class="sharing-type-actions">
+            <button class="add-room-btn" data-sharing-type="${sharingTypeName}" data-capacity="${capacity}" data-price="${price}" data-sharing-id="${sharingType.sharingTypeId || ''}">
+                <i class="fas fa-plus"></i> Add Room
+            </button>
+        </div>
+    `;
+    sharingDiv.appendChild(headerDiv);
+
+    const floorsContainer = document.createElement('div');
+    floorsContainer.className = 'floors-container';
+    floorsContainer.id = `floors-${sharingTypeName.replace(/\s+/g, '-').toLowerCase()}`;
+
+    // Handle empty state or create floor sections
+    if (totalRooms === 0) {
+        console.log(`📭 No rooms found for sharing type: ${sharingTypeName}, showing empty state`);
+        floorsContainer.innerHTML = `
+            <div class="empty-room-state-container">
+                <div class="empty-room-content">
+                    <i class="fas fa-door-open"></i>
+                    <h4>No Rooms Added Yet</h4>
+                    <p>This sharing type is present, but doesn't contain any rooms/floors. Click the <strong>"Add Room"</strong> button above to create the first room.</p>
+                </div>
+            </div>
+        `;
+    } else {
+        console.log(`🏢 Creating floor sections for ${sharingTypeName} with ${floorNumbers.length} floors`);
+        // Create floor sections with rooms
+        Object.keys(floorsData).sort((a, b) => parseInt(a) - parseInt(b)).forEach(floorNumber => {
+            const floorSection = createFloorSection(floorNumber, floorsData[floorNumber]);
+            floorsContainer.appendChild(floorSection);
+            console.log(`✅ Added floor ${floorNumber} for ${sharingTypeName}`);
+        });
+    }
+
+    sharingDiv.appendChild(floorsContainer);
+    console.log(`✅ Completed section for: ${sharingTypeName}`);
+    return sharingDiv;
+}
+
+function createFloorSection(floorNumber, rooms) {
+    const floorDiv = document.createElement('div');
+    floorDiv.className = 'floor-section';
+
+    const heading = document.createElement('h3');
+    heading.className = 'floor-heading';
+    heading.textContent = `Floor ${floorNumber}`;
+    floorDiv.appendChild(heading);
+
+    const roomsContainer = document.createElement('div');
+    roomsContainer.className = 'floor-rooms-container';
+
+    // Add room cards for this floor
+    rooms.forEach(room => {
+        const roomCard = createRoomCard(room);
+        roomsContainer.appendChild(roomCard);
+    });
+
+    floorDiv.appendChild(roomsContainer);
+    return floorDiv;
+}
+
+function createRoomCard(room) {
+    console.log("🏠 Creating card for room:", room.roomNumber);
+
+    const roomId = room.roomId;
+    const roomNumber = room.roomNumber;
+    const floorNumber = room.floorNumber;
+    const roomStatus = room.roomStatus;
+    const currentOccupancy = room.currentOccupancy || 0;
+    const sharingCapacity = room.sharingCapacity || 2;
+    const sharingTypeName = `${sharingCapacity}-Sharing`;
+    const price = room.price || 5000;
+
+    const availableSpots = sharingCapacity - currentOccupancy;
+    const statusClass = getRoomStatusClass(roomStatus);
+    const availabilityText = getAvailabilityText(roomStatus, availableSpots);
+    const occupancyStatus = room.occupancyStatus || `${currentOccupancy}/${sharingCapacity}`;
+
+    const roomCard = document.createElement('div');
+    roomCard.className = `room-card ${statusClass}`;
+    roomCard.setAttribute('data-room-id', roomId);
+    roomCard.setAttribute('data-floor', floorNumber);
+    roomCard.setAttribute('data-sharing-type', sharingTypeName);
+
+    roomCard.innerHTML = `
+        <div class="room-card-header">
+            <div class="room-number-group">
+                <span class="room-number">${roomNumber}</span>
+                <span class="beds-info">Available: <span class="beds-available-count">${occupancyStatus}</span> beds</span>
+            </div>
+        </div>
+        <div class="room-details-content">
+            <ul class="room-meta-list">
+                <li><strong>Sharing Type:</strong> <span>${sharingTypeName}</span></li>
+                <li><strong>Availability:</strong> <span class="available-status">${availabilityText}</span></li>
+                <li><strong>Price:</strong> <span class="price">₹${price} <span class="price-unit">/Bed</span></span></li>
+            </ul>
+            <div class="room-actions">
+                <button class="btn-primary book-now-btn" data-room="${roomNumber}" data-room-id="${roomId}" ${availableSpots === 0 || roomStatus !== 'Available' ? 'disabled' : ''}>
+                    <i class="fas fa-bookmark"></i> ${availableSpots === 0 ? 'Full' : 'Book Now'}
+                </button>
+                <button class="btn-secondary details-btn" data-room="${roomNumber}" data-room-id="${roomId}">
+                    <i class="fas fa-info-circle"></i> View Details
+                </button>
+            </div>
+        </div>
+    `;
+    return roomCard;
+}
+
+function getRoomStatusClass(status) {
+    switch(status) {
+        case 'Available': return 'available-room';
+        case 'Occupied': return 'occupied-room';
+        case 'Maintenance': return 'maintenance-room';
+        default: return 'available-room';
+    }
+}
+
+function getAvailabilityText(status, availableSpots) {
+    switch(status) {
+        case 'Available':
+            return availableSpots === 1 ? '1 spot available' : `${availableSpots} spots available`;
+        case 'Occupied': return 'Fully occupied';
+        case 'Maintenance': return 'Under maintenance';
+        default: return 'Available';
+    }
+}
+
+function showGlobalEmptyState() {
+    console.log("⚠️ Displaying GLOBAL empty state: No sharing types exist.");
+    const container = document.querySelector('.room-section.expanded');
+
+    if (!container) {
+         console.error("❌ Main room section container not found!");
+         return;
+    }
+
+    clearMainContentContainer();
+
+    container.innerHTML = `
+        <div class="empty-state-global-container" style="text-align: center; padding: 50px 20px; min-height: 200px;">
+            <div class="empty-state-content">
+                <i class="fas fa-home" style="font-size: 40px; color: #007bff;"></i>
+                <h3 style="margin-top: 15px;">No Sharing Types Configured</h3>
+                <p>Start by creating sharing types to organize your hostel rooms</p>
+                <button class="btn-primary" id="addSharingTypeBtn" style="margin-top: 20px;">
+                    <i class="fas fa-plus"></i> Add Sharing Type
+                </button>
+            </div>
+        </div>
+    `;
+
+    container.style.display = 'block';
+
+    // Initialize the add sharing type button
+    initializeAddSharingTypeButton();
+}
+
+function initializeAddSharingTypeButton() {
+    const addSharingTypeBtn = document.getElementById('addSharingTypeBtn');
+    if (addSharingTypeBtn) {
+        addSharingTypeBtn.addEventListener('click', function() {
+            console.log("➕ Add Sharing Type button clicked");
+            showAddSharingTypeModal();
+        });
+    }
+}
+
+function showAddSharingTypeModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay active';
+
+    // Add CSS for proper modal styling
+    const modalStyles = `
+        <style>
+            .modal-overlay.active {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.6);
+                backdrop-filter: blur(5px);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+                opacity: 1;
+                transition: opacity 0.3s ease;
+            }
+            .modal-overlay.active .modal-content {
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+                width: 90%;
+                max-width: 500px;
+                max-height: 90vh;
+                overflow-y: auto;
+                transform: scale(1);
+                transition: transform 0.3s ease;
+                border: 1px solid #e0e0e0;
+            }
+            .modal-header {
+                padding: 20px 24px;
+                border-bottom: 1px solid #e8e8e8;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border-radius: 12px 12px 0 0;
+                display: flex;
+                justify-content: between;
+                align-items: center;
+            }
+            .modal-header h3 {
+                margin: 0;
+                font-size: 1.4rem;
+                font-weight: 600;
+            }
+            .close-modal {
+                background: rgba(255, 255, 255, 0.2);
+                border: none;
+                color: white;
+                font-size: 24px;
+                cursor: pointer;
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: background 0.2s ease;
+            }
+            .close-modal:hover {
+                background: rgba(255, 255, 255, 0.3);
+            }
+            .modal-body {
+                padding: 24px;
+            }
+            .form-group {
+                margin-bottom: 20px;
+            }
+            .form-group label {
+                display: block;
+                margin-bottom: 8px;
+                font-weight: 600;
+                color: #333;
+                font-size: 0.95rem;
+            }
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                width: 100%;
+                padding: 12px 16px;
+                border: 2px solid #e8e8e8;
+                border-radius: 8px;
+                font-size: 1rem;
+                transition: all 0.3s ease;
+                box-sizing: border-box;
+            }
+            .form-group input:focus,
+            .form-group select:focus,
+            .form-group textarea:focus {
+                outline: none;
+                border-color: #667eea;
+                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            }
+            .form-group textarea {
+                resize: vertical;
+                min-height: 80px;
+                font-family: inherit;
+            }
+            .readonly-field {
+                padding: 12px 16px;
+                background: #f8f9fa;
+                border: 2px solid #e8e8e8;
+                border-radius: 8px;
+                color: #666;
+                font-size: 1rem;
+            }
+            .form-actions {
+                display: flex;
+                gap: 12px;
+                justify-content: flex-end;
+                margin-top: 24px;
+                padding-top: 20px;
+                border-top: 1px solid #e8e8e8;
+            }
+            .btn-primary, .btn-secondary {
+                padding: 12px 24px;
+                border: none;
+                border-radius: 8px;
+                font-size: 1rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                min-width: 100px;
+            }
+            .btn-primary {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+            }
+            .btn-primary:hover:not(:disabled) {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+            }
+            .btn-primary:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                transform: none !important;
+            }
+            .btn-secondary {
+                background: #f8f9fa;
+                color: #666;
+                border: 2px solid #e8e8e8;
+            }
+            .btn-secondary:hover {
+                background: #e9ecef;
+                border-color: #ddd;
+            }
+            small {
+                display: block;
+                margin-top: 6px;
+                font-size: 0.85rem;
+                color: #666;
+            }
+            #capacityExistsMsg {
+                color: #dc3545;
+                font-weight: 500;
+            }
+            .loading-spinner {
+                display: inline-block;
+                width: 16px;
+                height: 16px;
+                border: 2px solid #ffffff;
+                border-radius: 50%;
+                border-top-color: transparent;
+                animation: spin 1s ease-in-out infinite;
+                margin-right: 8px;
+            }
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+            .validation-error {
+                border-color: #dc3545 !important;
+                background-color: #fff5f5;
+            }
+            .validation-success {
+                border-color: #28a745 !important;
+                background-color: #f8fff9;
+            }
+        </style>
+    `;
+
+    modal.innerHTML = modalStyles + `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Sharing Type</h3>
+                <button class="close-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="addSharingTypeForm">
+                    <div class="form-group">
+                        <label for="sharingCapacity">Sharing Capacity:</label>
+                        <select id="sharingCapacity" required>
+                            <option value="">Select capacity</option>
+                            <option value="1">1-Sharing (Single)</option>
+                            <option value="2">2-Sharing</option>
+                            <option value="3">3-Sharing</option>
+                            <option value="4">4-Sharing</option>
+                            <option value="5">5-Sharing</option>
+                            <option value="6">6-Sharing</option>
+                        </select>
+                        <small id="capacityExistsMsg" style="color: red; display: none; margin-top: 8px;">
+                            <i class="fas fa-exclamation-triangle"></i> This sharing type already exists for your hostel.
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <label for="sharingFee">Price per Bed (₹):</label>
+                        <input type="number" id="sharingFee" min="1000" step="500" placeholder="Enter price per bed" required>
+                        <small>Minimum price: ₹1000 per bed</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="sharingDescription">Description (Optional):</label>
+                        <textarea id="sharingDescription" placeholder="Brief description of this sharing type (e.g., 'Premium single rooms', 'Economy shared rooms')"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary cancel-btn">Cancel</button>
+                        <button type="submit" class="btn-primary" id="submitSharingBtn">
+                            Add Sharing Type
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Prevent background scrolling when modal is open
+    document.body.style.overflow = 'hidden';
+
+    // Close modal function
+    const closeModal = () => {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+        setTimeout(() => {
+            if (modal.parentNode) {
+                modal.parentNode.removeChild(modal);
+            }
+        }, 300);
+    };
+
+    // Close modal events
+    modal.querySelector('.close-modal').addEventListener('click', closeModal);
+    modal.querySelector('.cancel-btn').addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+
+    // Escape key to close modal
+    document.addEventListener('keydown', function escapeHandler(e) {
+        if (e.key === 'Escape') {
+            closeModal();
+            document.removeEventListener('keydown', escapeHandler);
+        }
+    });
+
+    // Real-time validation for capacity - FIXED VERSION
+    const capacitySelect = modal.querySelector('#sharingCapacity');
+    const existsMsg = modal.querySelector('#capacityExistsMsg');
+    const submitBtn = modal.querySelector('#submitSharingBtn');
+    const form = modal.querySelector('#addSharingTypeForm');
+
+    // Store current admin's sharing types for validation
+    let currentAdminSharingTypes = [];
+
+    // Function to load current admin's sharing types
+    const loadCurrentAdminSharingTypes = async () => {
+        try {
+            console.log("🔍 Loading current admin's sharing types for validation...");
+            const response = await fetch("/api/auth/sharing-details?" + new Date().getTime(), {
+                method: "GET",
+                credentials: "include"
+            });
+
+            if (response.ok) {
+                currentAdminSharingTypes = await response.json();
+                console.log("✅ Current admin sharing types loaded:", currentAdminSharingTypes);
             } else {
-                // No rooms AND no sharing types exist, show the absolute empty state
-                showGlobalEmptyState();
+                console.error("❌ Failed to load sharing types for validation");
+            }
+        } catch (error) {
+            console.error("❌ Error loading sharing types for validation:", error);
+        }
+    };
+
+    // Load sharing types when modal opens
+    loadCurrentAdminSharingTypes();
+
+    capacitySelect.addEventListener('change', async function() {
+        const capacity = this.value;
+
+        if (capacity) {
+            console.log(`🔍 Checking if ${capacity}-Sharing already exists for current admin...`);
+
+            // Check against current admin's sharing types only
+            const alreadyExists = currentAdminSharingTypes.some(type =>
+                type.capacity == capacity || type.sharingCapacity == capacity
+            );
+
+            if (alreadyExists) {
+                existsMsg.style.display = 'block';
+                submitBtn.disabled = true;
+                capacitySelect.classList.add('validation-error');
+                capacitySelect.classList.remove('validation-success');
+                console.log(`❌ ${capacity}-Sharing already exists for current admin`);
+            } else {
+                existsMsg.style.display = 'none';
+                submitBtn.disabled = false;
+                capacitySelect.classList.remove('validation-error');
+                capacitySelect.classList.add('validation-success');
+                console.log(`✅ ${capacity}-Sharing is available for current admin`);
             }
         } else {
-             // Failed to fetch sharing types (e.g., 404/500), assume they don't exist
-            showGlobalEmptyState();
+            existsMsg.style.display = 'none';
+            submitBtn.disabled = false;
+            capacitySelect.classList.remove('validation-error', 'validation-success');
         }
+    });
+
+    // Form submission with server-side validation as backup
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const capacity = capacitySelect.value;
+        const sharingFee = modal.querySelector('#sharingFee').value;
+        const description = modal.querySelector('#sharingDescription').value;
+
+        console.log(`📝 Attempting to add new sharing type: ${capacity}-Sharing, ₹${sharingFee}`);
+
+        // Validate inputs
+        if (!capacity || !sharingFee) {
+            showNotification("Please fill all required fields", "error");
+            return;
+        }
+
+        if (parseInt(sharingFee) < 1000) {
+            showNotification("Price per bed must be at least ₹1000", "error");
+            modal.querySelector('#sharingFee').focus();
+            return;
+        }
+
+        // Double-check client-side validation
+        const alreadyExists = currentAdminSharingTypes.some(type =>
+            type.capacity == capacity || type.sharingCapacity == capacity
+        );
+
+        if (alreadyExists) {
+            showNotification("This sharing type already exists for your hostel", "error");
+            capacitySelect.focus();
+            return;
+        }
+
+        try {
+            // Update button to show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<div class="loading-spinner"></div> Adding...';
+
+            const response = await fetch("/api/auth/add-sharing-type", {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    capacity: parseInt(capacity),
+                    sharingFee: parseInt(sharingFee),
+                    description: description || ""
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showNotification(result.message, 'success');
+                // Don't close modal immediately - show success state briefly
+                submitBtn.innerHTML = '<i class="fas fa-check"></i> Success!';
+                submitBtn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+
+                // Wait a moment to show success, then close and refresh
+                setTimeout(async () => {
+                    closeModal();
+                    // Refresh the dashboard to show new sharing type
+                    await refreshDashboard();
+                }, 1000);
+
+            } else {
+                // Handle server-side validation errors
+                if (result.message && result.message.toLowerCase().includes('already exists')) {
+                    showNotification("This sharing type already exists for your hostel", "error");
+                    existsMsg.style.display = 'block';
+                    submitBtn.disabled = true;
+                    capacitySelect.classList.add('validation-error');
+                } else {
+                    showNotification(result.message || "Error adding sharing type", "error");
+                }
+
+                // Reset button state on error
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Add Sharing Type';
+            }
+        } catch (error) {
+            console.error("Error adding sharing type:", error);
+            showNotification("Error adding sharing type. Please try again.", 'error');
+            // Reset button state on error
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Add Sharing Type';
+        }
+    });
+
+    // Initialize form
+    capacitySelect.dispatchEvent(new Event('change'));
+
+    // Focus on first input
+    setTimeout(() => {
+        capacitySelect.focus();
+    }, 100);
+}
+async function refreshDashboard() {
+    console.log("🔄 Starting dashboard refresh...");
+
+    try {
+        // Clear current content
+        clearMainContentContainer();
+
+        // Show loading state
+        const container = document.querySelector('.room-section.expanded');
+        if (container) {
+            container.innerHTML = `
+                <div class="loading-state" style="text-align: center; padding: 40px;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: #007bff;"></i>
+                    <p style="margin-top: 10px;">Refreshing dashboard...</p>
+                </div>
+            `;
+        }
+
+        // Reload all data sequentially
+        await loadDataSequentially();
+
+        console.log("✅ Dashboard refresh completed");
     } catch (error) {
-        console.error("Error fetching sharing types:", error);
-        showGlobalEmptyState();
+        console.error("❌ Error refreshing dashboard:", error);
+        showNotification("Error refreshing dashboard", "error");
     }
 }
+
+// ... (rest of your existing functions remain the same - initializeSidebar, initializeProfileNavigation, showNotification, etc.)
 
 function updateDashboardUI(admin) {
     console.log("Updating dashboard UI with admin data:", admin);
-    
+
     const hostelNameElem = document.querySelector(".hostel-name");
     const profileNameElem = document.querySelector(".profile-name");
 
@@ -238,15 +1007,15 @@ function initializeProfileNavigation() {
             e.preventDefault();
             e.stopPropagation();
             console.log("Logout button clicked");
-            
+
             showNotification("Logging out...", "info");
-            
+
             try {
                 const response = await fetch("/api/auth/logout", {
                     method: "POST",
                     credentials: "include"
                 });
-                
+
                 if (response.ok) {
                     console.log("Logout successful");
                     localStorage.clear();
@@ -270,12 +1039,11 @@ function initializeProfileNavigation() {
 
 function showNotification(message, type = "info") {
     console.log(`Notification: ${message}`);
-    // Create a nice notification instead of alert
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
     notification.textContent = message;
     document.body.appendChild(notification);
-    
+
     setTimeout(() => {
         notification.remove();
     }, 3000);
@@ -284,10 +1052,10 @@ function showNotification(message, type = "info") {
 // === SEARCH FUNCTIONALITY ===
 function initializeSearch() {
     console.log("🔍 initializeSearch() called");
-    
+
     const searchInput = document.getElementById('roomSearch');
     console.log("Search input found:", !!searchInput);
-    
+
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase().trim();
@@ -300,15 +1068,15 @@ function initializeSearch() {
 function filterRooms(searchTerm) {
     const roomCards = document.querySelectorAll('.room-card');
     console.log("Filtering", roomCards.length, "rooms for:", searchTerm);
-    
+
     let visibleCount = 0;
 
     roomCards.forEach(card => {
         const roomNumber = card.querySelector('.room-number')?.textContent.toLowerCase() || '';
         const floor = card.getAttribute('data-floor') || '';
         const sharingType = card.getAttribute('data-sharing-type')?.toLowerCase() || '';
-        
-        const matchesSearch = 
+
+        const matchesSearch =
             roomNumber.includes(searchTerm) ||
             floor.includes(searchTerm) ||
             sharingType.includes(searchTerm) ||
@@ -317,11 +1085,11 @@ function filterRooms(searchTerm) {
         if (matchesSearch) {
             card.style.display = 'block';
             visibleCount++;
-            
+
             // Show parent sections
             let currentElement = card.parentElement;
             while (currentElement) {
-                if (currentElement.classList.contains('floor-section') || 
+                if (currentElement.classList.contains('floor-section') ||
                     currentElement.classList.contains('sharing-type-section')) {
                     currentElement.style.display = 'block';
                 }
@@ -371,342 +1139,10 @@ function clearSearch() {
         searchInput.value = '';
     }
     filterRooms('');
-    
+
     const noResults = document.querySelector('.no-results');
     if (noResults) {
         noResults.remove();
-    }
-}
-
-// === ROOM MANAGEMENT WITH REAL API DATA ===
-function displayRoomsWithSharingHeaders(rooms) {
-    console.log("🎨 displayRoomsWithSharingHeaders() called with real API data:", rooms);
-    
-    const roomSection = document.querySelector('.room-section.expanded');
-    
-    if (!roomSection) {
-        console.error("❌ Room section not found!");
-        return;
-    }
-
-    // Aggressively clear content first
-    clearMainContentContainer();
-
-    if (!rooms || !Array.isArray(rooms) || rooms.length === 0) {
-        console.log("❌ No rooms to display (secondary check)");
-        return; 
-    }
-
-    console.log("✅ Displaying", rooms.length, "real rooms from API");
-
-    // Group rooms by sharing type first, then by floor using real API data
-    const roomsBySharingType = groupRoomsBySharingTypeAndFloor(rooms);
-    console.log("📊 Real rooms grouped by sharing type:", roomsBySharingType);
-
-    // Create sharing type sections with real data
-    Object.keys(roomsBySharingType).sort((a, b) => parseInt(a) - parseInt(b)).forEach(sharingType => {
-        const sharingSection = createSharingTypeSection(sharingType, roomsBySharingType[sharingType]);
-        roomSection.appendChild(sharingSection);
-        console.log(`✅ Added sharing type section: ${sharingType}`);
-    });
-
-    // Initialize room interactions and dropdown toggles
-    initializeRoomCardInteractions();
-    initializeDropdownToggles();
-    initializeAddRoomButtons();
-    
-    console.log("✅ Real rooms displayed successfully from API");
-}
-
-// === Global Empty State Function (The one that replaces everything) ===
-function showGlobalEmptyState() {
-    console.log("⚠️ Displaying GLOBAL empty state: No rooms or sharing types exist.");
-    const container = document.querySelector('.room-section.expanded');
-    
-    if (!container) {
-         console.error("❌ Main room section container not found!");
-         return;
-    }
-
-    // Aggressively clear content first
-    clearMainContentContainer();
-
-    container.innerHTML = `
-        <div class="empty-state-global-container" style="text-align: center; padding: 50px 20px; min-height: 200px;">
-            <div class="empty-state-content">
-                <i class="fas fa-home" style="font-size: 40px; color: #007bff;"></i>
-                <h3 style="margin-top: 15px;">No Rooms or Sharing Types Configured</h3>
-                <p>No-Sharing are available to start that click on **Add ShareType Button** to start the application</p>
-                <button class="btn-primary" onclick="window.location.href='/hostel/add-sharing-type'" style="margin-top: 20px;">
-                    <i class="fas fa-plus"></i> Add ShareType
-                </button>
-            </div>
-        </div>
-    `;
-    
-    container.style.display = 'block'; 
-}
-
-function initializeRoomCardInteractions() {
-    console.log("Initializing room card interactions (e.g., Book Now/View Details).");
-    // Implementation for button event listeners goes here
-}
-
-
-// Display sharing types when no rooms exist
-function displaySharingTypesWithoutRooms(sharingTypes) {
-    console.log("🏗️ Displaying sharing types without rooms:", sharingTypes);
-    
-    const roomSection = document.querySelector('.room-section.expanded');
-    if (!roomSection) return;
-
-    // Aggressively clear content first
-    clearMainContentContainer();
-
-    // Create sharing type sections similar to when there are rooms, but with empty state
-    sharingTypes.forEach(sharingType => {
-        const sharingSection = createEmptySharingTypeSection(sharingType);
-        roomSection.appendChild(sharingSection);
-    });
-    
-    // Initialize dropdown toggles and add room buttons for these empty sections
-    initializeDropdownToggles();
-    initializeAddRoomButtons(); 
-
-    console.log(`✅ Created ${sharingTypes.length} sharing type sections without rooms`);
-}
-
-// === Empty Sharing Type Section (for no rooms but sharing types exist) ===
-function createEmptySharingTypeSection(sharingType) {
-    console.log("📦 Creating empty sharing type section for:", sharingType);
-    
-    const capacity = sharingType.capacity || 1; 
-    const price = sharingType.sharingFee || 5000;
-    const sharingTypeName = `${capacity}-Sharing`;
-    
-    const sharingDiv = document.createElement('div');
-    sharingDiv.className = 'sharing-type-section empty-sharing-section';
-    sharingDiv.setAttribute('data-sharing-type', sharingTypeName);
-    
-    
-    // Create sharing type header with dropdown toggle and add room button
-    const headerDiv = document.createElement('div');
-    headerDiv.className = 'sharing-type-header';
-    headerDiv.innerHTML = `
-        <div class="sharing-type-info">
-            <button class="dropdown-toggle" data-sharing-type="${sharingTypeName}">
-                <i class="fas fa-chevron-down"></i>
-            </button>
-            <div class="sharing-type-details">
-                <h2>${sharingTypeName}</h2>
-                <div class="sharing-type-stats">
-                    <span class="floor-count">0 floors</span>
-                    <span class="room-count">0 rooms</span>
-                    <span class="price-info">₹${price} / bed</span>
-                </div>
-            </div>
-        </div>
-        <div class="sharing-type-actions">
-            <button class="add-room-btn" data-sharing-type="${sharingTypeName}" data-capacity="${capacity}" data-price="${price}">
-                <i class="fas fa-plus"></i> Add Room
-            </button>
-        </div>
-    `;
-    sharingDiv.appendChild(headerDiv);
-    
-    // Create empty floors container with centered message
-    const floorsContainer = document.createElement('div');
-    floorsContainer.className = 'floors-container empty-floors-container';
-    floorsContainer.id = `floors-${sharingTypeName.replace(/\s+/g, '-').toLowerCase()}`;
-    
-    // The key change is to ensure the message content is centered
-    floorsContainer.innerHTML = `
-        <div class="empty-room-state-container" style="
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            text-align: center;
-            min-height: 150px; 
-            padding: 20px;
-        "> 
-            <div class="empty-room-content">
-                <i class="fas fa-door-open" style="font-size: 30px; color: #aaa;"></i>
-                <h4 style="margin-top: 10px;">No Rooms Added Yet</h4>
-                <p>This sharing type doesn't have any rooms. Click "Add Room" above to create the first room.</p>
-            </div>
-        </div>
-    `;
-    
-    sharingDiv.appendChild(floorsContainer);
-    
-    return sharingDiv;
-}
-
-function groupRoomsBySharingTypeAndFloor(rooms) {
-    const grouped = {};
-    
-    rooms.forEach(room => {
-        // Use the actual field names from your RoomDTO
-        const sharingType = room.sharingTypeName || `${room.sharingCapacity}-Sharing`;
-        const floorNumber = room.floorNumber || 1;
-        
-        if (!grouped[sharingType]) {
-            grouped[sharingType] = {};
-        }
-        
-        if (!grouped[sharingType][floorNumber]) {
-            grouped[sharingType][floorNumber] = [];
-        }
-        
-        grouped[sharingType][floorNumber].push(room);
-    });
-    
-    return grouped;
-}
-
-// === Sharing Type Section (for when rooms exist) ===
-function createSharingTypeSection(sharingType, floorsData) {
-    const sharingDiv = document.createElement('div');
-    sharingDiv.className = 'sharing-type-section';
-    sharingDiv.setAttribute('data-sharing-type', sharingType);
-    
-    // Calculate stats for this sharing type from real data
-    const floorNumbers = Object.keys(floorsData);
-    const totalRooms = Object.values(floorsData).reduce((total, floorRooms) => total + floorRooms.length, 0);
-    const capacity = parseInt(sharingType.split('-')[0]) || 2;
-    // Assuming price is available on one of the rooms for calculation or fetched separately
-    const price = floorsData[floorNumbers[0]]?.[0]?.price || 5000;
-
-    
-    // Create sharing type header with dropdown toggle and add room button
-    const headerDiv = document.createElement('div');
-    headerDiv.className = 'sharing-type-header';
-    headerDiv.innerHTML = `
-        <div class="sharing-type-info">
-            <button class="dropdown-toggle" data-sharing-type="${sharingType}">
-                <i class="fas fa-chevron-down"></i>
-            </button>
-            <div class="sharing-type-details">
-                <h2>${sharingType}</h2>
-                <div class="sharing-type-stats">
-                    <span class="floor-count">${floorNumbers.length} ${floorNumbers.length === 1 ? 'floor' : 'floors'}</span>
-                    <span class="room-count">${totalRooms} ${totalRooms === 1 ? 'room' : 'rooms'}</span>
-                    <span class="price-info">₹${price} / bed</span>
-                </div>
-            </div>
-        </div>
-        <div class="sharing-type-actions">
-            <button class="add-room-btn" data-sharing-type="${sharingType}">
-                <i class="fas fa-plus"></i> Add Room
-            </button>
-        </div>
-    `;
-    sharingDiv.appendChild(headerDiv);
-    
-    // Create floors container (initially visible)
-    const floorsContainer = document.createElement('div');
-    floorsContainer.className = 'floors-container';
-    floorsContainer.id = `floors-${sharingType.replace(/\s+/g, '-').toLowerCase()}`;
-    
-    // Add each floor section with real room data
-    Object.keys(floorsData).sort((a, b) => a - b).forEach(floorNumber => {
-        const floorSection = createFloorSection(floorNumber, floorsData[floorNumber]);
-        floorsContainer.appendChild(floorSection);
-    });
-    
-    sharingDiv.appendChild(floorsContainer);
-    return sharingDiv;
-}
-
-function createFloorSection(floorNumber, rooms) {
-    const floorDiv = document.createElement('div');
-    floorDiv.className = 'floor-section';
-    
-    const heading = document.createElement('h3');
-    heading.className = 'floor-heading';
-    heading.textContent = `Floor ${floorNumber}`;
-    floorDiv.appendChild(heading);
-    
-    const roomsContainer = document.createElement('div');
-    roomsContainer.className = 'floor-rooms-container';
-    
-    // Add room cards for this floor using real API data
-    rooms.forEach(room => {
-        const roomCard = createRoomCard(room);
-        roomsContainer.appendChild(roomCard);
-    });
-    
-    floorDiv.appendChild(roomsContainer);
-    return floorDiv;
-}
-
-function createRoomCard(room) {
-    console.log("🏠 Creating card for real room:", room);
-    
-    // Use actual field names from your RoomDTO
-    const roomId = room.roomId;
-    const roomNumber = room.roomNumber;
-    const floorNumber = room.floorNumber;
-    const roomStatus = room.roomStatus;
-    const currentOccupancy = room.currentOccupancy || 0;
-    const sharingCapacity = room.sharingCapacity || 2;
-    const sharingTypeName = room.sharingTypeName || `${sharingCapacity}-Sharing`;
-    const price = room.price || 5000;
-    
-    const availableSpots = sharingCapacity - currentOccupancy;
-    const statusClass = getRoomStatusClass(roomStatus);
-    const availabilityText = getAvailabilityText(roomStatus, availableSpots);
-    const occupancyStatus = room.occupancyStatus || `${currentOccupancy}/${sharingCapacity}`;
-    
-    const roomCard = document.createElement('div');
-    roomCard.className = `room-card ${statusClass}`;
-    roomCard.setAttribute('data-room-id', roomId);
-    roomCard.setAttribute('data-floor', floorNumber);
-    roomCard.setAttribute('data-sharing-type', sharingTypeName);
-    
-    roomCard.innerHTML = `
-        <div class="room-card-header">
-            <div class="room-number-group">
-                <span class="room-number">${roomNumber}</span>
-                <span class="beds-info">Available: <span class="beds-available-count">${occupancyStatus}</span> beds</span>
-            </div>
-        </div>
-        <div class="room-details-content">
-            <ul class="room-meta-list">
-                <li><strong>Sharing Type:</strong> <span>${sharingTypeName}</span></li>
-                <li><strong>Availability:</strong> <span class="available-status">${availabilityText}</span></li>
-                <li><strong>Price:</strong> <span class="price">₹${price} <span class="price-unit">/Bed</span></span></li>
-            </ul>
-            <div class="room-actions">
-                <button class="btn-primary book-now-btn" data-room="${roomNumber}" data-room-id="${roomId}" ${availableSpots === 0 || roomStatus !== 'Available' ? 'disabled' : ''}>
-                    <i class="fas fa-bookmark"></i> ${availableSpots === 0 ? 'Full' : 'Book Now'}
-                </button>
-                <button class="btn-secondary details-btn" data-room="${roomNumber}" data-room-id="${roomId}">
-                    <i class="fas fa-info-circle"></i> View Details
-                </button>
-            </div>
-        </div>
-    `;
-    
-    return roomCard;
-}
-
-function getRoomStatusClass(status) {
-    switch(status) {
-        case 'Available': return 'available-room';
-        case 'Occupied': return 'occupied-room';
-        case 'Maintenance': return 'maintenance-room';
-        default: return 'available-room';
-    }
-}
-
-function getAvailabilityText(status, availableSpots) {
-    switch(status) {
-        case 'Available': 
-            return availableSpots === 1 ? '1 spot available' : `${availableSpots} spots available`;
-        case 'Occupied': return 'Fully occupied';
-        case 'Maintenance': return 'Under maintenance';
-        default: return 'Available';
     }
 }
 
@@ -714,7 +1150,7 @@ function getAvailabilityText(status, availableSpots) {
 function initializeDropdownToggles() {
     const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
     console.log("📂 Initializing dropdown toggles:", dropdownToggles.length);
-    
+
     dropdownToggles.forEach(toggle => {
         toggle.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -722,7 +1158,7 @@ function initializeDropdownToggles() {
             const sharingSection = this.closest('.sharing-type-section');
             const floorsContainer = sharingSection.querySelector('.floors-container');
             const icon = this.querySelector('i');
-            
+
             if (floorsContainer.style.display === 'none') {
                 // Expand
                 floorsContainer.style.display = 'block';
@@ -740,40 +1176,76 @@ function initializeDropdownToggles() {
     });
 }
 
-// Initialize Add Room buttons
 function initializeAddRoomButtons() {
     const addRoomButtons = document.querySelectorAll('.add-room-btn');
     console.log("➕ Initializing add room buttons:", addRoomButtons.length);
-    
+
     addRoomButtons.forEach(button => {
         button.addEventListener('click', function(e) {
             e.stopPropagation();
             const sharingType = this.getAttribute('data-sharing-type');
             const capacity = this.getAttribute('data-capacity');
             const price = this.getAttribute('data-price');
+            const sharingId = this.getAttribute('data-sharing-id');
+
             console.log("➕ Add room clicked for sharing type:", sharingType);
-            
-            if (capacity && price) {
-                // From empty sharing type section
-                addNewRoomWithSharingType(sharingType, capacity, price);
-            } else {
-                // From regular sharing type section with rooms (capacity/price will be null/undefined)
-                // We need to infer the capacity from the sharingType string
-                const inferredCapacity = parseInt(sharingType.split('-')[0]) || 2;
-                addNewRoom(sharingType, inferredCapacity);
+
+            addNewRoom(sharingType, capacity, price, sharingId);
+        });
+    });
+}
+
+function initializeRoomCardInteractions() {
+    console.log("🔄 Initializing room card interactions");
+
+    // Book Now button functionality
+    document.querySelectorAll('.book-now-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const roomNumber = this.getAttribute('data-room');
+            const roomId = this.getAttribute('data-room-id');
+
+            if (!this.disabled) {
+                console.log(`Booking room: ${roomNumber} (ID: ${roomId})`);
+                // Implement booking logic here
+                showNotification(`Booking initiated for room ${roomNumber}`, 'info');
+            }
+        });
+    });
+
+    // View Details button functionality
+    document.querySelectorAll('.details-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const roomNumber = this.getAttribute('data-room');
+            const roomId = this.getAttribute('data-room-id');
+
+            console.log(`Viewing details for room: ${roomNumber} (ID: ${roomId})`);
+            // Implement view details logic here
+            showNotification(`Showing details for room ${roomNumber}`, 'info');
+        });
+    });
+
+    // Room card click functionality (optional)
+    document.querySelectorAll('.room-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            // Don't trigger if user clicked on a button inside the card
+            if (!e.target.closest('button')) {
+                const roomNumber = this.querySelector('.room-number').textContent;
+                const roomId = this.getAttribute('data-room-id');
+                console.log(`Room card clicked: ${roomNumber} (ID: ${roomId})`);
+                // You can add room card click logic here
             }
         });
     });
 }
 
-// Add new room function for sharing types with existing rooms
-function addNewRoom(sharingType, capacity) {
-    console.log(`➕ Opening add room modal for: ${sharingType}`);
-    
-    // Create modal for adding new room
+function addNewRoom(sharingType, capacity, price, sharingId) {
+    console.log(`➕ Opening add room modal for: ${sharingType}, Capacity: ${capacity}, Price: ${price}`);
+
     const modal = document.createElement('div');
-    modal.className = 'modal-overlay';
-    
+    modal.className = 'modal-overlay active';
+
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-header">
@@ -782,112 +1254,24 @@ function addNewRoom(sharingType, capacity) {
             </div>
             <div class="modal-body">
                 <form id="addRoomForm">
-                    <div class="form-group">
-                        <label>Room Number:</label>
-                        <input type="text" id="roomNumber" placeholder="Enter room number" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Floor Number:</label>
-                        <input type="number" id="floorNumber" min="1" max="10" placeholder="Enter floor number" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Sharing Type:</label>
-                        <div class="readonly-field">${sharingType}</div>
-                    </div>
-                    <div class="form-group">
-                        <label>Price per Bed:</label>
-                        <input type="number" id="roomPrice" min="1000" step="500" placeholder="Enter price per bed" required>
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn-secondary cancel-btn">Cancel</button>
-                        <button type="submit" class="btn-primary">Add Room</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-    
-    // Close modal events
-    const closeModal = () => modal.remove();
-    
-    modal.querySelector('.close-modal').addEventListener('click', closeModal);
-    modal.querySelector('.cancel-btn').addEventListener('click', closeModal);
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) closeModal();
-    });
-    
-    // Form submission
-    modal.querySelector('#addRoomForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const roomNumber = modal.querySelector('#roomNumber').value;
-        const floorNumber = modal.querySelector('#floorNumber').value;
-        const price = modal.querySelector('#roomPrice').value;
-        
-        console.log(`📝 Adding new room: ${roomNumber}, Floor ${floorNumber}, ${sharingType}, ₹${price}`);
-        
-        try {
-            // API call to add room
-            const response = await fetch("/api/rooms/add-room", {
-                method: "POST",
-                credentials: "include",
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    roomNumber: roomNumber,
-                    floorNumber: parseInt(floorNumber),
-                    sharingType: sharingType,
-                    price: parseInt(price),
-                    capacity: capacity
-                })
-            });
-
-            if (response.ok) {
-                showNotification(`Room ${roomNumber} added successfully!`, 'success');
-                closeModal();
-                
-                // Refresh room data from API
-                await getRoomDetails();
-            } else {
-                showNotification("Failed to add room. Please try again.", 'error');
-            }
-        } catch (error) {
-            console.error("Error adding room:", error);
-            showNotification("Error adding room. Please try again.", 'error');
-        }
-    });
-}
-
-// Add new room function for empty sharing types
-function addNewRoomWithSharingType(sharingType, capacity, price) {
-    console.log(`➕ Opening add room modal for empty sharing type: ${sharingType}, Capacity: ${capacity}, Price: ${price}`);
-    
-    // Create modal for adding new room with pre-filled sharing type and price
-    const modal = document.createElement('div');
-    modal.className = 'modal-overlay';
-    
-    modal.innerHTML = `
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Add New Room - ${sharingType}</h3>
-                <button class="close-modal">×</button>
-            </div>
-            <div class="modal-body">
-                <form id="addRoomForm">
-                    <div class="form-group">
-                        <label>Room Number:</label>
-                        <input type="text" id="roomNumber" placeholder="e.g., 101, G01, etc." required>
-                    </div>
                     <div class="form-group">
                         <label>Floor Number:</label>
                         <input type="number" id="floorNumber" min="0" max="10" value="1" required>
                     </div>
                     <div class="form-group">
+                        <label>Room Number (on this floor):</label>
+                        <input type="text" id="baseRoomNumber" placeholder="e.g., 01, 02, A, B, etc." required>
+                        <small>Will be combined with floor number (e.g., Floor 2 + Room 01 = 201)</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Final Room Number:</label>
+                        <div class="readonly-field" id="finalRoomNumber" style="font-weight: bold; color: #007bff;">201</div>
+                    </div>
+                    <div class="form-group">
                         <label>Sharing Type:</label>
                         <div class="readonly-field">${sharingType} (Capacity: ${capacity})</div>
                         <input type="hidden" id="roomCapacity" value="${capacity}">
+                        <input type="hidden" id="sharingTypeId" value="${sharingId}">
                     </div>
                     <div class="form-group">
                         <label>Price per Bed:</label>
@@ -901,31 +1285,87 @@ function addNewRoomWithSharingType(sharingType, capacity, price) {
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(modal);
-    
+
+    // Auto-generate room number based on floor
+    const floorInput = modal.querySelector('#floorNumber');
+    const baseRoomInput = modal.querySelector('#baseRoomNumber');
+    const finalRoomDisplay = modal.querySelector('#finalRoomNumber');
+
+    const updateRoomNumber = () => {
+        const floor = floorInput.value;
+        const baseRoom = baseRoomInput.value.trim();
+        if (floor && baseRoom) {
+            // Handle both numeric and alphabetic room numbers
+            if (/^\d+$/.test(baseRoom)) {
+                // Numeric: 1 → 01, 2 → 02, etc.
+                finalRoomDisplay.textContent = `${floor}${baseRoom.padStart(2, '0')}`;
+            } else {
+                // Alphabetic: A → 2A, B → 2B, etc.
+                finalRoomDisplay.textContent = `${floor}${baseRoom.toUpperCase()}`;
+            }
+        }
+    };
+
+    floorInput.addEventListener('input', updateRoomNumber);
+    baseRoomInput.addEventListener('input', updateRoomNumber);
+
+    // Initialize
+    updateRoomNumber();
+
     // Close modal events
-    const closeModal = () => modal.remove();
-    
+    const closeModal = () => {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+        setTimeout(() => {
+            if (modal.parentNode) {
+                modal.parentNode.removeChild(modal);
+            }
+        }, 300);
+    };
+
     modal.querySelector('.close-modal').addEventListener('click', closeModal);
     modal.querySelector('.cancel-btn').addEventListener('click', closeModal);
     modal.addEventListener('click', (e) => {
         if (e.target === modal) closeModal();
     });
-    
-    // Form submission
+
     modal.querySelector('#addRoomForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const roomNumber = modal.querySelector('#roomNumber').value;
-        const floorNumber = modal.querySelector('#floorNumber').value;
+        const floorNumber = floorInput.value;
+        const baseRoomNumber = baseRoomInput.value.trim();
+        let roomNumber;
+
+        // Generate the final room number
+        if (/^\d+$/.test(baseRoomNumber)) {
+            roomNumber = `${floorNumber}${baseRoomNumber.padStart(2, '0')}`;
+        } else {
+            roomNumber = `${floorNumber}${baseRoomNumber.toUpperCase()}`;
+        }
+
         const roomPrice = modal.querySelector('#roomPrice').value;
-        const roomCapacity = modal.querySelector('#roomCapacity').value; // Get capacity from hidden field
-        
-        console.log(`📝 Adding new room: ${roomNumber}, Floor ${floorNumber}, ${sharingType}, ₹${roomPrice}`);
-        
+        const sharingTypeId = modal.querySelector('#sharingTypeId').value;
+
+        console.log(`📝 Adding new room: ${roomNumber}, Floor: ${floorNumber}, Sharing: ${sharingType}, Price: ₹${roomPrice}`);
+
+        // Validate inputs
+        if (!floorNumber || !baseRoomNumber || !roomPrice) {
+            showNotification("Please fill all required fields", "error");
+            return;
+        }
+
+        if (parseInt(roomPrice) < 1000) {
+            showNotification("Price per bed must be at least ₹1000", "error");
+            return;
+        }
+
         try {
-            // API call to add room
-            const response = await fetch("/api/rooms/add-room", {
+            const submitBtn = modal.querySelector('.btn-primary');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<div class="loading-spinner"></div> Adding...';
+
+            const response = await fetch("/api/auth/add-room", {
                 method: "POST",
                 credentials: "include",
                 headers: {
@@ -934,24 +1374,41 @@ function addNewRoomWithSharingType(sharingType, capacity, price) {
                 body: JSON.stringify({
                     roomNumber: roomNumber,
                     floorNumber: parseInt(floorNumber),
-                    sharingType: sharingType,
+                    sharingTypeId: sharingTypeId,
                     price: parseInt(roomPrice),
-                    capacity: parseInt(roomCapacity) // Use the capacity
+                    capacity: parseInt(capacity)
                 })
             });
 
-            if (response.ok) {
-                showNotification(`Room ${roomNumber} added successfully!`, 'success');
-                closeModal();
-                
-                // Refresh room data from API
-                await getRoomDetails();
+            const result = await response.json();
+
+            if (result.success) {
+                showNotification(result.message, 'success');
+                submitBtn.innerHTML = '<i class="fas fa-check"></i> Success!';
+                submitBtn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+
+                setTimeout(async () => {
+                    closeModal();
+                    await refreshDashboard();
+                }, 1000);
             } else {
-                showNotification("Failed to add room. Please try again.", 'error');
+                showNotification(result.message, 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Add Room';
             }
         } catch (error) {
             console.error("Error adding room:", error);
             showNotification("Error adding room. Please try again.", 'error');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Add Room';
         }
     });
+
+    // Prevent background scrolling
+    document.body.style.overflow = 'hidden';
+
+    // Focus on first input
+    setTimeout(() => {
+        baseRoomInput.focus();
+    }, 100);
 }

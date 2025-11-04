@@ -1,10 +1,15 @@
 package com.example.HostelManagement.repositories;
 
 import java.util.List;
+import java.util.stream.Collectors;
+
+import com.example.HostelManagement.dto.SharingDetailsDTO;
 import org.springframework.stereotype.Repository;
+
 import com.example.HostelManagement.dao.AdminAuthDAO;
 import com.example.HostelManagement.entities.hostel.SharingType;
 import com.example.HostelManagement.entities.hostel.admin.Admin;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.TypedQuery;
@@ -16,6 +21,22 @@ public class AdminAuthDAORepository implements AdminAuthDAO {
 
     public AdminAuthDAORepository(EntityManager entityManager) {
         this.entityManager = entityManager;
+    }
+
+    @Override
+    public Integer findAdminIdEmail(String email) {
+        String query = "SELECT a.id FROM Admin a WHERE a.email = :email";
+        try {
+            TypedQuery<Integer> typedQuery = entityManager.createQuery(query, Integer.class);
+            typedQuery.setParameter("email", email);
+            return typedQuery.getSingleResult();
+
+        } catch (NoResultException e) {
+            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     @Override
@@ -41,25 +62,36 @@ public class AdminAuthDAORepository implements AdminAuthDAO {
         return findByAdminEmail(email);
     }
 
-    // ✅ Get all sharing types for a given admin email
     @Override
-    public List<SharingType> getSharingTypesByAdminId(String email) {
-        Admin admin = findByAdminEmail(email);
-        if (admin == null) return List.of();
+    public List<SharingDetailsDTO> sharingTypesList(Integer adminId) {
+        entityManager.clear();
 
-        String jpql = "SELECT s FROM SharingType s WHERE s.admin.adminId = :adminId";
-        TypedQuery<SharingType> query = entityManager.createQuery(jpql, SharingType.class);
-        query.setParameter("adminId", admin.getAdminId());
-        return query.getResultList();
-    }
-
-    // ✅ Optional variant: directly by adminId
-    @Override
-    public List<SharingType> sharingTypesList(int adminId) {
         String jpql = "SELECT s FROM SharingType s WHERE s.admin.adminId = :adminId";
         TypedQuery<SharingType> query = entityManager.createQuery(jpql, SharingType.class);
         query.setParameter("adminId", adminId);
-        return query.getResultList();
+
+        List<SharingType> results = query.getResultList();
+
+        System.out.println("DAO Debug: Fetched " + results.size() + " sharing types by admin ID. Admin ID: " + adminId);
+        for (SharingType st : results) {
+            System.out.println("  -> ID: " + st.getSharingTypeId() + ", Type: " + st.getTypeName() + ", Capacity: " + st.getCapacity());
+        }
+
+        // DTO Mapping Implementation
+        return results.stream()
+                .map(st -> {
+                    // Ensure adminId is correctly extracted, handling possible null Admin reference
+                    Integer currentAdminId = (st.getAdmin() != null) ? st.getAdmin().getAdminId() : null;
+
+                    // Assumes SharingType has getSharingTypeId, getCapacity, and getSharingFee methods
+                    return new SharingDetailsDTO(
+                            currentAdminId,
+                            st.getSharingTypeId(),
+                            st.getCapacity(),
+                            st.getSharingFee(),
+                            "success"
+                    );
+                })
+                .collect(Collectors.toList());
     }
 }
-    
