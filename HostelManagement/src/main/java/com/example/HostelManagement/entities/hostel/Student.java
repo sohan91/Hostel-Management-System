@@ -1,6 +1,5 @@
 package com.example.HostelManagement.entities.hostel;
 
-
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -10,7 +9,17 @@ import java.time.LocalDate;
 import com.example.HostelManagement.entities.hostel.admin.Admin;
 
 @Entity
-@Table(name = "Student")
+@Table(name = "Student", 
+       uniqueConstraints = {
+           @UniqueConstraint(
+               name = "unique_admin_student_email", 
+               columnNames = {"admin_id", "student_email"}
+           ),
+           @UniqueConstraint(
+               name = "unique_admin_student_phone", 
+               columnNames = {"admin_id", "student_phone"}
+           )
+       })
 @Data
 public class Student {
     @Id
@@ -29,7 +38,7 @@ public class Student {
     @Column(name = "student_name", nullable = false, length = 100)
     private String studentName;
 
-    @Column(name = "student_email", unique = true, length = 100)
+    @Column(name = "student_email", length = 100)
     private String studentEmail;
 
     @Column(name = "student_phone", length = 15)
@@ -63,8 +72,10 @@ public class Student {
     public enum PaymentStatus {
         Paid, Pending, Overdue
     }
-  public Student(){}
-       public Student(Admin admin, Rooms room, String studentName, String studentEmail, 
+    
+    public Student(){}
+    
+    public Student(Admin admin, Rooms room, String studentName, String studentEmail, 
                    String studentPhone, String studentPassword) {
         this.admin = admin;
         this.room = room;

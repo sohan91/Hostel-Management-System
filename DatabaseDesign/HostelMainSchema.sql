@@ -35,6 +35,7 @@ CREATE TABLE Admin (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+
 -- 2. SharingType table
 CREATE TABLE SharingType (
     sharing_type_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -44,8 +45,11 @@ CREATE TABLE SharingType (
     capacity INT NOT NULL DEFAULT 1,
     description TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (admin_id) REFERENCES Admin(admin_id) ON DELETE CASCADE
+    FOREIGN KEY (admin_id) REFERENCES Admin(admin_id) ON DELETE CASCADE,
+    -- FIXED: Allow same sharing type names across different admins
+    UNIQUE KEY unique_admin_sharing_type (admin_id, type_name)
 );
+
 
 -- 3. Rooms table
 CREATE TABLE Rooms (
@@ -61,6 +65,7 @@ CREATE TABLE Rooms (
     FOREIGN KEY (admin_id) REFERENCES Admin(admin_id) ON DELETE CASCADE,
     FOREIGN KEY (sharing_type_id) REFERENCES SharingType(sharing_type_id) ON DELETE CASCADE
 );
+ALTER TABLE Rooms DROP INDEX unique_admin_room;
 
 -- 4. Student table
 CREATE TABLE Student (
@@ -82,24 +87,6 @@ CREATE TABLE Student (
     FOREIGN KEY (room_id) REFERENCES Rooms(room_id) ON DELETE CASCADE
 );
 
--- 5. Payment table
-CREATE TABLE Payment (
-    payment_id INT AUTO_INCREMENT PRIMARY KEY,
-    student_id INT NOT NULL,
-    admin_id INT NOT NULL,
-    room_id INT NOT NULL,
-    sharing_type_id INT NOT NULL,
-    amount DECIMAL(10,2) NOT NULL,
-    payment_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-    due_date DATE,
-    payment_mode ENUM('Cash','Card','UPI','NetBanking') DEFAULT 'Cash',
-    payment_status ENUM('Paid','Pending','Failed') DEFAULT 'Pending',
-    transaction_id VARCHAR(100),
-    FOREIGN KEY (student_id) REFERENCES Student(student_id) ON DELETE CASCADE,
-    FOREIGN KEY (admin_id) REFERENCES Admin(admin_id) ON DELETE CASCADE,
-    FOREIGN KEY (room_id) REFERENCES Rooms(room_id) ON DELETE CASCADE,
-    FOREIGN KEY (sharing_type_id) REFERENCES SharingType(sharing_type_id) ON DELETE RESTRICT
-);
 
 -- 6. Complaint table
 CREATE TABLE Complaint (
@@ -167,7 +154,23 @@ CREATE TABLE StudentMenuResponse (
     FOREIGN KEY (student_id) REFERENCES Student(student_id) ON DELETE CASCADE,
     FOREIGN KEY (menu_id) REFERENCES DailyMenu(menu_id) ON DELETE CASCADE
 );
-
+CREATE TABLE Payment (
+    payment_id INT AUTO_INCREMENT PRIMARY KEY,
+    student_id INT NOT NULL,
+    admin_id INT NOT NULL,
+    room_id INT NOT NULL,
+    sharing_type_id INT NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    payment_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    due_date DATE,
+    payment_mode ENUM('Cash','Card','UPI','NetBanking') DEFAULT 'Cash',
+    payment_status ENUM('Paid','Pending','Failed') DEFAULT 'Pending',
+    transaction_id VARCHAR(100),
+    FOREIGN KEY (student_id) REFERENCES Student(student_id) ON DELETE CASCADE,
+    FOREIGN KEY (admin_id) REFERENCES Admin(admin_id) ON DELETE CASCADE,
+    FOREIGN KEY (room_id) REFERENCES Rooms(room_id) ON DELETE CASCADE,
+    FOREIGN KEY (sharing_type_id) REFERENCES SharingType(sharing_type_id) ON DELETE RESTRICT
+);
 -- 10. Notice table
 CREATE TABLE Notice (
     notice_id INT AUTO_INCREMENT PRIMARY KEY,

@@ -190,7 +190,16 @@ public class AuthController {
     public ResponseEntity<Map<String, Object>> addRoom(@RequestBody RoomDTO roomDTO,
                                                        HttpServletRequest request) {
         System.out.println("=== ADD ROOM API CALLED ===");
-        System.out.println("Room data received: " + roomDTO);
+    
+    // Detailed logging
+    System.out.println("📦 Room data received:");
+    System.out.println("   - Room Number: " + roomDTO.getRoomNumber());
+    System.out.println("   - Floor: " + roomDTO.getFloorNumber());
+    System.out.println("   - Sharing Type ID: " + roomDTO.getSharingTypeId());
+    System.out.println("   - Price: " + roomDTO.getPrice());
+    System.out.println("   - Capacity: " + roomDTO.getSharingCapacity());
+    System.out.println("   - Admin ID: " + roomDTO.getAdminId());
+    System.out.println("   - Room Status: " + roomDTO.getRoomStatus());
 
         Map<String, Object> response = new HashMap<>();
 

@@ -10,7 +10,11 @@ import com.example.HostelManagement.entities.hostel.admin.Admin;
 
 @Data
 @Entity
-@Table(name = "Rooms")
+@Table(name = "Rooms", 
+       uniqueConstraints = @UniqueConstraint(
+           name = "unique_admin_room_floor", 
+           columnNames = {"admin_id", "room_number", "floor_number"}
+       ))
 public class Rooms {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,9 +46,10 @@ public class Rooms {
     private LocalDateTime createdAt;
 
     public enum RoomStatus {
-        Available,Occupied, Maintenance
+        Available, Occupied, Maintenance
     }
-      public Rooms() {}
+    
+    public Rooms() {}
     
     public Rooms(Admin admin, SharingType sharingType, String roomNumber, Integer floorNumber) {
         this.admin = admin;

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.HostelManagement.dao.RoomDAO;
 import com.example.HostelManagement.dto.RoomDTO;
+import com.example.HostelManagement.repositories.AddNewSharingTypeRepo;
 
 @Service
 public class RoomService {
@@ -15,8 +16,12 @@ public class RoomService {
     @Autowired
     private RoomDAO roomDAO;
 
+    @Autowired
+    private AddNewSharingTypeRepo sharingTypeRepo;
+
     public boolean createRoom(RoomDTO roomDTO) {
-        System.out.println("🚀 RoomService.createRoom() called for room: " + roomDTO.getRoomNumber());
+        System.out.println("🚀 RoomService.createRoom() called for room: " + roomDTO.getRoomNumber() + 
+                         ", Admin: " + roomDTO.getAdminId());
 
         try {
             // Validate required fields
@@ -35,28 +40,74 @@ public class RoomService {
                 return false;
             }
 
+            if (roomDTO.getAdminId() == null) {
+                System.out.println("❌ Admin ID is required");
+                return false;
+            }
+
+            // NEW: Validate that sharing type belongs to the same admin
+            if (!sharingTypeRepo.isSharingTypeBelongsToAdmin(roomDTO.getSharingTypeId(), roomDTO.getAdminId())) {
+                System.out.println("❌ Sharing type " + roomDTO.getSharingTypeId() + " does not belong to admin " + roomDTO.getAdminId());
+                return false;
+            }
+
             // Save the room
             boolean success = roomDAO.saveRoom(roomDTO);
-            System.out.println("✅ Room creation result: " + (success ? "SUCCESS" : "FAILED"));
+            System.out.println("✅ Room creation result for Admin " + roomDTO.getAdminId() + ": " + (success ? "SUCCESS" : "FAILED"));
 
             return success;
 
         } catch (Exception e) {
-            System.out.println("❌ Error in RoomService.createRoom(): " + e.getMessage());
+            System.out.println("❌ Error in RoomService.createRoom() for Admin " + roomDTO.getAdminId() + ": " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
 
+    // Updated: Now uses the correct constraint checking
     public boolean isRoomNumberExists(Integer adminId, String roomNumber, Integer floorNumber, Integer sharingTypeId) {
-        System.out.println("🔍 RoomService.isRoomNumberExists() called for room: " + roomNumber + ", floor: " + floorNumber);
+        System.out.println("🔍 RoomService.isRoomNumberExists() called for Admin " + adminId + 
+                         ": " + roomNumber + ", floor: " + floorNumber);
 
         try {
+            // The DAO method now properly checks (admin_id, room_number, floor_number) constraint
             boolean exists = roomDAO.isRoomNumberExists(adminId, roomNumber, floorNumber, sharingTypeId);
-            System.out.println("🔍 Room uniqueness check result: " + (exists ? "EXISTS" : "UNIQUE"));
+            System.out.println("🔍 Room uniqueness check for Admin " + adminId + ": " + (exists ? "EXISTS" : "UNIQUE"));
             return exists;
 
         } catch (Exception e) {
-            System.out.println("❌ Error checking room uniqueness: " + e.getMessage());
+            System.out.println("❌ Error checking room uniqueness for Admin " + adminId + ": " + e.getMessage());
+            return false;
+        }
+    }
+
+    // NEW: Method to check if room number exists on specific floor
+    public boolean isRoomNumberExistsOnFloor(Integer adminId, String roomNumber, Integer floorNumber) {
+        System.out.println("🔍 RoomService.isRoomNumberExistsOnFloor() called for Admin " + adminId + 
+                         ": " + roomNumber + ", floor: " + floorNumber);
+
+        try {
+            boolean exists = roomDAO.isRoomNumberExistsOnFloor(adminId, roomNumber, floorNumber);
+            System.out.println("🔍 Room on floor check for Admin " + adminId + ": " + (exists ? "EXISTS" : "UNIQUE"));
+            return exists;
+
+        } catch (Exception e) {
+            System.out.println("❌ Error checking room on floor for Admin " + adminId + ": " + e.getMessage());
+            return false;
+        }
+    }
+
+    // NEW: Method to check if room number exists anywhere for admin
+    public boolean isRoomNumberExistsAnywhere(Integer adminId, String roomNumber) {
+        System.out.println("🔍 RoomService.isRoomNumberExistsAnywhere() called for Admin " + adminId + ": " + roomNumber);
+
+        try {
+            boolean exists = roomDAO.isRoomNumberExistsAnywhere(adminId, roomNumber);
+            System.out.println("🔍 Room exists anywhere for Admin " + adminId + ": " + (exists ? "EXISTS" : "UNIQUE"));
+            return exists;
+
+        } catch (Exception e) {
+            System.out.println("❌ Error checking room existence for Admin " + adminId + ": " + e.getMessage());
             return false;
         }
     }
@@ -71,7 +122,7 @@ public class RoomService {
         if (rooms.isEmpty()) {
             System.out.println("❌ NO ROOMS FOUND in database for adminId: " + adminId);
         } else {
-            System.out.println("✅ Rooms found: " + rooms.size());
+            System.out.println("✅ Rooms found for Admin " + adminId + ": " + rooms.size());
         }
         
         return rooms;
@@ -105,7 +156,7 @@ public class RoomService {
         if (room == null) {
             System.out.println("❌ Room not found with roomId: " + roomId + ", adminId: " + adminId);
         } else {
-            System.out.println("✅ Room found: " + room.getRoomNumber());
+            System.out.println("✅ Room found for Admin " + adminId + ": " + room.getRoomNumber());
         }
         
         return room;
@@ -116,8 +167,10 @@ public class RoomService {
         
         List<RoomDTO> rooms = roomDAO.getAllRooms(adminId);
         
+        System.out.println("📋 Room Summary for Admin " + adminId + ":");
         rooms.forEach(room -> {
-            System.out.println("📋 Room Summary - " + room.getRoomNumber() + ": " + room.getOccupancyStatus());
+            System.out.println("📋 - " + room.getRoomNumber() + " (Floor " + room.getFloorNumber() + 
+                             "): " + room.getOccupancyStatus() + " - " + room.getRoomStatus());
         });
         
         return rooms;
@@ -135,7 +188,8 @@ public class RoomService {
         boolean canAccommodate = "Available".equals(room.getRoomStatus()) && 
                room.getCurrentOccupancy() < room.getSharingCapacity();
         
-        System.out.println("📊 Room " + room.getRoomNumber() + " can accommodate student: " + canAccommodate);
+        System.out.println("📊 Room " + room.getRoomNumber() + " (Admin " + adminId + ") can accommodate student: " + canAccommodate +
+                         " - Occupancy: " + room.getCurrentOccupancy() + "/" + room.getSharingCapacity());
         
         return canAccommodate;
     }
@@ -148,7 +202,7 @@ public class RoomService {
                 .filter(room -> status.equalsIgnoreCase(room.getRoomStatus()))
                 .collect(Collectors.toList());
         
-        System.out.println("📊 Found " + filteredRooms.size() + " rooms with status: " + status);
+        System.out.println("📊 Found " + filteredRooms.size() + " rooms with status '" + status + "' for admin " + adminId);
         
         return filteredRooms;
     }
@@ -161,7 +215,7 @@ public class RoomService {
                 .filter(room -> sharingTypeName.equalsIgnoreCase(room.getSharingTypeName()))
                 .collect(Collectors.toList());
         
-        System.out.println("📊 Found " + filteredRooms.size() + " rooms with sharing type: " + sharingTypeName);
+        System.out.println("📊 Found " + filteredRooms.size() + " rooms with sharing type '" + sharingTypeName + "' for admin " + adminId);
         
         return filteredRooms;
     }
@@ -171,7 +225,7 @@ public class RoomService {
         
         long count = roomDAO.getAllRooms(adminId).size();
         
-        System.out.println("📊 Total room count: " + count);
+        System.out.println("📊 Total room count for admin " + adminId + ": " + count);
         
         return count;
     }
@@ -181,7 +235,7 @@ public class RoomService {
         
         long count = roomDAO.getAvailableRooms(adminId).size();
         
-        System.out.println("📊 Available room count: " + count);
+        System.out.println("📊 Available room count for admin " + adminId + ": " + count);
         
         return count;
     }
@@ -205,14 +259,69 @@ public class RoomService {
         double occupancyRate = totalRooms > 0 ? 
                 (double) occupiedRooms / totalRooms * 100 : 0;
         
-        System.out.println("📊 Room Statistics - Total: " + totalRooms + 
+        System.out.println("📊 Room Statistics for Admin " + adminId + 
+                          " - Total: " + totalRooms + 
                           ", Available: " + availableRooms + 
                           ", Occupied: " + occupiedRooms + 
                           ", Maintenance: " + maintenanceRooms +
-                          ", Occupancy Rate: " + occupancyRate + "%");
+                          ", Occupancy Rate: " + String.format("%.2f", occupancyRate) + "%");
         
         return new RoomStatistics(totalRooms, availableRooms, occupiedRooms, 
                                 maintenanceRooms, occupancyRate);
+    }
+
+    // NEW: Comprehensive room creation validation
+    public RoomCreationResult validateRoomCreation(RoomDTO roomDTO) {
+        System.out.println("🔍 RoomService.validateRoomCreation() called for room: " + roomDTO.getRoomNumber() + ", Admin: " + roomDTO.getAdminId());
+
+        RoomCreationResult result = new RoomCreationResult();
+        
+        // Check required fields
+        if (roomDTO.getRoomNumber() == null || roomDTO.getRoomNumber().trim().isEmpty()) {
+            result.setValid(false);
+            result.setMessage("Room number is required");
+            return result;
+        }
+
+        if (roomDTO.getFloorNumber() == null) {
+            result.setValid(false);
+            result.setMessage("Floor number is required");
+            return result;
+        }
+
+        if (roomDTO.getSharingTypeId() == null) {
+            result.setValid(false);
+            result.setMessage("Sharing type is required");
+            return result;
+        }
+
+        // Check room number uniqueness on this floor
+        if (isRoomNumberExistsOnFloor(roomDTO.getAdminId(), roomDTO.getRoomNumber(), roomDTO.getFloorNumber())) {
+            result.setValid(false);
+            result.setMessage("Room number '" + roomDTO.getRoomNumber() + "' already exists on floor " + roomDTO.getFloorNumber());
+            return result;
+        }
+
+        // Check sharing type ownership
+        if (!sharingTypeRepo.isSharingTypeBelongsToAdmin(roomDTO.getSharingTypeId(), roomDTO.getAdminId())) {
+            result.setValid(false);
+            result.setMessage("Selected sharing type is not available for this admin");
+            return result;
+        }
+
+        result.setValid(true);
+        result.setMessage("Room creation validation passed");
+        return result;
+    }
+
+    public static class RoomCreationResult {
+        private boolean valid;
+        private String message;
+
+        public boolean isValid() { return valid; }
+        public void setValid(boolean valid) { this.valid = valid; }
+        public String getMessage() { return message; }
+        public void setMessage(String message) { this.message = message; }
     }
 
     public static class RoomStatistics {

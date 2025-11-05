@@ -78,4 +78,23 @@ public class RoomDTO {
 
     public String getOccupancyStatus() { return occupancyStatus; }
     public void setOccupancyStatus(String occupancyStatus) { this.occupancyStatus = occupancyStatus; }
+
+    // ADD THIS toString() METHOD TO FIX THE LOGGING ISSUE
+    @Override
+    public String toString() {
+        return "RoomDTO{" +
+                "roomId=" + roomId +
+                ", adminId=" + adminId +
+                ", sharingTypeId=" + sharingTypeId +
+                ", roomNumber='" + roomNumber + '\'' +
+                ", floorNumber=" + floorNumber +
+                ", roomStatus='" + roomStatus + '\'' +
+                ", currentOccupancy=" + currentOccupancy +
+                ", createdAt='" + createdAt + '\'' +
+                ", sharingTypeName='" + sharingTypeName + '\'' +
+                ", sharingCapacity=" + sharingCapacity +
+                ", price=" + price +
+                ", occupancyStatus='" + occupancyStatus + '\'' +
+                '}';
+    }
 }

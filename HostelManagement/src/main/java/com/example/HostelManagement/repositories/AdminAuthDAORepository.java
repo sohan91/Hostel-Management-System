@@ -66,7 +66,7 @@ public class AdminAuthDAORepository implements AdminAuthDAO {
     public List<SharingDetailsDTO> sharingTypesList(Integer adminId) {
         entityManager.clear();
 
-        String jpql = "SELECT s FROM sharingtype s WHERE s.admin.adminId = :adminId";
+        String jpql = "SELECT s FROM sharing_type s WHERE s.admin.adminId = :adminId";
         TypedQuery<SharingType> query = entityManager.createQuery(jpql, SharingType.class);
         query.setParameter("adminId", adminId);
 

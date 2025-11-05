@@ -5,18 +5,15 @@ import java.time.LocalDateTime;
 
 import com.example.HostelManagement.entities.hostel.admin.Admin;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
-@Table(name = "sharingtype")
+@Table(name = "sharing_type", 
+       uniqueConstraints = @UniqueConstraint(
+           name = "unique_admin_sharing_type", 
+           columnNames = {"admin_id", "type_name"}
+       ))
 @Data
 public class SharingType {
     @Id
@@ -31,7 +28,7 @@ public class SharingType {
     @Column(name = "type_name", nullable = false, length = 50)
     private String typeName;
 
-   @Column(name = "sharing_fee", nullable = false) 
+    @Column(name = "sharing_fee", nullable = false) 
     private BigDecimal sharingFee;
 
     @Column(name = "capacity", nullable = false)
@@ -43,10 +40,9 @@ public class SharingType {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-        public SharingType() {}
+    public SharingType() {}
     
-    public SharingType(Admin admin, String typeName, BigDecimal sharingFee, Integer capacity, String description) 
-    {
+    public SharingType(Admin admin, String typeName, BigDecimal sharingFee, Integer capacity, String description) {
         this.admin = admin;
         this.typeName = typeName;
         this.sharingFee = sharingFee;

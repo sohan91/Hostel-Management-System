@@ -9,7 +9,11 @@ import java.time.LocalDate;
 import com.example.HostelManagement.entities.hostel.admin.Admin;
 
 @Entity
-@Table(name = "DailyMenu")
+@Table(name = "DailyMenu", 
+       uniqueConstraints = @UniqueConstraint(
+           name = "unique_admin_menu_date", 
+           columnNames = {"admin_id", "menu_date"}
+       ))
 @Data
 public class DailyMenu {
     @Id
@@ -65,7 +69,7 @@ public class DailyMenu {
         Active, Closed, Expired
     }
 
-      public DailyMenu() {}
+    public DailyMenu() {}
     
     public DailyMenu(Admin admin, LocalDate menuDate, String breakfastItems, 
                      String lunchItems, String dinnerItems, LocalDateTime votingDeadline) {

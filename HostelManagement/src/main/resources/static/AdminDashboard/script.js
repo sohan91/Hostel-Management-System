@@ -148,7 +148,7 @@ async function getSharingTypes() {
     }
 }
 
-// Get room details (Accepts pre-fetched sharing types) - FIXED VERSION
+// Get room details
 async function getRoomDetails(sharingTypes) {
     console.log("Fetching room details from API...");
 
@@ -224,7 +224,7 @@ function displayDashboardStructure(sharingTypes, rooms) {
 
     console.log("✅ Displaying dashboard with", sharingTypes.length, "sharing types");
 
-    // Group rooms by sharing type ID and floor - FIXED: Use sharingTypeId instead of name
+    // Group rooms by sharing type ID and floor
     const roomsBySharingIdAndFloor = groupRoomsBySharingTypeAndFloor(rooms);
     console.log("📊 Rooms grouped by sharing type ID:", roomsBySharingIdAndFloor);
 
@@ -263,7 +263,6 @@ function groupRoomsBySharingTypeAndFloor(rooms) {
     console.log("🔍 Grouping", rooms.length, "rooms by sharing type ID and floor");
 
     rooms.forEach(room => {
-        // FIXED: Group by sharingTypeId instead of sharing type name
         const sharingTypeId = room.sharingTypeId;
         const sharingTypeName = room.sharingTypeName || `${room.sharingCapacity || 1}-Sharing`;
         const floorNumber = String(room.floorNumber || 1);
@@ -293,7 +292,6 @@ function groupRoomsBySharingTypeAndFloor(rooms) {
 }
 
 function createSharingTypeSection(sharingType, floorsData) {
-    // Use the actual typeName from the API response
     const sharingTypeName = sharingType.typeName || `${sharingType.sharingCapacity || 1}-Sharing`;
     const capacity = sharingType.sharingCapacity || sharingType.capacity || 1;
     const price = sharingType.sharingFee || sharingType.price || 5000;
@@ -767,7 +765,7 @@ function showAddSharingTypeModal() {
         }
     });
 
-    // Real-time validation for capacity - FIXED VERSION
+    // Real-time validation for capacity
     const capacitySelect = modal.querySelector('#sharingCapacity');
     const existsMsg = modal.querySelector('#capacityExistsMsg');
     const submitBtn = modal.querySelector('#submitSharingBtn');
@@ -1204,7 +1202,7 @@ function initializeAddRoomButtons() {
             const price = this.getAttribute('data-price');
             const sharingId = this.getAttribute('data-sharing-id');
 
-            console.log("➕ Add room clicked for sharing type:", sharingType);
+            console.log("➕ Add room clicked for sharing type:", sharingType, "ID:", sharingId);
 
             addNewRoom(sharingType, capacity, price, sharingId);
         });
@@ -1257,15 +1255,12 @@ function initializeRoomCardInteractions() {
 }
 
 function addNewRoom(sharingType, capacity, price, sharingId) {
-    console.log(`➕ Opening add room modal for: ${sharingType}, Capacity: ${capacity}, Price: ${price}`);
+    console.log(`➕ Opening add room modal for: ${sharingType}, Capacity: ${capacity}, Price: ${price}, SharingID: ${sharingId}`);
 
     const modal = document.createElement('div');
     modal.className = 'modal-overlay active';
 
-    // Add CSS for proper modal styling
-  
-
-    modal.innerHTML =  `
+    modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Add New Room - ${sharingType}</h3>
@@ -1281,7 +1276,10 @@ function addNewRoom(sharingType, capacity, price, sharingId) {
                     </div>
                     <div class="form-group">
                         <label>Floor Number (F):</label>
-                        <input type="number" id="floorNumber" min="0" max="10" value="1" required>
+                        <input type="number" id="floorNumber" min="1" max="10" value="1" required>
+                        <small id="floorExistsMsg" style="color: red; display: none; margin-top: 8px;">
+                            <i class="fas fa-exclamation-triangle"></i> A room with this number already exists on this floor.
+                        </small>
                     </div>
                     <div class="form-group">
                         <label>Room Base Number (R):</label>
@@ -1303,7 +1301,7 @@ function addNewRoom(sharingType, capacity, price, sharingId) {
                     </div>
                     <div class="form-actions">
                         <button type="button" class="btn-secondary cancel-btn">Cancel</button>
-                        <button type="submit" class="btn-primary">Add Room</button>
+                        <button type="submit" class="btn-primary" id="submitRoomBtn">Add Room</button>
                     </div>
                 </form>
             </div>
@@ -1316,16 +1314,41 @@ function addNewRoom(sharingType, capacity, price, sharingId) {
     const floorInput = modal.querySelector('#floorNumber');
     const baseRoomInput = modal.querySelector('#baseRoomNumber');
     const finalRoomDisplay = modal.querySelector('#finalRoomNumber');
+    const existsMsg = modal.querySelector('#floorExistsMsg');
+    const submitBtn = modal.querySelector('#submitRoomBtn');
 
     const updateRoomNumber = () => {
-        const capacityVal = capacity; // From function parameter
+        const capacityVal = capacity;
         const floor = floorInput.value;
         const baseRoom = baseRoomInput.value.trim();
         
         if (floor && baseRoom) {
-            // Format: Capacity + Floor + Room (e.g., 4101 for 4-Sharing, Floor 1, Room 01)
             const formattedRoomNumber = `${capacityVal}${floor}${baseRoom.padStart(2, '0')}`;
             finalRoomDisplay.textContent = formattedRoomNumber;
+            
+            // Check if room already exists on this floor
+            checkRoomExistsOnFloor(formattedRoomNumber, parseInt(floor));
+        }
+    };
+
+    // Function to check if room exists on the same floor
+    const checkRoomExistsOnFloor = async (roomNumber, floorNumber) => {
+        if (!roomNumber || !floorNumber) return;
+
+        try {
+            console.log(`🔍 Checking if room ${roomNumber} exists on floor ${floorNumber}`);
+            
+            // You can implement this API endpoint or use existing data
+            // For now, we'll rely on server-side validation
+            existsMsg.style.display = 'none';
+            submitBtn.disabled = false;
+            floorInput.classList.remove('validation-error');
+            
+        } catch (error) {
+            console.error("Error checking room existence:", error);
+            // If API fails, we'll rely on server-side validation
+            existsMsg.style.display = 'none';
+            submitBtn.disabled = false;
         }
     };
 
@@ -1362,8 +1385,7 @@ function addNewRoom(sharingType, capacity, price, sharingId) {
         const roomPrice = modal.querySelector('#roomPrice').value;
         const sharingTypeId = modal.querySelector('#sharingTypeId').value;
 
-        console.log(`📝 Adding new room: ${roomNumber}, Floor: ${floorNumber}, Sharing: ${sharingType}, Price: ₹${roomPrice}`);
-        console.log(`📝 Room Number Format: Capacity(${capacity}) + Floor(${floorNumber}) + Room(${baseRoomNumber.padStart(2, '0')}) = ${roomNumber}`);
+        console.log(`📝 Adding new room: ${roomNumber}, Floor: ${floorNumber}, SharingID: ${sharingTypeId}, Price: ₹${roomPrice}`);
 
         // Validate inputs
         if (!floorNumber || !baseRoomNumber || !roomPrice) {
@@ -1384,7 +1406,6 @@ function addNewRoom(sharingType, capacity, price, sharingId) {
         }
 
         try {
-            const submitBtn = modal.querySelector('.btn-primary');
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<div class="loading-spinner"></div> Adding...';
 
@@ -1395,11 +1416,11 @@ function addNewRoom(sharingType, capacity, price, sharingId) {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    roomNumber: roomNumber, // This will be in C+F+R format like "4101"
+                    roomNumber: roomNumber,
                     floorNumber: parseInt(floorNumber),
-                    sharingTypeId: sharingTypeId,
+                    sharingTypeId: parseInt(sharingTypeId), // Ensure it's integer
                     price: parseInt(roomPrice),
-                    capacity: parseInt(capacity)
+                    sharingCapacity: parseInt(capacity) // Send capacity for validation
                 })
             });
 
@@ -1415,7 +1436,20 @@ function addNewRoom(sharingType, capacity, price, sharingId) {
                     await refreshDashboard();
                 }, 1000);
             } else {
-                showNotification(result.message, 'error');
+                // Handle specific error cases
+                if (result.message && result.message.toLowerCase().includes('already exists')) {
+                    showNotification("A room with this number already exists on this floor", "error");
+                    existsMsg.style.display = 'block';
+                    floorInput.classList.add('validation-error');
+                    floorInput.focus();
+                } else if (result.message && result.message.toLowerCase().includes('sharing type')) {
+                    showNotification("Invalid sharing type selected", "error");
+                } else if (result.message && result.message.toLowerCase().includes('admin')) {
+                    showNotification("Authentication error. Please refresh and try again.", "error");
+                } else {
+                    showNotification(result.message || "Error adding room", "error");
+                }
+                
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = 'Add Room';
             }
@@ -1435,3 +1469,24 @@ function addNewRoom(sharingType, capacity, price, sharingId) {
         baseRoomInput.focus();
     }, 100);
 }
+
+// Add CSS for validation states
+const validationStyles = `
+    <style>
+        .validation-error {
+            border-color: #dc3545 !important;
+            background-color: #fff5f5;
+        }
+        .validation-success {
+            border-color: #28a745 !important;
+            background-color: #f8fff9;
+        }
+        #capacityExistsMsg, #floorExistsMsg {
+            color: #dc3545;
+            font-weight: 500;
+            margin-top: 8px;
+            display: none;
+        }
+    </style>
+`;
+document.head.insertAdjacentHTML('beforeend', validationStyles);
