@@ -3,10 +3,10 @@ package com.example.HostelManagement.repositories;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.example.HostelManagement.dto.SharingDetailsDTO;
 import org.springframework.stereotype.Repository;
 
 import com.example.HostelManagement.dao.AdminAuthDAO;
+import com.example.HostelManagement.dto.SharingDetailsDTO;
 import com.example.HostelManagement.entities.hostel.SharingType;
 import com.example.HostelManagement.entities.hostel.admin.Admin;
 
@@ -66,7 +66,7 @@ public class AdminAuthDAORepository implements AdminAuthDAO {
     public List<SharingDetailsDTO> sharingTypesList(Integer adminId) {
         entityManager.clear();
 
-        String jpql = "SELECT s FROM SharingType s WHERE s.admin.adminId = :adminId";
+        String jpql = "SELECT s FROM sharingtype s WHERE s.admin.adminId = :adminId";
         TypedQuery<SharingType> query = entityManager.createQuery(jpql, SharingType.class);
         query.setParameter("adminId", adminId);
 

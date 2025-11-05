@@ -128,7 +128,7 @@ public class RoomDAO {
                 COALESCE(st.sharing_fee, 5000.00) as price,
                 CONCAT(r.current_occupancy, '/', COALESCE(st.capacity, 2)) as occupancy_status
             FROM Rooms r
-            LEFT JOIN SharingType st ON r.sharing_type_id = st.sharing_type_id AND r.admin_id = st.admin_id
+            LEFT JOIN sharingtype st ON r.sharing_type_id = st.sharing_type_id AND r.admin_id = st.admin_id
             WHERE r.admin_id = ?
             ORDER BY r.floor_number, r.room_number
             """;
@@ -175,7 +175,7 @@ public class RoomDAO {
                        r.current_occupancy, r.sharing_type_id, r.admin_id,
                        st.type_name, st.capacity, st.sharing_fee
                 FROM Rooms r 
-                LEFT JOIN SharingType st ON r.sharing_type_id = st.sharing_type_id 
+                LEFT JOIN sharingtype st ON r.sharing_type_id = st.sharing_type_id 
                 WHERE r.admin_id = ?
                 """;
             jdbcTemplate.query(roomDataSql, new Object[]{adminId}, (rs, rowNum) -> {
@@ -196,13 +196,13 @@ public class RoomDAO {
         }
 
         // 2. Check SharingType table for this admin
-        String sharingSql = "SELECT COUNT(*) as sharing_count FROM SharingType WHERE admin_id = ?";
+        String sharingSql = "SELECT COUNT(*) as sharing_count FROM sharingtype WHERE admin_id = ?";
         try {
             Integer sharingCount = jdbcTemplate.queryForObject(sharingSql, new Object[]{adminId}, Integer.class);
             System.out.println("🐛 DEBUG: SharingType count for admin: " + sharingCount);
 
             // Show actual sharing type data
-            String sharingDataSql = "SELECT sharing_type_id, type_name, capacity, sharing_fee, admin_id FROM SharingType WHERE admin_id = ?";
+            String sharingDataSql = "SELECT sharing_type_id, type_name, capacity, sharing_fee, admin_id FROM sharingtype WHERE admin_id = ?";
             jdbcTemplate.query(sharingDataSql, new Object[]{adminId}, (rs, rowNum) -> {
                 System.out.println("🐛 DEBUG SharingType - ID: " + rs.getInt("sharing_type_id") +
                         ", Name: " + rs.getString("type_name") +
@@ -235,7 +235,7 @@ public class RoomDAO {
                 COALESCE(st.sharing_fee, 5000.00) as price,
                 CONCAT(r.current_occupancy, '/', COALESCE(st.capacity, 2)) as occupancy_status
             FROM Rooms r
-            LEFT JOIN SharingType st ON r.sharing_type_id = st.sharing_type_id AND r.admin_id = st.admin_id
+            LEFT JOIN sharingtype st ON r.sharing_type_id = st.sharing_type_id AND r.admin_id = st.admin_id
             WHERE r.admin_id = ? AND r.room_status = 'Available'
             ORDER BY r.floor_number, r.room_number
             """;
@@ -270,7 +270,7 @@ public class RoomDAO {
                 COALESCE(st.sharing_fee, 5000.00) as price,
                 CONCAT(r.current_occupancy, '/', COALESCE(st.capacity, 2)) as occupancy_status
             FROM Rooms r
-            LEFT JOIN SharingType st ON r.sharing_type_id = st.sharing_type_id AND r.admin_id = st.admin_id
+            LEFT JOIN sharingtype st ON r.sharing_type_id = st.sharing_type_id AND r.admin_id = st.admin_id
             WHERE r.admin_id = ? AND r.floor_number = ?
             ORDER BY r.room_number
             """;
@@ -305,7 +305,7 @@ public class RoomDAO {
                 COALESCE(st.sharing_fee, 5000.00) as price,
                 CONCAT(r.current_occupancy, '/', COALESCE(st.capacity, 2)) as occupancy_status
             FROM Rooms r
-            LEFT JOIN SharingType st ON r.sharing_type_id = st.sharing_type_id AND r.admin_id = st.admin_id
+            LEFT JOIN sharingtype st ON r.sharing_type_id = st.sharing_type_id AND r.admin_id = st.admin_id
             WHERE r.room_id = ? AND r.admin_id = ?
             """;
 

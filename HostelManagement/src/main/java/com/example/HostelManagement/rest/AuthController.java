@@ -1,12 +1,10 @@
 package com.example.HostelManagement.rest;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import com.example.HostelManagement.dto.CreateNewSharingType;
-import com.example.HostelManagement.repositories.AddNewSharingTypeRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -21,11 +19,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.HostelManagement.config.JwtUtil;
+import com.example.HostelManagement.dto.CreateNewSharingType;
 import com.example.HostelManagement.dto.DashboardAdminDTO;
 import com.example.HostelManagement.dto.RoomDTO;
 import com.example.HostelManagement.dto.SharingDetailsDTO;
 import com.example.HostelManagement.entities.hostel.admin.Admin;
 import com.example.HostelManagement.entities.hostel.admin.LoginRequestDAO;
+import com.example.HostelManagement.repositories.AddNewSharingTypeRepo;
 import com.example.HostelManagement.service.AdminAuthService;
 import com.example.HostelManagement.service.RoomService;
 
@@ -50,6 +50,7 @@ public class AuthController {
         this.jwtUtil = jwtUtil;
         this.roomService = roomService;
         this.newSharingTypeRepo = newSharingTypeRepo;
+       
     }
     @PostMapping("/add-sharing-type")
     public ResponseEntity<Map<String, Object>> addSharingType(@RequestBody CreateNewSharingType request,
@@ -375,7 +376,7 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
             }
 
-            List<SharingDetailsDTO> sharingDetails = authService.sharingTypesList(admin.getAdminId());
+            List<SharingDetailsDTO> sharingDetails = newSharingTypeRepo.getSharingTypesByAdmin(admin.getAdminId());
             System.out.println("Found sharing types: " + sharingDetails.size());
 
             if (sharingDetails.isEmpty()) {

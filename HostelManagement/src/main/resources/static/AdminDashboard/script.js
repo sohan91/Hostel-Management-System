@@ -62,27 +62,30 @@ function clearMainContentContainer() {
 }
 
 async function loadDataSequentially() {
-    console.log("Starting sequential data loading");
-
+    console.log("🚀 >>>>> loadDataSequentially() STARTED <<<<<");
     clearMainContentContainer();
 
     try {
         // Step 1: Load admin details first
+        console.log("👤 >>>>> STEP 1: Calling getAdminDetails() <<<<<");
         const adminDetails = await getAdminDetails();
-        console.log("✅ Admin details loaded");
+        console.log("✅ >>>>> STEP 1 COMPLETE: Admin details loaded <<<<<");
 
         // Step 2: Load sharing types
+        console.log("🏠 >>>>> STEP 2: Calling getSharingTypes() <<<<<");
         const sharingTypes = await getSharingTypes();
-        console.log("✅ Sharing types loaded:", sharingTypes.length);
+        console.log("✅ >>>>> STEP 2 COMPLETE: Sharing types loaded:", sharingTypes.length);
+        console.log("📊 >>>>> Sharing types data:", sharingTypes);
 
-        // Step 3: Load room details (passing required sharingTypes)
+        // Step 3: Load room details
+        console.log("🚪 >>>>> STEP 3: Calling getRoomDetails() <<<<<");
         const roomDetails = await getRoomDetails(sharingTypes);
-        console.log("✅ Room details loaded:", roomDetails ? roomDetails.length : 0);
+        console.log("✅ >>>>> STEP 3 COMPLETE: Room details loaded:", roomDetails.length);
 
-        console.log("✅ All data loaded successfully in sequence");
+        console.log("🎉 >>>>> ALL DATA LOADED SUCCESSFULLY <<<<<");
 
     } catch (error) {
-        console.error("❌ An overall error occurred during data loading:", error);
+        console.error("💥 >>>>> ERROR in loadDataSequentially:", error);
         showNotification("Error loading dashboard data", "error");
     }
 }
@@ -117,10 +120,11 @@ async function getAdminDetails() {
 
 // Get sharing types
 async function getSharingTypes() {
-    console.log("🔄 Fetching sharing types...");
-
+    console.log("🔄 >>>>> getSharingTypes() FUNCTION STARTED <<<<<");
+    
     try {
-        const response = await fetch("/api/auth/sharing-details?" + new Date().getTime(), {
+        console.log("📡 >>>>> ABOUT TO MAKE FETCH CALL <<<<<");
+        const response = await fetch("/api/auth/sharing-details", {
             method: "GET",
             credentials: "include",
             headers: {
@@ -128,23 +132,18 @@ async function getSharingTypes() {
             }
         });
 
+        console.log("📡 >>>>> FETCH COMPLETED, Status:", response.status);
+        
         if (response.ok) {
             const sharingData = await response.json();
-            console.log("Sharing types loaded from API:", sharingData);
-
-            if (Array.isArray(sharingData) && sharingData.length > 0) {
-                sharingData.sort((a, b) => (a.capacity || 99) - (b.capacity || 99));
-                return sharingData;
-            } else {
-                console.log("No sharing types found");
-                return [];
-            }
+            console.log("📡 >>>>> RESPONSE PARSED:", sharingData);
+            return sharingData;
         } else {
-            console.error("Failed to fetch sharing types:", response.status);
+            console.error("❌ >>>>> FETCH FAILED:", response.status);
             return [];
         }
     } catch (error) {
-        console.error("Error fetching sharing types:", error);
+        console.error("❌ >>>>> FETCH ERROR:", error);
         return [];
     }
 }
@@ -225,23 +224,23 @@ function displayDashboardStructure(sharingTypes, rooms) {
 
     console.log("✅ Displaying dashboard with", sharingTypes.length, "sharing types");
 
-    // Group rooms by sharing type and floor
-    const roomsBySharingAndFloor = groupRoomsBySharingTypeAndFloor(rooms);
-    console.log("📊 Rooms grouped by sharing type:", roomsBySharingAndFloor);
+    // Group rooms by sharing type ID and floor - FIXED: Use sharingTypeId instead of name
+    const roomsBySharingIdAndFloor = groupRoomsBySharingTypeAndFloor(rooms);
+    console.log("📊 Rooms grouped by sharing type ID:", roomsBySharingIdAndFloor);
 
     // Create sections for each sharing type
     sharingTypes.forEach(sharingType => {
-        // Use capacity to generate sharing type name
-        const capacity = sharingType.capacity || 1;
-        const sharingTypeName = `${capacity}-Sharing`;
-        console.log(`🔄 Processing sharing type: ${sharingTypeName} (ID: ${sharingType.sharingTypeId})`);
+        const sharingTypeId = sharingType.sharingTypeId;
+        const sharingData = roomsBySharingIdAndFloor[sharingTypeId];
+        
+        console.log(`🔄 Processing sharing type: ${sharingType.typeName} (ID: ${sharingTypeId})`);
 
-        const sharingRooms = roomsBySharingAndFloor[sharingTypeName] || {};
-        console.log(`📦 Rooms for ${sharingTypeName}:`, sharingRooms);
+        const sharingRooms = sharingData ? sharingData.floors : {};
+        console.log(`📦 Rooms for ${sharingType.typeName}:`, sharingRooms);
 
         const sharingSection = createSharingTypeSection(sharingType, sharingRooms);
         roomSection.appendChild(sharingSection);
-        console.log(`✅ Added sharing type section: ${sharingTypeName}`);
+        console.log(`✅ Added sharing type section: ${sharingType.typeName}`);
     });
 
     // Initialize interactions
@@ -261,28 +260,32 @@ function groupRoomsBySharingTypeAndFloor(rooms) {
         return grouped;
     }
 
-    console.log("🔍 Grouping", rooms.length, "rooms by sharing type and floor");
+    console.log("🔍 Grouping", rooms.length, "rooms by sharing type ID and floor");
 
     rooms.forEach(room => {
-        // Use capacity to generate sharing type name for grouping
-        const sharingCapacity = room.sharingCapacity || 1;
-        const sharingType = `${sharingCapacity}-Sharing`;
+        // FIXED: Group by sharingTypeId instead of sharing type name
+        const sharingTypeId = room.sharingTypeId;
+        const sharingTypeName = room.sharingTypeName || `${room.sharingCapacity || 1}-Sharing`;
         const floorNumber = String(room.floorNumber || 1);
 
-        console.log(`🏠 Processing room: ${room.roomNumber}, Sharing: ${sharingType}, Floor: ${floorNumber}`);
+        console.log(`🏠 Processing room: ${room.roomNumber}, SharingID: ${sharingTypeId}, Sharing: ${sharingTypeName}, Floor: ${floorNumber}`);
 
-        if (!grouped[sharingType]) {
-            grouped[sharingType] = {};
-            console.log(`📁 Created new sharing type group: ${sharingType}`);
+        // Use sharingTypeId as the key instead of sharingTypeName
+        if (!grouped[sharingTypeId]) {
+            grouped[sharingTypeId] = {
+                sharingTypeName: sharingTypeName,
+                floors: {}
+            };
+            console.log(`📁 Created new sharing type group: ${sharingTypeName} (ID: ${sharingTypeId})`);
         }
 
-        if (!grouped[sharingType][floorNumber]) {
-            grouped[sharingType][floorNumber] = [];
-            console.log(`📂 Created new floor group: ${sharingType} - Floor ${floorNumber}`);
+        if (!grouped[sharingTypeId].floors[floorNumber]) {
+            grouped[sharingTypeId].floors[floorNumber] = [];
+            console.log(`📂 Created new floor group: ${sharingTypeName} - Floor ${floorNumber}`);
         }
 
-        grouped[sharingType][floorNumber].push(room);
-        console.log(`✅ Added room ${room.roomNumber} to ${sharingType} - Floor ${floorNumber}`);
+        grouped[sharingTypeId].floors[floorNumber].push(room);
+        console.log(`✅ Added room ${room.roomNumber} to ${sharingTypeName} (ID: ${sharingTypeId}) - Floor ${floorNumber}`);
     });
 
     console.log("📊 Final grouped structure:", grouped);
@@ -290,21 +293,23 @@ function groupRoomsBySharingTypeAndFloor(rooms) {
 }
 
 function createSharingTypeSection(sharingType, floorsData) {
-    const capacity = sharingType.capacity || 1;
-    const price = sharingType.sharingFee || 5000;
-    const sharingTypeName = `${capacity}-Sharing`;
+    // Use the actual typeName from the API response
+    const sharingTypeName = sharingType.typeName || `${sharingType.sharingCapacity || 1}-Sharing`;
+    const capacity = sharingType.sharingCapacity || sharingType.capacity || 1;
+    const price = sharingType.sharingFee || sharingType.price || 5000;
+    const sharingTypeId = sharingType.sharingTypeId;
 
-    console.log(`🏗️ Creating section for: ${sharingTypeName} (Capacity: ${capacity}, Price: ${price})`);
+    console.log(`🏗️ Creating section for: ${sharingTypeName} (ID: ${sharingTypeId}, Capacity: ${capacity}, Price: ${price})`);
 
-    const floorNumbers = Object.keys(floorsData);
-    const totalRooms = Object.values(floorsData).reduce((total, floorRooms) => total + floorRooms.length, 0);
+    const floorNumbers = Object.keys(floorsData || {});
+    const totalRooms = Object.values(floorsData || {}).reduce((total, floorRooms) => total + floorRooms.length, 0);
 
     console.log(`📊 Section stats - Floors: ${floorNumbers.length}, Total Rooms: ${totalRooms}`);
 
     const sharingDiv = document.createElement('div');
     sharingDiv.className = 'sharing-type-section';
     sharingDiv.setAttribute('data-sharing-type', sharingTypeName);
-    sharingDiv.setAttribute('data-sharing-id', sharingType.sharingTypeId || '');
+    sharingDiv.setAttribute('data-sharing-id', sharingTypeId || '');
     sharingDiv.setAttribute('data-capacity', capacity);
 
     const headerDiv = document.createElement('div');
@@ -324,7 +329,7 @@ function createSharingTypeSection(sharingType, floorsData) {
             </div>
         </div>
         <div class="sharing-type-actions">
-            <button class="add-room-btn" data-sharing-type="${sharingTypeName}" data-capacity="${capacity}" data-price="${price}" data-sharing-id="${sharingType.sharingTypeId || ''}">
+            <button class="add-room-btn" data-sharing-type="${sharingTypeName}" data-capacity="${capacity}" data-price="${price}" data-sharing-id="${sharingTypeId || ''}">
                 <i class="fas fa-plus"></i> Add Room
             </button>
         </div>
@@ -388,18 +393,33 @@ function createRoomCard(room) {
     console.log("🏠 Creating card for room:", room.roomNumber);
 
     const roomId = room.roomId;
-    const roomNumber = room.roomNumber;
+    
+    // Extract display room number (remove capacity prefix)
+    const fullRoomNumber = room.roomNumber;
+    let displayRoomNumber = fullRoomNumber;
+    
+    // Remove the capacity digit from the beginning for display
+    if (/^\d+/.test(fullRoomNumber)) {
+        displayRoomNumber = fullRoomNumber.substring(1); // Remove first character (capacity)
+    }
+    
     const floorNumber = room.floorNumber;
     const roomStatus = room.roomStatus;
     const currentOccupancy = room.currentOccupancy || 0;
+    
+    // Use actual sharingTypeName from room data instead of generating from capacity
+    const sharingTypeName = room.sharingTypeName || `${room.sharingCapacity || 2}-Sharing`;
     const sharingCapacity = room.sharingCapacity || 2;
-    const sharingTypeName = `${sharingCapacity}-Sharing`;
     const price = room.price || 5000;
 
     const availableSpots = sharingCapacity - currentOccupancy;
     const statusClass = getRoomStatusClass(roomStatus);
     const availabilityText = getAvailabilityText(roomStatus, availableSpots);
     const occupancyStatus = room.occupancyStatus || `${currentOccupancy}/${sharingCapacity}`;
+
+    // Create the display format: "1-201" (SharingType-RoomNumber)
+    const sharingTypePrefix = sharingCapacity; // Get just the number from sharing type
+    const roomDisplay = `${sharingTypePrefix}-${displayRoomNumber}`;
 
     const roomCard = document.createElement('div');
     roomCard.className = `room-card ${statusClass}`;
@@ -410,21 +430,21 @@ function createRoomCard(room) {
     roomCard.innerHTML = `
         <div class="room-card-header">
             <div class="room-number-group">
-                <span class="room-number">${roomNumber}</span>
+                <span class="room-number">${roomDisplay}</span>
                 <span class="beds-info">Available: <span class="beds-available-count">${occupancyStatus}</span> beds</span>
             </div>
         </div>
         <div class="room-details-content">
             <ul class="room-meta-list">
                 <li><strong>Sharing Type:</strong> <span>${sharingTypeName}</span></li>
-                <li><strong>Availability:</strong> <span class="available-status">${availabilityText}</span></li>
+                <li><strong>Availability:</strong> <span class="available-status ${availableSpots === 0 ? 'filled' : ''}">${availabilityText}</span></li>
                 <li><strong>Price:</strong> <span class="price">₹${price} <span class="price-unit">/Bed</span></span></li>
             </ul>
             <div class="room-actions">
-                <button class="btn-primary book-now-btn" data-room="${roomNumber}" data-room-id="${roomId}" ${availableSpots === 0 || roomStatus !== 'Available' ? 'disabled' : ''}>
+                <button class="book-now-btn" data-room="${roomDisplay}" data-room-id="${roomId}" ${availableSpots === 0 || roomStatus !== 'Available' ? 'disabled' : ''}>
                     <i class="fas fa-bookmark"></i> ${availableSpots === 0 ? 'Full' : 'Book Now'}
                 </button>
-                <button class="btn-secondary details-btn" data-room="${roomNumber}" data-room-id="${roomId}">
+                <button class="details-btn" data-room="${roomDisplay}" data-room-id="${roomId}">
                     <i class="fas fa-info-circle"></i> View Details
                 </button>
             </div>
@@ -469,9 +489,6 @@ function showGlobalEmptyState() {
                 <i class="fas fa-home" style="font-size: 40px; color: #007bff;"></i>
                 <h3 style="margin-top: 15px;">No Sharing Types Configured</h3>
                 <p>Start by creating sharing types to organize your hostel rooms</p>
-                <button class="btn-primary" id="addSharingTypeBtn" style="margin-top: 20px;">
-                    <i class="fas fa-plus"></i> Add Sharing Type
-                </button>
             </div>
         </div>
     `;
@@ -533,7 +550,7 @@ function showAddSharingTypeModal() {
                 color: white;
                 border-radius: 12px 12px 0 0;
                 display: flex;
-                justify-content: between;
+                justify-content: space-between;
                 align-items: center;
             }
             .modal-header h3 {
@@ -763,7 +780,7 @@ function showAddSharingTypeModal() {
     const loadCurrentAdminSharingTypes = async () => {
         try {
             console.log("🔍 Loading current admin's sharing types for validation...");
-            const response = await fetch("/api/auth/sharing-details?" + new Date().getTime(), {
+            const response = await fetch("/api/auth/sharing-details", {
                 method: "GET",
                 credentials: "include"
             });
@@ -910,6 +927,7 @@ function showAddSharingTypeModal() {
         capacitySelect.focus();
     }, 100);
 }
+
 async function refreshDashboard() {
     console.log("🔄 Starting dashboard refresh...");
 
@@ -937,8 +955,6 @@ async function refreshDashboard() {
         showNotification("Error refreshing dashboard", "error");
     }
 }
-
-// ... (rest of your existing functions remain the same - initializeSidebar, initializeProfileNavigation, showNotification, etc.)
 
 function updateDashboardUI(admin) {
     console.log("Updating dashboard UI with admin data:", admin);
@@ -1246,7 +1262,10 @@ function addNewRoom(sharingType, capacity, price, sharingId) {
     const modal = document.createElement('div');
     modal.className = 'modal-overlay active';
 
-    modal.innerHTML = `
+    // Add CSS for proper modal styling
+  
+
+    modal.innerHTML =  `
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Add New Room - ${sharingType}</h3>
@@ -1255,23 +1274,28 @@ function addNewRoom(sharingType, capacity, price, sharingId) {
             <div class="modal-body">
                 <form id="addRoomForm">
                     <div class="form-group">
-                        <label>Floor Number:</label>
+                        <label>Sharing Capacity (C):</label>
+                        <div class="readonly-field" id="capacityReadOnly" style="font-weight: bold;">${capacity} Sharing</div>
+                        <input type="hidden" id="roomCapacity" value="${capacity}">
+                        <input type="hidden" id="sharingTypeId" value="${sharingId}">
+                    </div>
+                    <div class="form-group">
+                        <label>Floor Number (F):</label>
                         <input type="number" id="floorNumber" min="0" max="10" value="1" required>
                     </div>
                     <div class="form-group">
-                        <label>Room Number (on this floor):</label>
-                        <input type="text" id="baseRoomNumber" placeholder="e.g., 01, 02, A, B, etc." required>
-                        <small>Will be combined with floor number (e.g., Floor 2 + Room 01 = 201)</small>
+                        <label>Room Base Number (R):</label>
+                        <input type="text" id="baseRoomNumber" placeholder="e.g., 01, 02, etc." required value="01">
+                        <small>Must be 2 digits (e.g., '01', '02', '10', etc.)</small>
                     </div>
                     <div class="form-group">
-                        <label>Final Room Number:</label>
-                        <div class="readonly-field" id="finalRoomNumber" style="font-weight: bold; color: #007bff;">201</div>
-                    </div>
-                    <div class="form-group">
-                        <label>Sharing Type:</label>
-                        <div class="readonly-field">${sharingType} (Capacity: ${capacity})</div>
-                        <input type="hidden" id="roomCapacity" value="${capacity}">
-                        <input type="hidden" id="sharingTypeId" value="${sharingId}">
+                        <label>Final Room Number (C + F + R):</label>
+                        <div class="readonly-field" id="finalRoomNumber" style="font-weight: bold; color: var(--primary-blue);">
+                            ${capacity}101
+                        </div>
+                        <small style="color: var(--text-light-gray); font-weight: 500;">
+                            Format: Capacity ${capacity} + Floor 1 + Room 01 = <strong>${capacity}101</strong>
+                        </small>
                     </div>
                     <div class="form-group">
                         <label>Price per Bed:</label>
@@ -1288,23 +1312,20 @@ function addNewRoom(sharingType, capacity, price, sharingId) {
 
     document.body.appendChild(modal);
 
-    // Auto-generate room number based on floor
+    // Auto-generate room number based on capacity + floor + room
     const floorInput = modal.querySelector('#floorNumber');
     const baseRoomInput = modal.querySelector('#baseRoomNumber');
     const finalRoomDisplay = modal.querySelector('#finalRoomNumber');
 
     const updateRoomNumber = () => {
+        const capacityVal = capacity; // From function parameter
         const floor = floorInput.value;
         const baseRoom = baseRoomInput.value.trim();
+        
         if (floor && baseRoom) {
-            // Handle both numeric and alphabetic room numbers
-            if (/^\d+$/.test(baseRoom)) {
-                // Numeric: 1 → 01, 2 → 02, etc.
-                finalRoomDisplay.textContent = `${floor}${baseRoom.padStart(2, '0')}`;
-            } else {
-                // Alphabetic: A → 2A, B → 2B, etc.
-                finalRoomDisplay.textContent = `${floor}${baseRoom.toUpperCase()}`;
-            }
+            // Format: Capacity + Floor + Room (e.g., 4101 for 4-Sharing, Floor 1, Room 01)
+            const formattedRoomNumber = `${capacityVal}${floor}${baseRoom.padStart(2, '0')}`;
+            finalRoomDisplay.textContent = formattedRoomNumber;
         }
     };
 
@@ -1335,23 +1356,25 @@ function addNewRoom(sharingType, capacity, price, sharingId) {
         e.preventDefault();
         const floorNumber = floorInput.value;
         const baseRoomNumber = baseRoomInput.value.trim();
-        let roomNumber;
 
-        // Generate the final room number
-        if (/^\d+$/.test(baseRoomNumber)) {
-            roomNumber = `${floorNumber}${baseRoomNumber.padStart(2, '0')}`;
-        } else {
-            roomNumber = `${floorNumber}${baseRoomNumber.toUpperCase()}`;
-        }
-
+        // Generate the final room number in Capacity + Floor + Room format
+        const roomNumber = `${capacity}${floorNumber}${baseRoomNumber.padStart(2, '0')}`;
         const roomPrice = modal.querySelector('#roomPrice').value;
         const sharingTypeId = modal.querySelector('#sharingTypeId').value;
 
         console.log(`📝 Adding new room: ${roomNumber}, Floor: ${floorNumber}, Sharing: ${sharingType}, Price: ₹${roomPrice}`);
+        console.log(`📝 Room Number Format: Capacity(${capacity}) + Floor(${floorNumber}) + Room(${baseRoomNumber.padStart(2, '0')}) = ${roomNumber}`);
 
         // Validate inputs
         if (!floorNumber || !baseRoomNumber || !roomPrice) {
             showNotification("Please fill all required fields", "error");
+            return;
+        }
+
+        // Validate base room number is numeric and 2 digits
+        if (!/^\d{1,2}$/.test(baseRoomNumber)) {
+            showNotification("Room number must be 1 or 2 digits (e.g., 1, 01, 10, 25)", "error");
+            baseRoomInput.focus();
             return;
         }
 
@@ -1372,7 +1395,7 @@ function addNewRoom(sharingType, capacity, price, sharingId) {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    roomNumber: roomNumber,
+                    roomNumber: roomNumber, // This will be in C+F+R format like "4101"
                     floorNumber: parseInt(floorNumber),
                     sharingTypeId: sharingTypeId,
                     price: parseInt(roomPrice),

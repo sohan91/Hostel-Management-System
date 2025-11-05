@@ -1,9 +1,10 @@
 package com.example.HostelManagement.repositories;
 
-import com.example.HostelManagement.dto.SharingDetailsDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+
+import com.example.HostelManagement.dto.SharingDetailsDTO;
 
 @Repository
 public class AddNewSharingTypeRepo {
@@ -38,7 +39,7 @@ public class AddNewSharingTypeRepo {
 
         try {
             String sql = """
-            INSERT INTO SharingType (admin_id, type_name, capacity, sharing_fee, description, created_at)
+            INSERT INTO sharingtype(admin_id, type_name, capacity, sharing_fee, description, created_at)
             VALUES (?, ?, ?, ?, ?, NOW())
             """;
 
@@ -77,7 +78,7 @@ public class AddNewSharingTypeRepo {
         try {
             String sql = """
                 SELECT sharing_type_id, admin_id, type_name, capacity, sharing_fee, description 
-                FROM SharingType 
+                FROM SharingType
                 WHERE admin_id = ?
                 ORDER BY capacity
                 """;
