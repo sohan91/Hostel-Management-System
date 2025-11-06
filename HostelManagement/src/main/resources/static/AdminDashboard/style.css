@@ -444,10 +444,11 @@ button {
   display: flex;
   gap: 10px;
 }
-
-.add-room-btn {
+.add-room-btn{
+ background: linear-gradient(135deg, var(--success-green), #20c997);
+}
+.add-room-btn, #delete-sharing-btn{
   padding: 10px 20px;
-  background: linear-gradient(135deg, var(--success-green), #20c997);
   color: white;
   border: none;
   border-radius: 8px;
@@ -459,11 +460,21 @@ button {
   font-weight: 600;
   box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
 }
+#delete-sharing-btn
+{
+  background: linear-gradient(135deg, red, #da1c2c);
+}
 
 .add-room-btn:hover {
   background: linear-gradient(135deg, #218838, #1ea085);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+#delete-sharing-btn:hover
+{
+    background: linear-gradient(135deg, #cb151e, #d33030);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(165, 37, 40, 0.4);
 }
 
 .floors-container {
@@ -674,23 +685,24 @@ button {
 }
 
 .modal-content {
+  margin-top: 20px;
   background: white;
   backdrop-filter: blur(20px);
   padding: 30px;
   border-radius: 20px;
-  /* INCREASED WIDTH HERE */
-  width: 500px; 
+  width: 650px; 
   max-width: 90%;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   border: 1px solid var(--border-light);
   position: relative;
+  margin-bottom: 20px;
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 25px;
+  margin-bottom: 5px;
   padding-bottom: 10px;
   border-bottom: 1px solid var(--border-light);
 }
@@ -715,49 +727,67 @@ button {
   transform: rotate(90deg);
 }
 
-.modal-content .form-group {
+/* Enhanced Form Styles for Adding New Room */
+.modal-body {
+  padding: 0;
+}
+
+.form-group {
   margin-bottom: 20px;
 }
 
-.modal-content .form-group label {
+.form-group label {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 5px;
   font-weight: 600;
   color: var(--text-dark);
   font-size: 0.95rem;
 }
 
-.modal-content .form-group input {
+.form-group input,
+.form-group select,
+.form-group textarea {
   width: 100%;
-  padding: 12px 15px;
-  border: 1px solid var(--border-light);
+  padding: 12px 16px;
+  border: 2px solid #e8e8e8;
   border-radius: 8px;
   font-size: 1rem;
-  background: #fcfcfc;
   transition: all 0.3s ease;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
 }
 
-.modal-content .form-group input:focus {
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
   outline: none;
   border-color: var(--primary-blue);
   box-shadow: 0 0 0 3px rgba(10, 102, 194, 0.2);
   background: white;
 }
 
-.modal-content .readonly-field {
-  padding: 12px 15px;
-  background: #f8f9fa;
-  border: 1px solid var(--border-light);
-  border-radius: 8px;
-  font-size: 1rem;
-  color: var(--text-dark);
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
 }
 
-.modal-content .form-actions {
+.readonly-field {
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border: 2px solid #e8e8e8;
+  border-radius: 8px;
+  color: #666;
+  font-size: 1rem;
+}
+
+.form-actions {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
-  margin-top: 25px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e8e8e8;
 }
 
 .modal-content .form-actions .btn-primary,
@@ -767,10 +797,54 @@ button {
     min-width: 100px;
 }
 
+.form-row {
+  display: flex;
+  gap: 15px;
+}
 
-/* ---------------------------------- */
-/* 6. EMPTY STATES & UTILITY */
-/* ---------------------------------- */
+.form-row .form-group {
+  flex: 1;
+}
+
+.form-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: var(--text-light-gray);
+}
+
+.form-error {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: var(--danger-red);
+  font-weight: 500;
+}
+
+.validation-error {
+  border-color: var(--danger-red) !important;
+  background-color: #fff5f5;
+}
+
+.validation-success {
+  border-color: var(--success-green) !important;
+  background-color: #f8fff9;
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 1s ease-in-out infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 
 .empty-state-global-container {
     display: flex;
@@ -796,7 +870,6 @@ button {
     margin-bottom: 10px;
 }
 
-/* Empty State for SHARING TYPE SECTION (No Rooms Added Yet) */
 .empty-room-state-container { 
     display: flex; 
     flex-direction: column;
@@ -841,10 +914,6 @@ button {
     100% { transform: translateY(-50px); opacity: 0; }
 }
 
-
-/* ---------------------------------- */
-/* 7. RESPONSIVE DESIGN */
-/* ---------------------------------- */
 
 @media (max-width: 768px) {
   :root {
@@ -936,179 +1005,20 @@ button {
   
   .modal-content {
     padding: 20px;
+    width: 95%;
   }
-} .modal-overlay.active {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.6);
-                backdrop-filter: blur(5px);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                z-index: 1000;
-                opacity: 1;
-                transition: opacity 0.3s ease;
-            }
-            .modal-overlay.active .modal-content {
-                background: white;
-                border-radius: 12px;
-                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-                width: 90%;
-                max-width: 600px;
-                max-height: 85vh;
-                overflow-y: auto;
-                transform: scale(1);
-                transition: transform 0.3s ease;
-                border: 1px solid #e0e0e0;
-            }
-            .modal-header {
-                padding: 20px 24px;
-                border-bottom: 1px solid #e8e8e8;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                border-radius: 12px 12px 0 0;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-            .modal-header h3 {
-                margin: 0;
-                font-size: 1.4rem;
-                font-weight: 600;
-            }
-            .close-modal {
-                background: rgba(255, 255, 255, 0.2);
-                border: none;
-                color: white;
-                font-size: 24px;
-                cursor: pointer;
-                width: 32px;
-                height: 32px;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition: background 0.2s ease;
-            }
-            .close-modal:hover {
-                background: rgba(255, 255, 255, 0.3);
-            }
-            .modal-body {
-                padding: 24px;
-            }
-            .form-group {
-                margin-bottom: 20px;
-            }
-            .form-group label {
-                display: block;
-                margin-bottom: 8px;
-                font-weight: 600;
-                color: #333;
-                font-size: 0.95rem;
-            }
-            .form-group input,
-            .form-group select,
-            .form-group textarea {
-                width: 100%;
-                padding: 12px 16px;
-                border: 2px solid #e8e8e8;
-                border-radius: 8px;
-                font-size: 1rem;
-                transition: all 0.3s ease;
-                box-sizing: border-box;
-            }
-            .form-group input:focus,
-            .form-group select:focus,
-            .form-group textarea:focus {
-                outline: none;
-                border-color: #667eea;
-                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-            }
-            .form-group textarea {
-                resize: vertical;
-                min-height: 80px;
-                font-family: inherit;
-            }
-            .readonly-field {
-                padding: 12px 16px;
-                background: #f8f9fa;
-                border: 2px solid #e8e8e8;
-                border-radius: 8px;
-                color: #666;
-                font-size: 1rem;
-            }
-            .form-actions {
-                display: flex;
-                gap: 12px;
-                justify-content: flex-end;
-                margin-top: 24px;
-                padding-top: 20px;
-                border-top: 1px solid #e8e8e8;
-            }
-            .btn-primary, .btn-secondary {
-                padding: 12px 24px;
-                border: none;
-                border-radius: 8px;
-                font-size: 1rem;
-                font-weight: 600;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                min-width: 100px;
-            }
-            .btn-primary {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-            }
-            .btn-primary:hover:not(:disabled) {
-                transform: translateY(-2px);
-                box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
-            }
-            .btn-primary:disabled {
-                opacity: 0.6;
-                cursor: not-allowed;
-                transform: none !important;
-            }
-            .btn-secondary {
-                background: #f8f9fa;
-                color: #666;
-                border: 2px solid #e8e8e8;
-            }
-            .btn-secondary:hover {
-                background: #e9ecef;
-                border-color: #ddd;
-            }
-            small {
-                display: block;
-                margin-top: 6px;
-                font-size: 0.85rem;
-                color: #666;
-            }
-            #capacityExistsMsg {
-                color: #dc3545;
-                font-weight: 500;
-            }
-            .loading-spinner {
-                display: inline-block;
-                width: 16px;
-                height: 16px;
-                border: 2px solid #ffffff;
-                border-radius: 50%;
-                border-top-color: transparent;
-                animation: spin 1s ease-in-out infinite;
-                margin-right: 8px;
-            }
-            @keyframes spin {
-                to { transform: rotate(360deg); }
-            }
-            .validation-error {
-                border-color: #dc3545 !important;
-                background-color: #fff5f5;
-            }
-            .validation-success {
-                border-color: #28a745 !important;
-                background-color: #f8fff9;
-            }
   
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .form-actions .btn-primary,
+  .form-actions .btn-secondary {
+    width: 100%;
+  }
+}

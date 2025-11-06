@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -38,7 +36,6 @@ import jakarta.servlet.http.HttpSession;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     private final AdminAuthService authService;
     private final JwtUtil jwtUtil;
@@ -66,7 +63,7 @@ public class AuthController {
             String email = getEmailFromSecurityContext(auth);
 
             if (email == null) {
-                System.out.println("❌ Unauthorized: No email found in security context");
+                System.out.println(" Unauthorized: No email found in security context");
                 response.put("success", false);
                 response.put("message", "Authentication required");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
@@ -74,7 +71,7 @@ public class AuthController {
 
             Admin admin = authService.getAdminByEmail(email);
             if (admin == null) {
-                System.out.println("❌ Admin not found for email: " + email);
+                System.out.println("Admin not found for email: " + email);
                 response.put("success", false);
                 response.put("message", "Admin not found");
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
@@ -87,25 +84,25 @@ public class AuthController {
             sharingDTO.setSharingFee(request.getSharingFee());
             sharingDTO.setDescription(request.getDescription());
 
-            System.out.println("✅ Admin ID set: " + sharingDTO.getAdminId());
+            System.out.println("Admin ID set: " + sharingDTO.getAdminId());
 
             // Validate required fields
             if (sharingDTO.getSharingCapacity() == null || sharingDTO.getSharingCapacity() <= 0) {
-                System.out.println("❌ Capacity validation failed");
+                System.out.println(" Capacity validation failed");
                 response.put("success", false);
                 response.put("message", "Valid capacity is required");
                 return ResponseEntity.badRequest().body(response);
             }
 
             if (sharingDTO.getSharingFee() == null || sharingDTO.getSharingFee().doubleValue() <= 0) {
-                System.out.println("❌ Sharing fee validation failed");
+                System.out.println("Sharing fee validation failed");
                 response.put("success", false);
                 response.put("message", "Valid price per bed is required");
                 return ResponseEntity.badRequest().body(response);
             }
 
             // Create the sharing type
-            System.out.println("🚀 Creating sharing type with details:");
+            System.out.println("Creating sharing type with details:");
             System.out.println("   - Capacity: " + sharingDTO.getSharingCapacity());
             System.out.println("   - Fee: " + sharingDTO.getSharingFee());
             System.out.println("   - Description: " + sharingDTO.getDescription());
@@ -115,18 +112,18 @@ public class AuthController {
             if (isCreated) {
                 response.put("success", true);
                 response.put("message", sharingDTO.getSharingCapacity() + "-Sharing type added successfully!");
-                System.out.println("✅ Sharing type created successfully: " + sharingDTO.getSharingCapacity() + "-Sharing");
+                System.out.println(" Sharing type created successfully: " + sharingDTO.getSharingCapacity() + "-Sharing");
                 return ResponseEntity.ok(response);
             } else {
                 response.put("success", false);
                 response.put("message", sharingDTO.getSharingCapacity() + "-Sharing type already exists");
-                System.out.println("❌ Failed to create sharing type: " + sharingDTO.getSharingCapacity() + "-Sharing");
+                System.out.println("Failed to create sharing type: " + sharingDTO.getSharingCapacity() + "-Sharing");
                 return ResponseEntity.badRequest().body(response);
             }
 
         } catch (Exception e) {
-            System.out.println("❌ Error in add-sharing-type endpoint: " + e.getMessage());
-            e.printStackTrace();
+            System.out.println("Error in add-sharing-type endpoint: " + e.getMessage());
+            
             response.put("success", false);
             response.put("message", "Internal server error: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
@@ -143,7 +140,7 @@ public class AuthController {
         System.out.println("Room details - email from SecurityContext: " + email);
 
         if (email == null) {
-            System.out.println("❌ Unauthorized: No email found in security context");
+            System.out.println(" Unauthorized: No email found in security context");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.emptyList());
         }
 
@@ -152,19 +149,19 @@ public class AuthController {
             System.out.println("Found admin for room details: " + (admin != null ? admin.getAdminId() : "null"));
 
             if (admin == null) {
-                System.out.println("❌ Admin not found for email: " + email);
+                System.out.println("Admin not found for email: " + email);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
             }
 
             // 1. Fetches all rooms (flat list) for the specific admin.
             List<RoomDTO> roomDetails = roomService.getAllRooms(admin.getAdminId());
-            System.out.println("✅ Found rooms: " + roomDetails.size());
+            System.out.println("Found rooms: " + roomDetails.size());
 
             // 2. Enhanced debugging: Print room details to see what's being returned
             if (!roomDetails.isEmpty()) {
-                System.out.println("🐛 DEBUG - Room Details Returned:");
+                System.out.println(" DEBUG - Room Details Returned:");
                 for (RoomDTO room : roomDetails) {
-                    System.out.println("🐛 Room: " + room.getRoomNumber() +
+                    System.out.println(" Room: " + room.getRoomNumber() +
                             " | SharingType: " + room.getSharingTypeName() +
                             " | Capacity: " + room.getSharingCapacity() +
                             " | Price: " + room.getPrice() +
@@ -172,16 +169,16 @@ public class AuthController {
                             " | Status: " + room.getRoomStatus());
                 }
             } else {
-                System.out.println("⚠️ No rooms found for admin ID: " + admin.getAdminId());
+                System.out.println(" No rooms found for admin ID: " + admin.getAdminId());
             }
 
-            System.out.println("✅ Returning room details: " + roomDetails.size() + " rooms");
+            System.out.println("Returning room details: " + roomDetails.size() + " rooms");
             // 3. Return the flat list. The frontend handles the rest.
             return ResponseEntity.ok(roomDetails);
 
         } catch (Exception e) {
-            System.out.println("❌ Error in room-details: " + e.getMessage());
-            e.printStackTrace();
+            e.getMessage();
+            System.out.println("Error in room-details: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
         }
     }
@@ -192,7 +189,7 @@ public class AuthController {
         System.out.println("=== ADD ROOM API CALLED ===");
     
     // Detailed logging
-    System.out.println("📦 Room data received:");
+    System.out.println("Room data received:");
     System.out.println("   - Room Number: " + roomDTO.getRoomNumber());
     System.out.println("   - Floor: " + roomDTO.getFloorNumber());
     System.out.println("   - Sharing Type ID: " + roomDTO.getSharingTypeId());
@@ -204,12 +201,12 @@ public class AuthController {
         Map<String, Object> response = new HashMap<>();
 
         try {
-            // Get admin from security context
+
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             String email = getEmailFromSecurityContext(auth);
 
             if (email == null) {
-                System.out.println("❌ Unauthorized: No email found in security context");
+                System.out.println("Unauthorized: No email found in security context");
                 response.put("success", false);
                 response.put("message", "Authentication required");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
@@ -217,7 +214,7 @@ public class AuthController {
 
             Admin admin = authService.getAdminByEmail(email);
             if (admin == null) {
-                System.out.println("❌ Admin not found for email: " + email);
+                System.out.println("Admin not found for email: " + email);
                 response.put("success", false);
                 response.put("message", "Admin not found");
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
@@ -225,39 +222,39 @@ public class AuthController {
 
             // Set admin ID to the room DTO
             roomDTO.setAdminId(admin.getAdminId());
-            System.out.println("✅ Admin ID set: " + roomDTO.getAdminId());
+            System.out.println("Admin ID set: " + roomDTO.getAdminId());
 
             // Validate required fields
             if (roomDTO.getRoomNumber() == null || roomDTO.getRoomNumber().trim().isEmpty()) {
-                System.out.println("❌ Room number validation failed");
+                System.out.println(" Room number validation failed");
                 response.put("success", false);
                 response.put("message", "Room number is required");
                 return ResponseEntity.badRequest().body(response);
             }
 
             if (roomDTO.getFloorNumber() == null) {
-                System.out.println("❌ Floor number validation failed");
+                System.out.println(" Floor number validation failed");
                 response.put("success", false);
                 response.put("message", "Floor number is required");
                 return ResponseEntity.badRequest().body(response);
             }
 
             if (roomDTO.getSharingTypeId() == null) {
-                System.out.println("❌ Sharing type ID validation failed");
+                System.out.println(" Sharing type ID validation failed");
                 response.put("success", false);
                 response.put("message", "Sharing type is required");
                 return ResponseEntity.badRequest().body(response);
             }
 
             if (roomDTO.getPrice() == null || roomDTO.getPrice() <= 0) {
-                System.out.println("❌ Price validation failed");
+                System.out.println("Price validation failed");
                 response.put("success", false);
                 response.put("message", "Valid price is required");
                 return ResponseEntity.badRequest().body(response);
             }
 
-            // Create the room
-            System.out.println("🚀 Creating room with details:");
+            
+            System.out.println("Creating room with details:");
             System.out.println("   - Room Number: " + roomDTO.getRoomNumber());
             System.out.println("   - Floor: " + roomDTO.getFloorNumber());
             System.out.println("   - Sharing Type ID: " + roomDTO.getSharingTypeId());
@@ -269,18 +266,18 @@ public class AuthController {
             if (isCreated) {
                 response.put("success", true);
                 response.put("message", "Room " + roomDTO.getRoomNumber() + " added successfully!");
-                System.out.println("✅ Room created successfully: " + roomDTO.getRoomNumber());
+                System.out.println("Room created successfully: " + roomDTO.getRoomNumber());
                 return ResponseEntity.ok(response);
             } else {
                 response.put("success", false);
                 response.put("message", "Failed to create room. Room might already exist on this floor.");
-                System.out.println("❌ Failed to create room: " + roomDTO.getRoomNumber());
+                System.out.println(" Failed to create room: " + roomDTO.getRoomNumber());
                 return ResponseEntity.badRequest().body(response);
             }
 
         } catch (Exception e) {
-            System.out.println("❌ Error in add-room endpoint: " + e.getMessage());
-            e.printStackTrace();
+            e.getMessage();
+            System.out.println("Error in add-room endpoint: " + e.getMessage());
             response.put("success", false);
             response.put("message", "Internal server error: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
@@ -322,16 +319,17 @@ public class AuthController {
                         "email", admin.getEmail()
                 ));
 
-                System.out.println("✅ Login successful for: " + loginRequest.getEmail());
+                System.out.println("Login successful for: " + loginRequest.getEmail());
                 return ResponseEntity.ok(responseBody);
             } else {
                 responseBody.put("success", false);
                 responseBody.put("message", "Invalid email or password");
-                System.out.println("❌ Login failed: Invalid credentials");
+                System.out.println("Login failed: Invalid credentials");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(responseBody);
             }
         } catch (Exception e) {
-            System.out.println("❌ Login error: " + e.getMessage());
+            e.getMessage();
+            System.out.println("Login error: " + e.getMessage());
             responseBody.put("success", false);
             responseBody.put("message", "Login failed: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBody);
@@ -361,7 +359,7 @@ public class AuthController {
         responseBody.put("success", true);
         responseBody.put("message", "Logout successful - session cleared");
 
-        System.out.println("✅ Logout successful, session and cookies cleared");
+        System.out.println("Logout successful, session and cookies cleared");
         return ResponseEntity.ok(responseBody);
     }
 
@@ -396,8 +394,8 @@ public class AuthController {
             return ResponseEntity.ok(sharingDetails);
 
         } catch (Exception e) {
+            e.getMessage();
             System.out.println("Error in sharing-details: " + e.getMessage());
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
         }
     }
@@ -411,7 +409,7 @@ public class AuthController {
         System.out.println("Extracted email from SecurityContext: " + email);
 
         if (email == null) {
-            System.out.println("❌ No email found - user not authenticated");
+            System.out.println("No email found - user not authenticated");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Authentication required"));
         }
@@ -419,7 +417,7 @@ public class AuthController {
         try {
             Admin admin = authService.getAdminByEmail(email);
             if (admin == null) {
-                System.out.println("❌ Admin not found for email: " + email);
+                System.out.println("Admin not found for email: " + email);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(Map.of("error", "Admin not found"));
             }
@@ -430,10 +428,11 @@ public class AuthController {
                     admin.getHostelName()
             );
 
-            System.out.println("✅ Admin details fetched successfully for: " + email);
+            System.out.println("Admin details fetched successfully for: " + email);
             return ResponseEntity.ok(adminDTO);
         } catch (Exception e) {
-            System.out.println("❌ Error fetching admin details: " + e.getMessage());
+            e.getMessage();
+            System.out.println(" Error fetching admin details: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Error fetching admin details"));
         }
@@ -448,7 +447,7 @@ public class AuthController {
         System.out.println("Profile details - email from SecurityContext: " + email);
 
         if (email == null) {
-            System.out.println("❌ Unauthorized: No email found for profile details");
+            System.out.println("Unauthorized: No email found for profile details");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Authentication required"));
         }
@@ -456,7 +455,7 @@ public class AuthController {
         try {
             Admin admin = authService.getAdminByEmail(email);
             if (admin == null) {
-                System.out.println("❌ Admin not found for profile details");
+                System.out.println("Admin not found for profile details");
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(Map.of("error", "Admin not found"));
             }
@@ -471,10 +470,10 @@ public class AuthController {
             profileData.put("hostelAddress", admin.getHostelAddress());
             profileData.put("createdAt", admin.getCreatedAt());
 
-            System.out.println("✅ Profile details fetched successfully for: " + email);
+            System.out.println("Profile details fetched successfully for: " + email);
             return ResponseEntity.ok(profileData);
         } catch (Exception e) {
-            System.out.println("❌ Error fetching profile details: " + e.getMessage());
+            System.out.println("Error fetching profile details: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Error fetching profile details: " + e.getMessage()));
         }
@@ -489,7 +488,7 @@ public class AuthController {
         System.out.println("Refresh token - email from SecurityContext: " + email);
 
         if (email == null) {
-            System.out.println("❌ Unauthorized: Cannot refresh token");
+            System.out.println(" Unauthorized: Cannot refresh token");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Cannot refresh token: not authenticated"));
         }
@@ -509,10 +508,10 @@ public class AuthController {
             responseBody.put("message", "Token refreshed successfully");
             responseBody.put("token", newToken);
 
-            System.out.println("✅ Token refreshed successfully for: " + email);
+            System.out.println("Token refreshed successfully for: " + email);
             return ResponseEntity.ok(responseBody);
         } catch (Exception e) {
-            System.out.println("❌ Error refreshing token: " + e.getMessage());
+            System.out.println(" Error refreshing token: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Failed to refresh token"));
         }
@@ -531,10 +530,10 @@ public class AuthController {
     private String getEmailFromSecurityContext(Authentication auth) {
         if (auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)) {
             String email = auth.getName();
-            System.out.println("🔐 Security Context - Authenticated user: " + email);
+            System.out.println("Security Context - Authenticated user: " + email);
             return email;
         }
-        System.out.println("🔐 Security Context - No authenticated user found");
+        System.out.println("Security Context - No authenticated user found");
         return null;
     }
 }

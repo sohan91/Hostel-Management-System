@@ -11,3 +11,4 @@ public static void main(String[] args) {
 		SpringApplication.run(HostelManagementApplication.class, args);
 	}
 }
+	

@@ -330,6 +330,9 @@ function createSharingTypeSection(sharingType, floorsData) {
             <button class="add-room-btn" data-sharing-type="${sharingTypeName}" data-capacity="${capacity}" data-price="${price}" data-sharing-id="${sharingTypeId || ''}">
                 <i class="fas fa-plus"></i> Add Room
             </button>
+            <button id="delete-sharing-btn">
+                <i class="fas fa-plus"></i> Delete Sharing
+            </button>
         </div>
     `;
     sharingDiv.appendChild(headerDiv);
@@ -512,186 +515,9 @@ function showAddSharingTypeModal() {
     modal.className = 'modal-overlay active';
 
     // Add CSS for proper modal styling
-    const modalStyles = `
-        <style>
-            .modal-overlay.active {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.6);
-                backdrop-filter: blur(5px);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                z-index: 1000;
-                opacity: 1;
-                transition: opacity 0.3s ease;
-            }
-            .modal-overlay.active .modal-content {
-                background: white;
-                border-radius: 12px;
-                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-                width: 90%;
-                max-width: 500px;
-                max-height: 90vh;
-                overflow-y: auto;
-                transform: scale(1);
-                transition: transform 0.3s ease;
-                border: 1px solid #e0e0e0;
-            }
-            .modal-header {
-                padding: 20px 24px;
-                border-bottom: 1px solid #e8e8e8;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                border-radius: 12px 12px 0 0;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-            .modal-header h3 {
-                margin: 0;
-                font-size: 1.4rem;
-                font-weight: 600;
-            }
-            .close-modal {
-                background: rgba(255, 255, 255, 0.2);
-                border: none;
-                color: white;
-                font-size: 24px;
-                cursor: pointer;
-                width: 32px;
-                height: 32px;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition: background 0.2s ease;
-            }
-            .close-modal:hover {
-                background: rgba(255, 255, 255, 0.3);
-            }
-            .modal-body {
-                padding: 24px;
-            }
-            .form-group {
-                margin-bottom: 20px;
-            }
-            .form-group label {
-                display: block;
-                margin-bottom: 8px;
-                font-weight: 600;
-                color: #333;
-                font-size: 0.95rem;
-            }
-            .form-group input,
-            .form-group select,
-            .form-group textarea {
-                width: 100%;
-                padding: 12px 16px;
-                border: 2px solid #e8e8e8;
-                border-radius: 8px;
-                font-size: 1rem;
-                transition: all 0.3s ease;
-                box-sizing: border-box;
-            }
-            .form-group input:focus,
-            .form-group select:focus,
-            .form-group textarea:focus {
-                outline: none;
-                border-color: #667eea;
-                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-            }
-            .form-group textarea {
-                resize: vertical;
-                min-height: 80px;
-                font-family: inherit;
-            }
-            .readonly-field {
-                padding: 12px 16px;
-                background: #f8f9fa;
-                border: 2px solid #e8e8e8;
-                border-radius: 8px;
-                color: #666;
-                font-size: 1rem;
-            }
-            .form-actions {
-                display: flex;
-                gap: 12px;
-                justify-content: flex-end;
-                margin-top: 24px;
-                padding-top: 20px;
-                border-top: 1px solid #e8e8e8;
-            }
-            .btn-primary, .btn-secondary {
-                padding: 12px 24px;
-                border: none;
-                border-radius: 8px;
-                font-size: 1rem;
-                font-weight: 600;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                min-width: 100px;
-            }
-            .btn-primary {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-            }
-            .btn-primary:hover:not(:disabled) {
-                transform: translateY(-2px);
-                box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
-            }
-            .btn-primary:disabled {
-                opacity: 0.6;
-                cursor: not-allowed;
-                transform: none !important;
-            }
-            .btn-secondary {
-                background: #f8f9fa;
-                color: #666;
-                border: 2px solid #e8e8e8;
-            }
-            .btn-secondary:hover {
-                background: #e9ecef;
-                border-color: #ddd;
-            }
-            small {
-                display: block;
-                margin-top: 6px;
-                font-size: 0.85rem;
-                color: #666;
-            }
-            #capacityExistsMsg {
-                color: #dc3545;
-                font-weight: 500;
-            }
-            .loading-spinner {
-                display: inline-block;
-                width: 16px;
-                height: 16px;
-                border: 2px solid #ffffff;
-                border-radius: 50%;
-                border-top-color: transparent;
-                animation: spin 1s ease-in-out infinite;
-                margin-right: 8px;
-            }
-            @keyframes spin {
-                to { transform: rotate(360deg); }
-            }
-            .validation-error {
-                border-color: #dc3545 !important;
-                background-color: #fff5f5;
-            }
-            .validation-success {
-                border-color: #28a745 !important;
-                background-color: #f8fff9;
-            }
-        </style>
-    `;
+  
 
-    modal.innerHTML = modalStyles + `
+    modal.innerHTML =  `
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Add New Sharing Type</h3>
@@ -1255,11 +1081,8 @@ function initializeRoomCardInteractions() {
 }
 
 function addNewRoom(sharingType, capacity, price, sharingId) {
-    console.log(`➕ Opening add room modal for: ${sharingType}, Capacity: ${capacity}, Price: ${price}, SharingID: ${sharingId}`);
-
     const modal = document.createElement('div');
     modal.className = 'modal-overlay active';
-
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-header">
@@ -1287,12 +1110,12 @@ function addNewRoom(sharingType, capacity, price, sharingId) {
                         <small>Must be 2 digits (e.g., '01', '02', '10', etc.)</small>
                     </div>
                     <div class="form-group">
-                        <label>Final Room Number (C + F + R):</label>
+                        <label>Final Room Number (F+R):</label>
                         <div class="readonly-field" id="finalRoomNumber" style="font-weight: bold; color: var(--primary-blue);">
-                            ${capacity}101
+                            101
                         </div>
                         <small style="color: var(--text-light-gray); font-weight: 500;">
-                            Format: Capacity ${capacity} + Floor 1 + Room 01 = <strong>${capacity}101</strong>
+                            Format: Floor 1 + Room 01 = <strong>101</strong>
                         </small>
                     </div>
                     <div class="form-group">
@@ -1307,167 +1130,91 @@ function addNewRoom(sharingType, capacity, price, sharingId) {
             </div>
         </div>
     `;
-
     document.body.appendChild(modal);
-
-    // Auto-generate room number based on capacity + floor + room
     const floorInput = modal.querySelector('#floorNumber');
     const baseRoomInput = modal.querySelector('#baseRoomNumber');
     const finalRoomDisplay = modal.querySelector('#finalRoomNumber');
     const existsMsg = modal.querySelector('#floorExistsMsg');
     const submitBtn = modal.querySelector('#submitRoomBtn');
-
     const updateRoomNumber = () => {
-        const capacityVal = capacity;
         const floor = floorInput.value;
         const baseRoom = baseRoomInput.value.trim();
-        
         if (floor && baseRoom) {
-            const formattedRoomNumber = `${capacityVal}${floor}${baseRoom.padStart(2, '0')}`;
-            finalRoomDisplay.textContent = formattedRoomNumber;
-            
-            // Check if room already exists on this floor
-            checkRoomExistsOnFloor(formattedRoomNumber, parseInt(floor));
+            finalRoomDisplay.textContent = `${floor}${baseRoom.padStart(2, '0')}`;
         }
     };
-
-    // Function to check if room exists on the same floor
-    const checkRoomExistsOnFloor = async (roomNumber, floorNumber) => {
-        if (!roomNumber || !floorNumber) return;
-
-        try {
-            console.log(`🔍 Checking if room ${roomNumber} exists on floor ${floorNumber}`);
-            
-            // You can implement this API endpoint or use existing data
-            // For now, we'll rely on server-side validation
-            existsMsg.style.display = 'none';
-            submitBtn.disabled = false;
-            floorInput.classList.remove('validation-error');
-            
-        } catch (error) {
-            console.error("Error checking room existence:", error);
-            // If API fails, we'll rely on server-side validation
-            existsMsg.style.display = 'none';
-            submitBtn.disabled = false;
-        }
-    };
-
     floorInput.addEventListener('input', updateRoomNumber);
     baseRoomInput.addEventListener('input', updateRoomNumber);
-
-    // Initialize
     updateRoomNumber();
-
-    // Close modal events
     const closeModal = () => {
         modal.classList.remove('active');
         document.body.style.overflow = '';
-        setTimeout(() => {
-            if (modal.parentNode) {
-                modal.parentNode.removeChild(modal);
-            }
-        }, 300);
+        setTimeout(() => { if (modal.parentNode) modal.parentNode.removeChild(modal); }, 300);
     };
-
     modal.querySelector('.close-modal').addEventListener('click', closeModal);
     modal.querySelector('.cancel-btn').addEventListener('click', closeModal);
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) closeModal();
-    });
-
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
     modal.querySelector('#addRoomForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const floorNumber = floorInput.value;
         const baseRoomNumber = baseRoomInput.value.trim();
-
-        // Generate the final room number in Capacity + Floor + Room format
-        const roomNumber = `${capacity}${floorNumber}${baseRoomNumber.padStart(2, '0')}`;
+        const roomNumber = `${floorNumber}${baseRoomNumber.padStart(2, '0')}`;
         const roomPrice = modal.querySelector('#roomPrice').value;
         const sharingTypeId = modal.querySelector('#sharingTypeId').value;
-
-        console.log(`📝 Adding new room: ${roomNumber}, Floor: ${floorNumber}, SharingID: ${sharingTypeId}, Price: ₹${roomPrice}`);
-
-        // Validate inputs
-        if (!floorNumber || !baseRoomNumber || !roomPrice) {
-            showNotification("Please fill all required fields", "error");
-            return;
-        }
-
-        // Validate base room number is numeric and 2 digits
-        if (!/^\d{1,2}$/.test(baseRoomNumber)) {
-            showNotification("Room number must be 1 or 2 digits (e.g., 1, 01, 10, 25)", "error");
-            baseRoomInput.focus();
-            return;
-        }
-
-        if (parseInt(roomPrice) < 1000) {
-            showNotification("Price per bed must be at least ₹1000", "error");
-            return;
-        }
-
+        const sharingCapacity = modal.querySelector('#roomCapacity').value;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<div class="loading-spinner"></div> Adding...';
         try {
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<div class="loading-spinner"></div> Adding...';
-
             const response = await fetch("/api/auth/add-room", {
                 method: "POST",
                 credentials: "include",
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({
                     roomNumber: roomNumber,
                     floorNumber: parseInt(floorNumber),
-                    sharingTypeId: parseInt(sharingTypeId), // Ensure it's integer
+                    sharingTypeId: parseInt(sharingTypeId),
                     price: parseInt(roomPrice),
-                    sharingCapacity: parseInt(capacity) // Send capacity for validation
+                    sharingCapacity: parseInt(sharingCapacity)
                 })
             });
-
             const result = await response.json();
-
-            if (result.success) {
-                showNotification(result.message, 'success');
-                submitBtn.innerHTML = '<i class="fas fa-check"></i> Success!';
-                submitBtn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
-
-                setTimeout(async () => {
-                    closeModal();
-                    await refreshDashboard();
-                }, 1000);
-            } else {
-                // Handle specific error cases
-                if (result.message && result.message.toLowerCase().includes('already exists')) {
-                    showNotification("A room with this number already exists on this floor", "error");
-                    existsMsg.style.display = 'block';
-                    floorInput.classList.add('validation-error');
-                    floorInput.focus();
-                } else if (result.message && result.message.toLowerCase().includes('sharing type')) {
-                    showNotification("Invalid sharing type selected", "error");
-                } else if (result.message && result.message.toLowerCase().includes('admin')) {
-                    showNotification("Authentication error. Please refresh and try again.", "error");
-                } else {
-                    showNotification(result.message || "Error adding room", "error");
-                }
-                
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Add Room';
-            }
-        } catch (error) {
-            console.error("Error adding room:", error);
-            showNotification("Error adding room. Please try again.", 'error');
+             if (result.success) {
+    showNotification(result.message, 'success');
+    submitBtn.innerHTML = '<i class="fas fa-check"></i> Success!';
+    submitBtn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+    setTimeout(async () => {
+        closeModal();
+        await refreshDashboard();
+    }, 1000);
+} else {
+    if (result.message && result.message.toLowerCase().includes('already exists')) {
+        showNotification("A room with this number already exists on this floor or sharing", "error");
+        existsMsg.style.display = 'block';
+        existsMsg.textContent = "A room with this number already exists on this floor.";
+        floorInput.classList.add('validation-error');
+        floorInput.focus();
+        setTimeout(function() {
+            existsMsg.style.display = 'none';
+            floorInput.classList.remove('validation-error');
+        }, 2000);
+    } else if (result.message && result.message.toLowerCase().includes('sharing type')) {
+        showNotification("Invalid sharing type selected", "error");
+    } else if (result.message && result.message.toLowerCase().includes('admin')) {
+        showNotification("Authentication error. Please refresh and try again.", "error");
+    } else {
+        showNotification(result.message || "Error adding room", "error");
+    }
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = 'Add Room';
+}
+       } 
+       catch (error) {
             submitBtn.disabled = false;
             submitBtn.innerHTML = 'Add Room';
         }
     });
-
-    // Prevent background scrolling
     document.body.style.overflow = 'hidden';
-
-    // Focus on first input
-    setTimeout(() => {
-        baseRoomInput.focus();
-    }, 100);
+    setTimeout(() => { baseRoomInput.focus(); }, 100);
 }
 
 // Add CSS for validation states

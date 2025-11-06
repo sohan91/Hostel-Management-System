@@ -51,6 +51,9 @@ public class RoomService {
                 return false;
             }
 
+            // UPDATED: Room number uniqueness is now handled by DAO (per floor, regardless of sharing type)
+            // The DAO will check if room number already exists on this floor for any sharing type
+
             // Save the room
             boolean success = roomDAO.saveRoom(roomDTO);
             System.out.println("✅ Room creation result for Admin " + roomDTO.getAdminId() + ": " + (success ? "SUCCESS" : "FAILED"));
@@ -64,14 +67,15 @@ public class RoomService {
         }
     }
 
-    // Updated: Now uses the correct constraint checking
-    public boolean isRoomNumberExists(Integer adminId, String roomNumber, Integer floorNumber, Integer sharingTypeId) {
+    // UPDATED: Simplified - sharingTypeId parameter is no longer needed for uniqueness check
+    public boolean isRoomNumberExists(Integer adminId, String roomNumber, Integer floorNumber) {
         System.out.println("🔍 RoomService.isRoomNumberExists() called for Admin " + adminId + 
                          ": " + roomNumber + ", floor: " + floorNumber);
 
         try {
             // The DAO method now properly checks (admin_id, room_number, floor_number) constraint
-            boolean exists = roomDAO.isRoomNumberExists(adminId, roomNumber, floorNumber, sharingTypeId);
+            // Room numbers must be unique per floor regardless of sharing type
+            boolean exists = roomDAO.isRoomNumberExistsOnFloor(adminId, roomNumber, floorNumber);
             System.out.println("🔍 Room uniqueness check for Admin " + adminId + ": " + (exists ? "EXISTS" : "UNIQUE"));
             return exists;
 
@@ -81,7 +85,7 @@ public class RoomService {
         }
     }
 
-    // NEW: Method to check if room number exists on specific floor
+    // UPDATED: Enhanced with better logging
     public boolean isRoomNumberExistsOnFloor(Integer adminId, String roomNumber, Integer floorNumber) {
         System.out.println("🔍 RoomService.isRoomNumberExistsOnFloor() called for Admin " + adminId + 
                          ": " + roomNumber + ", floor: " + floorNumber);
@@ -89,6 +93,12 @@ public class RoomService {
         try {
             boolean exists = roomDAO.isRoomNumberExistsOnFloor(adminId, roomNumber, floorNumber);
             System.out.println("🔍 Room on floor check for Admin " + adminId + ": " + (exists ? "EXISTS" : "UNIQUE"));
+            
+            if (exists) {
+                System.out.println("⚠️  Room number '" + roomNumber + "' already exists on floor " + floorNumber + 
+                                 " for admin " + adminId + " (regardless of sharing type)");
+            }
+            
             return exists;
 
         } catch (Exception e) {
@@ -97,7 +107,7 @@ public class RoomService {
         }
     }
 
-    // NEW: Method to check if room number exists anywhere for admin
+    // UPDATED: Enhanced with better logging
     public boolean isRoomNumberExistsAnywhere(Integer adminId, String roomNumber) {
         System.out.println("🔍 RoomService.isRoomNumberExistsAnywhere() called for Admin " + adminId + ": " + roomNumber);
 
@@ -112,6 +122,127 @@ public class RoomService {
         }
     }
 
+    // NEW: Get used room numbers on a specific floor
+    public List<String> getUsedRoomNumbersOnFloor(Integer adminId, Integer floorNumber) {
+        System.out.println("🔍 RoomService.getUsedRoomNumbersOnFloor() called for Admin " + adminId + ", floor: " + floorNumber);
+
+        try {
+            List<String> usedNumbers = roomDAO.getUsedRoomNumbersOnFloor(adminId, floorNumber);
+            System.out.println("📊 Used room numbers on floor " + floorNumber + " for admin " + adminId + ": " + usedNumbers);
+            return usedNumbers;
+        } catch (Exception e) {
+            System.out.println("❌ Error fetching used room numbers for Admin " + adminId + ": " + e.getMessage());
+            return List.of();
+        }
+    }
+
+    // NEW: Suggest available room numbers for a floor
+    public List<String> suggestAvailableRoomNumbers(Integer adminId, Integer floorNumber, int count) {
+        System.out.println("💡 RoomService.suggestAvailableRoomNumbers() called for Admin " + adminId + 
+                         ", floor: " + floorNumber + ", count: " + count);
+
+        try {
+            List<String> suggestions = roomDAO.suggestAvailableRoomNumbers(adminId, floorNumber, count);
+            System.out.println("💡 Suggested room numbers for floor " + floorNumber + ": " + suggestions);
+            return suggestions;
+        } catch (Exception e) {
+            System.out.println("❌ Error suggesting room numbers for Admin " + adminId + ": " + e.getMessage());
+            return List.of();
+        }
+    }
+
+    // NEW: Comprehensive room validation before creation
+    public RoomValidationResult validateRoomForCreation(RoomDTO roomDTO) {
+        System.out.println("🔍 RoomService.validateRoomForCreation() called for room: " + 
+                         roomDTO.getRoomNumber() + ", floor: " + roomDTO.getFloorNumber() + 
+                         ", admin: " + roomDTO.getAdminId());
+
+        RoomValidationResult result = new RoomValidationResult();
+        
+        // Check required fields
+        if (roomDTO.getRoomNumber() == null || roomDTO.getRoomNumber().trim().isEmpty()) {
+            result.setValid(false);
+            result.setMessage("Room number is required");
+            result.setErrorType("MISSING_FIELD");
+            return result;
+        }
+
+        if (roomDTO.getFloorNumber() == null) {
+            result.setValid(false);
+            result.setMessage("Floor number is required");
+            result.setErrorType("MISSING_FIELD");
+            return result;
+        }
+
+        if (roomDTO.getSharingTypeId() == null) {
+            result.setValid(false);
+            result.setMessage("Sharing type is required");
+            result.setErrorType("MISSING_FIELD");
+            return result;
+        }
+
+        if (roomDTO.getAdminId() == null) {
+            result.setValid(false);
+            result.setMessage("Admin ID is required");
+            result.setErrorType("MISSING_FIELD");
+            return result;
+        }
+
+        // Check room number format (basic validation)
+        if (!isValidRoomNumber(roomDTO.getRoomNumber())) {
+            result.setValid(false);
+            result.setMessage("Room number format is invalid. Use numbers only (e.g., 101, 102)");
+            result.setErrorType("INVALID_FORMAT");
+            return result;
+        }
+
+        // Check floor number range
+        if (roomDTO.getFloorNumber() < 1 || roomDTO.getFloorNumber() > 20) {
+            result.setValid(false);
+            result.setMessage("Floor number must be between 1 and 20");
+            result.setErrorType("INVALID_RANGE");
+            return result;
+        }
+
+        // Check room number uniqueness on this floor (regardless of sharing type)
+        if (isRoomNumberExistsOnFloor(roomDTO.getAdminId(), roomDTO.getRoomNumber(), roomDTO.getFloorNumber())) {
+            result.setValid(false);
+            result.setMessage("Room number '" + roomDTO.getRoomNumber() + "' already exists on floor " + roomDTO.getFloorNumber() + 
+                            ". Room numbers must be unique per floor.");
+            result.setErrorType("DUPLICATE_ROOM");
+            
+            // Get suggestions for available room numbers
+            List<String> suggestions = suggestAvailableRoomNumbers(roomDTO.getAdminId(), roomDTO.getFloorNumber(), 5);
+            result.setSuggestedRoomNumbers(suggestions);
+            
+            return result;
+        }
+
+        // Check sharing type ownership
+        if (!sharingTypeRepo.isSharingTypeBelongsToAdmin(roomDTO.getSharingTypeId(), roomDTO.getAdminId())) {
+            result.setValid(false);
+            result.setMessage("Selected sharing type is not available for your account");
+            result.setErrorType("INVALID_SHARING_TYPE");
+            return result;
+        }
+
+        // All validations passed
+        result.setValid(true);
+        result.setMessage("Room validation passed successfully");
+        result.setErrorType("VALID");
+        return result;
+    }
+
+    // Helper method to validate room number format
+    private boolean isValidRoomNumber(String roomNumber) {
+        if (roomNumber == null || roomNumber.trim().isEmpty()) {
+            return false;
+        }
+        // Basic validation: room number should contain only digits
+        return roomNumber.matches("\\d+");
+    }
+
+    // Existing methods remain the same with minor enhancements
     public List<RoomDTO> getAllRooms(Integer adminId) {
         System.out.println("🚀 RoomService.getAllRooms() called with adminId: " + adminId);
         
@@ -170,7 +301,8 @@ public class RoomService {
         System.out.println("📋 Room Summary for Admin " + adminId + ":");
         rooms.forEach(room -> {
             System.out.println("📋 - " + room.getRoomNumber() + " (Floor " + room.getFloorNumber() + 
-                             "): " + room.getOccupancyStatus() + " - " + room.getRoomStatus());
+                             "): " + room.getOccupancyStatus() + " - " + room.getRoomStatus() +
+                             " - " + room.getSharingTypeName());
         });
         
         return rooms;
@@ -189,7 +321,8 @@ public class RoomService {
                room.getCurrentOccupancy() < room.getSharingCapacity();
         
         System.out.println("📊 Room " + room.getRoomNumber() + " (Admin " + adminId + ") can accommodate student: " + canAccommodate +
-                         " - Occupancy: " + room.getCurrentOccupancy() + "/" + room.getSharingCapacity());
+                         " - Occupancy: " + room.getCurrentOccupancy() + "/" + room.getSharingCapacity() +
+                         " - Sharing Type: " + room.getSharingTypeName());
         
         return canAccommodate;
     }
@@ -270,58 +403,26 @@ public class RoomService {
                                 maintenanceRooms, occupancyRate);
     }
 
-    // NEW: Comprehensive room creation validation
-    public RoomCreationResult validateRoomCreation(RoomDTO roomDTO) {
-        System.out.println("🔍 RoomService.validateRoomCreation() called for room: " + roomDTO.getRoomNumber() + ", Admin: " + roomDTO.getAdminId());
-
-        RoomCreationResult result = new RoomCreationResult();
-        
-        // Check required fields
-        if (roomDTO.getRoomNumber() == null || roomDTO.getRoomNumber().trim().isEmpty()) {
-            result.setValid(false);
-            result.setMessage("Room number is required");
-            return result;
-        }
-
-        if (roomDTO.getFloorNumber() == null) {
-            result.setValid(false);
-            result.setMessage("Floor number is required");
-            return result;
-        }
-
-        if (roomDTO.getSharingTypeId() == null) {
-            result.setValid(false);
-            result.setMessage("Sharing type is required");
-            return result;
-        }
-
-        // Check room number uniqueness on this floor
-        if (isRoomNumberExistsOnFloor(roomDTO.getAdminId(), roomDTO.getRoomNumber(), roomDTO.getFloorNumber())) {
-            result.setValid(false);
-            result.setMessage("Room number '" + roomDTO.getRoomNumber() + "' already exists on floor " + roomDTO.getFloorNumber());
-            return result;
-        }
-
-        // Check sharing type ownership
-        if (!sharingTypeRepo.isSharingTypeBelongsToAdmin(roomDTO.getSharingTypeId(), roomDTO.getAdminId())) {
-            result.setValid(false);
-            result.setMessage("Selected sharing type is not available for this admin");
-            return result;
-        }
-
-        result.setValid(true);
-        result.setMessage("Room creation validation passed");
-        return result;
-    }
-
-    public static class RoomCreationResult {
+    // NEW: Enhanced validation result class
+    public static class RoomValidationResult {
         private boolean valid;
         private String message;
+        private String errorType;
+        private List<String> suggestedRoomNumbers;
 
         public boolean isValid() { return valid; }
         public void setValid(boolean valid) { this.valid = valid; }
+        
         public String getMessage() { return message; }
         public void setMessage(String message) { this.message = message; }
+        
+        public String getErrorType() { return errorType; }
+        public void setErrorType(String errorType) { this.errorType = errorType; }
+        
+        public List<String> getSuggestedRoomNumbers() { return suggestedRoomNumbers; }
+        public void setSuggestedRoomNumbers(List<String> suggestedRoomNumbers) { 
+            this.suggestedRoomNumbers = suggestedRoomNumbers; 
+        }
     }
 
     public static class RoomStatistics {
