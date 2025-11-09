@@ -541,11 +541,13 @@ public class AuthController {
 public ResponseEntity<HostlerListResponseDto> fetchHostlerList(
         @ModelAttribute RoomCardDetailsFetch roomDetails) {
     
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = getEmailFromSecurityContext(auth);
-        Admin admin = authService.getAdminByEmail(email);
-         Integer adminId = admin.getAdminId();
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    String email = getEmailFromSecurityContext(auth);
+    Admin admin = authService.getAdminByEmail(email);
+    Integer adminId = admin.getAdminId();
+    
     try {
+        System.out.println("=== DEBUG START ===");
         System.out.println("Fetching hostler list for room: " + roomDetails + ", adminId: " + adminId);
         
         // Fetch raw data from database
@@ -556,22 +558,73 @@ public ResponseEntity<HostlerListResponseDto> fetchHostlerList(
             adminId
         );
         
+        System.out.println("Raw data size: " + rawData.size());
+        
+        // DEBUG: Check what's in the raw data
+        if (!rawData.isEmpty()) {
+            System.out.println("=== RAW DATA ANALYSIS ===");
+            for (int i = 0; i < Math.min(rawData.size(), 5); i++) { // Check first 5 records
+                Map<String, Object> row = rawData.get(i);
+                System.out.println("--- Row " + i + " ---");
+                System.out.println("Available columns: " + row.keySet());
+                
+                // Check student info
+                System.out.println("student_id: " + row.get("student_id"));
+                System.out.println("student_name: " + row.get("student_name"));
+                
+                // Check join_date specifically
+                Object joinDateValue = row.get("join_date");
+                System.out.println("join_date value: " + joinDateValue);
+                System.out.println("join_date type: " + 
+                    (joinDateValue != null ? joinDateValue.getClass().getName() : "null"));
+                
+                // Check all date-related fields
+                String[] dateFields = {"join_date", "date_of_birth", "last_login"};
+                for (String field : dateFields) {
+                    Object fieldValue = row.get(field);
+                    if (fieldValue != null) {
+                        System.out.println(field + ": " + fieldValue + " (type: " + fieldValue.getClass().getName() + ")");
+                    }
+                }
+                System.out.println("-------------------");
+            }
+        }
+        
         if (rawData.isEmpty()) {
+            System.out.println("No data found for the given criteria");
             return ResponseEntity.ok(HostlerListResponseDto.notFound(roomDetails));
         }
         
-    
+        // Extract room info from first row
         RoomInfoDto roomInfo = RoomInfoDto.fromMap(rawData.get(0));
         
+        // Process hostlers with detailed debugging
+        System.out.println("=== PROCESSING HOSTLERS ===");
         List<HostlerDto> hostlers = rawData.stream()
-            .map(HostlerDto::fromMap)
+            .map(row -> {
+                System.out.println("Processing row for student: " + row.get("student_name"));
+                HostlerDto hostler = HostlerDto.fromMap(row);
+                if (hostler != null) {
+                    System.out.println("Created HostlerDto - JoinDate: " + hostler.getJoinDate());
+                    System.out.println("Formatted JoinDate: " + hostler.getFormattedJoinDate());
+                }
+                return hostler;
+            })
             .filter(hostler -> hostler != null)
             .collect(Collectors.toList());
         
-
+        System.out.println("Successfully processed " + hostlers.size() + " hostlers");
+        
+        // Final verification
+        System.out.println("=== FINAL VERIFICATION ===");
+        for (HostlerDto hostler : hostlers) {
+            System.out.println("Hostler: " + hostler.getStudentName() + 
+                " | Join Date: " + hostler.getJoinDate() +
+                " | Formatted: " + hostler.getFormattedJoinDate());
+        }
+        
         HostlerListResponseDto response = HostlerListResponseDto.success(roomDetails, roomInfo, hostlers);
-        System.out.println("List of hostlers are : "+response);
-        System.out.println("Sending response with " + hostlers.size() + " hostlers");
+        System.out.println("=== DEBUG END ===");
         return ResponseEntity.ok(response);
         
     } catch (Exception e) {
@@ -623,7 +676,7 @@ private HostlerDto mapToHostlerDto(Map<String, Object> row) {
     hostler.setParentPhone(getString(row, "parent_phone"));
     hostler.setPaymentStatus(getString(row, "payment_status"));
     hostler.setIsActive(getBoolean(row, "is_active"));
-    
+
     if (row.get("join_date") instanceof java.sql.Timestamp) {
         hostler.setJoinDate(((java.sql.Timestamp) row.get("join_date")).toLocalDateTime());
     }

@@ -53,7 +53,7 @@
             
             background: #1150a9;
             border-bottom: 1px solid var(--border-color);
-            padding: 30px 40px;
+            padding: 10px 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -250,6 +250,20 @@
             background: #7c3aed; 
             box-shadow: 0 6px 15px rgba(139, 92, 246, 0.7);
             transform: translateY(-2px); 
+        }
+
+        .floating-action-btn:disabled {
+            background: #9ca3af; 
+            color: #6b7280;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .floating-action-btn:disabled:hover {
+            background: #9ca3af; 
+            box-shadow: none;
+            transform: none;
         }
 
         .back-floating-btn {
@@ -544,7 +558,7 @@
                 <i class="fas fa-arrow-left"></i> Back to Rooms List
             </button>
 
-            <button class="action-btn floating-action-btn" onclick="addStudent()">
+            <button class="action-btn floating-action-btn" id="addStudentBtn" onclick="addStudent()">
                 <i class="fas fa-user-plus"></i> Add Student
             </button>
         </div>
@@ -653,6 +667,9 @@
 
             // Render students
             renderStudents();
+            
+            // Update add student button state
+            updateAddStudentButton();
         }
 
         // Update room header with current data
@@ -682,6 +699,24 @@
             }
         }
 
+        // Update add student button state based on room availability
+        function updateAddStudentButton() {
+            const addStudentBtn = document.getElementById('addStudentBtn');
+            const totalCapacity = roomData.sharingCapacity || 0;
+            const occupiedCount = studentsData.length;
+            const availableBeds = totalCapacity - occupiedCount;
+            
+            if (availableBeds <= 0) {
+                // Room is full - disable the button
+                addStudentBtn.disabled = true;
+                addStudentBtn.title = "Room is full. Cannot add more students.";
+            } else {
+                // Room has available beds - enable the button
+                addStudentBtn.disabled = false;
+                addStudentBtn.title = "Add new student to this room";
+            }
+        }
+
         // Create student card HTML
         function createStudentCard(student) {
             // Determine class and icon based on payment status
@@ -702,8 +737,8 @@
             const activeStatusText = student.isActive ? 'Active' : 'Inactive';
             const activeStatusClass = student.isActive ? 'status-active' : 'status-inactive';
             const activeStatusIcon = student.isActive ? 'fas fa-user-check' : 'fas fa-user-times';
-            
-            // Format dates
+
+
             const joinDate = student.joinDate ? new Date(student.joinDate).toLocaleDateString() : 'N/A';
             const dob = student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString() : 'N/A';
             
@@ -824,7 +859,7 @@
                         <i class="fas fa-users-slash empty-icon"></i>
                         <h2 class="empty-title">No Students Assigned to Room ${roomData.roomNumber}</h2>
                         <p class="empty-message">This room is completely vacant. Click the button below to assign the first student.</p>
-                        <button class="action-btn floating-action-btn empty-action-btn" onclick="addStudent()">
+                        <button class="action-btn floating-action-btn empty-action-btn" onclick="addStudent()" ${availableBeds <= 0 ? 'disabled' : ''}>
                             <i class="fas fa-user-plus"></i> Add First Student
                         </button>
                     </div>
@@ -880,6 +915,15 @@
         }
 
         function addStudent() {
+            const totalCapacity = roomData.sharingCapacity || 0;
+            const occupiedCount = studentsData.length;
+            const availableBeds = totalCapacity - occupiedCount;
+            
+            if (availableBeds <= 0) {
+                showNotification(`Cannot add student. Room ${roomData.roomNumber} is already full.`, 'error');
+                return;
+            }
+            
             showNotification(`Add student functionality for Room ${roomData.roomNumber} would open here`, 'info');
         }
 

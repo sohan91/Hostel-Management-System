@@ -321,7 +321,7 @@ function createSharingTypeSection(sharingType, floorsData) {
             <button class="add-room-btn" data-sharing-type="${sharingTypeName}" data-capacity="${capacity}" data-price="${price}" data-sharing-id="${sharingTypeId || ''}">
                 <i class="fas fa-plus"></i> Add Room
             </button>
-            <button class="delete-sharing-btn" data-sharing-id="${sharingTypeId}">
+            <button class="delete-sharing-btn" id="delete-sharing-btn" data-sharing-id="${sharingTypeId}">
                 <i class="fas fa-trash"></i> Delete Sharing
             </button>
         </div>
@@ -1278,7 +1278,7 @@ function addNewRoom(sharingType, capacity, price, sharingId) {
     const modal = document.createElement('div');
     modal.className = 'modal-overlay active';
     modal.innerHTML = `
-        <div class="modal-content">
+             <div class="modal-content">
             <div class="modal-header">
                 <h3>Add New Room - ${sharingType}</h3>
                 <button class="close-modal">×</button>
@@ -1314,7 +1314,8 @@ function addNewRoom(sharingType, capacity, price, sharingId) {
                     </div>
                     <div class="form-group">
                         <label>Price per Bed:</label>
-                        <input type="number" id="roomPrice" min="1000" step="500" value="${price}" required>
+                        <input type="number" id="roomPrice" min="1000" step="500" value="${price}" required readonly>
+                        <small style="color: var(--text-light-gray);">Price is fixed for ${capacity} sharing room</small>
                     </div>
                     <div class="form-actions">
                         <button type="button" class="btn-secondary cancel-btn">Cancel</button>
@@ -1452,6 +1453,5 @@ const validationStyles = `
 `;
 document.head.insertAdjacentHTML('beforeend', validationStyles);
 
-// Export functions for global access
 window.clearSearch = clearSearch;
 window.initiateBooking = initiateBooking;

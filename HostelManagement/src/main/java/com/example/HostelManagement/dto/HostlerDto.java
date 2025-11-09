@@ -22,12 +22,19 @@ public class HostlerDto {
     private LocalDateTime joinDate;
     private String paymentStatus;
     private Boolean isActive;
-     private String bloodGroup;
+    private String bloodGroup;
+    
     // Utility method to create from database result set
     public static HostlerDto fromMap(Map<String, Object> row) {
         if (row == null || row.get("student_id") == null) {
             return null;
         }
+        
+        // DEBUG: Log join_date information
+        Object joinDateValue = row.get("join_date");
+        System.out.println("DEBUG - Creating HostlerDto for student: " + row.get("student_name"));
+        System.out.println("DEBUG - join_date value: " + joinDateValue);
+        System.out.println("DEBUG - join_date type: " + (joinDateValue != null ? joinDateValue.getClass().getName() : "null"));
         
         return HostlerDto.builder()
             .studentId(getInteger(row, "student_id"))
@@ -64,19 +71,58 @@ public class HostlerDto {
             return (Boolean) value;
         } else if (value instanceof Number) {
             return ((Number) value).intValue() == 1;
+        } else if (value instanceof String) {
+            return "true".equalsIgnoreCase((String) value) || "1".equals(value);
         }
         return null;
     }
     
     private static LocalDateTime getLocalDateTime(Map<String, Object> row, String key) {
         Object value = row.get(key);
-        if (value instanceof java.sql.Timestamp) {
-            return ((java.sql.Timestamp) value).toLocalDateTime();
+        if (value == null) {
+            System.out.println("DEBUG - getLocalDateTime: null value for key: " + key);
+            return null;
         }
-        return null;
+        
+        System.out.println("DEBUG - getLocalDateTime processing: " + value + " of type: " + value.getClass().getName());
+        
+        try {
+            if (value instanceof java.sql.Timestamp) {
+                LocalDateTime result = ((java.sql.Timestamp) value).toLocalDateTime();
+                System.out.println("DEBUG - Converted from Timestamp: " + result);
+                return result;
+            } else if (value instanceof java.time.LocalDateTime) {
+                System.out.println("DEBUG - Already LocalDateTime: " + value);
+                return (LocalDateTime) value;
+            } else if (value instanceof java.sql.Date) {
+                LocalDateTime result = ((java.sql.Date) value).toLocalDate().atStartOfDay();
+                System.out.println("DEBUG - Converted from sql.Date: " + result);
+                return result;
+            } else if (value instanceof java.util.Date) {
+                LocalDateTime result = new java.sql.Timestamp(((java.util.Date) value).getTime()).toLocalDateTime();
+                System.out.println("DEBUG - Converted from util.Date: " + result);
+                return result;
+            } else if (value instanceof String) {
+                // Try to parse string representation
+                try {
+                    LocalDateTime result = LocalDateTime.parse((String) value);
+                    System.out.println("DEBUG - Parsed from String: " + result);
+                    return result;
+                } catch (Exception e) {
+                    System.out.println("DEBUG - Failed to parse string as LocalDateTime: " + value);
+                }
+            }
+            
+            System.out.println("DEBUG - Unhandled type for LocalDateTime conversion: " + value.getClass().getName());
+            return null;
+            
+        } catch (Exception e) {
+            System.err.println("ERROR converting to LocalDateTime for key " + key + ": " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
     }
     
-    // Additional utility methods for frontend formatting
     public String getFormattedJoinDate() {
         if (joinDate != null) {
             return joinDate.toLocalDate().toString();
