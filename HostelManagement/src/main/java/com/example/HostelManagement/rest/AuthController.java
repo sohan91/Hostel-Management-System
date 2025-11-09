@@ -1,9 +1,11 @@
 package com.example.HostelManagement.rest;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,19 +13,26 @@ import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.HostelManagement.config.JwtUtil;
+import com.example.HostelManagement.dao.RoomCardDetailsFetch;
 import com.example.HostelManagement.dto.CreateNewSharingType;
 import com.example.HostelManagement.dto.DashboardAdminDTO;
+import com.example.HostelManagement.dto.HostlerDto;
+import com.example.HostelManagement.dto.HostlerListResponseDto;
 import com.example.HostelManagement.dto.RoomDTO;
+import com.example.HostelManagement.dto.RoomInfoDto;
 import com.example.HostelManagement.dto.SharingDetailsDTO;
 import com.example.HostelManagement.entities.hostel.admin.Admin;
 import com.example.HostelManagement.entities.hostel.admin.LoginRequestDAO;
 import com.example.HostelManagement.repositories.AddNewSharingTypeRepo;
+import com.example.HostelManagement.repositories.RoomRepository;
 import com.example.HostelManagement.service.AdminAuthService;
 import com.example.HostelManagement.service.RoomService;
 
@@ -41,12 +50,14 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final RoomService roomService;
     private final AddNewSharingTypeRepo newSharingTypeRepo;
+    private final RoomRepository roomRepository;
 
-    public AuthController(AdminAuthService authService, JwtUtil jwtUtil, RoomService roomService, AddNewSharingTypeRepo newSharingTypeRepo) {
+    public AuthController(AdminAuthService authService, JwtUtil jwtUtil, RoomService roomService, AddNewSharingTypeRepo newSharingTypeRepo,RoomRepository repository) {
         this.authService = authService;
         this.jwtUtil = jwtUtil;
         this.roomService = roomService;
         this.newSharingTypeRepo = newSharingTypeRepo;
+        this.roomRepository = repository;
        
     }
     @PostMapping("/add-sharing-type")
@@ -526,7 +537,114 @@ public class AuthController {
         response.put("timestamp", java.time.LocalDateTime.now().toString());
         return ResponseEntity.ok(response);
     }
+@GetMapping("/hostler-lists")
+public ResponseEntity<HostlerListResponseDto> fetchHostlerList(
+        @ModelAttribute RoomCardDetailsFetch roomDetails) {
+    
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = getEmailFromSecurityContext(auth);
+        Admin admin = authService.getAdminByEmail(email);
+         Integer adminId = admin.getAdminId();
+    try {
+        System.out.println("Fetching hostler list for room: " + roomDetails + ", adminId: " + adminId);
+        
+        // Fetch raw data from database
+        List<Map<String, Object>> rawData = roomRepository.fetchRoomWithHostlers(
+            roomDetails.getRoomId(),
+            roomDetails.getFloorNumber(),
+            roomDetails.getSharingTypeId(),
+            adminId
+        );
+        
+        if (rawData.isEmpty()) {
+            return ResponseEntity.ok(HostlerListResponseDto.notFound(roomDetails));
+        }
+        
+    
+        RoomInfoDto roomInfo = RoomInfoDto.fromMap(rawData.get(0));
+        
+        List<HostlerDto> hostlers = rawData.stream()
+            .map(HostlerDto::fromMap)
+            .filter(hostler -> hostler != null)
+            .collect(Collectors.toList());
+        
 
+        HostlerListResponseDto response = HostlerListResponseDto.success(roomDetails, roomInfo, hostlers);
+        System.out.println("List of hostlers are : "+response);
+        System.out.println("Sending response with " + hostlers.size() + " hostlers");
+        return ResponseEntity.ok(response);
+        
+    } catch (Exception e) {
+        System.err.println("Error fetching hostler list: " + e.getMessage());
+        e.printStackTrace();
+        
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(HostlerListResponseDto.error(roomDetails, "Failed to fetch hostler list: " + e.getMessage()));
+    }
+}
+
+private RoomInfoDto extractRoomInfoFromRawData(List<Map<String, Object>> rawData) {
+    if (rawData.isEmpty()) {
+        return null;
+    }
+    
+    // Get room info from first row (room details are same in all rows)
+    Map<String, Object> firstRow = rawData.get(0);
+    
+    RoomInfoDto roomInfo = new RoomInfoDto();
+    roomInfo.setRoomId(getInteger(firstRow, "room_id"));
+    roomInfo.setRoomNumber(getString(firstRow, "room_number"));
+    roomInfo.setFloorNumber(getInteger(firstRow, "floor_number"));
+    roomInfo.setRoomStatus(getString(firstRow, "room_status"));
+    roomInfo.setCurrentOccupancy(getInteger(firstRow, "current_occupancy"));
+    roomInfo.setSharingCapacity(getInteger(firstRow, "sharing_capacity"));
+    roomInfo.setAvailableBeds(getInteger(firstRow, "available_beds"));
+    roomInfo.setSharingTypeName(getString(firstRow, "sharing_type_name"));
+    roomInfo.setSharingTypeId(getInteger(firstRow, "sharing_type_id"));
+    
+    return roomInfo;
+}
+
+private List<HostlerDto> extractHostlersFromRawData(List<Map<String, Object>> rawData) {
+    return rawData.stream()
+        .filter(row -> row.get("student_id") != null) // Only rows with students
+        .map(this::mapToHostlerDto)
+        .collect(Collectors.toList());
+}
+
+private HostlerDto mapToHostlerDto(Map<String, Object> row) {
+    HostlerDto hostler = new HostlerDto();
+    hostler.setStudentId(getInteger(row, "student_id"));
+    hostler.setStudentName(getString(row, "student_name"));
+    hostler.setStudentEmail(getString(row, "student_email"));
+    hostler.setStudentPhone(getString(row, "student_phone"));
+    hostler.setDateOfBirth(row.get("date_of_birth") != null ? row.get("date_of_birth").toString() : null);
+    hostler.setParentName(getString(row, "parent_name"));
+    hostler.setParentPhone(getString(row, "parent_phone"));
+    hostler.setPaymentStatus(getString(row, "payment_status"));
+    hostler.setIsActive(getBoolean(row, "is_active"));
+    
+    if (row.get("join_date") instanceof java.sql.Timestamp) {
+        hostler.setJoinDate(((java.sql.Timestamp) row.get("join_date")).toLocalDateTime());
+    }
+    
+    return hostler;
+}
+
+private Integer getInteger(Map<String, Object> row, String key) {
+    Object value = row.get(key);
+    return value != null ? ((Number) value).intValue() : null;
+}
+
+private String getString(Map<String, Object> row, String key) {
+    Object value = row.get(key);
+    return value != null ? value.toString() : null;
+}
+
+private Boolean getBoolean(Map<String, Object> row, String key) {
+    Object value = row.get(key);
+    return value != null ? (Boolean) value : null;
+}
     private String getEmailFromSecurityContext(Authentication auth) {
         if (auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)) {
             String email = auth.getName();

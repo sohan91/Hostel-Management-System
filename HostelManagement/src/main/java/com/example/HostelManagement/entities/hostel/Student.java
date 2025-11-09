@@ -27,6 +27,8 @@ public class Student {
     @Column(name = "student_id")
     private Integer studentId;
 
+ 
+
     @ManyToOne
     @JoinColumn(name = "admin_id", nullable = false)
     private Admin admin;
@@ -69,6 +71,9 @@ public class Student {
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
 
+   @Column(name = "blood_group")
+    private String bloodGroup;
+
     public enum PaymentStatus {
         Paid, Pending, Overdue
     }
@@ -76,7 +81,7 @@ public class Student {
     public Student(){}
     
     public Student(Admin admin, Rooms room, String studentName, String studentEmail, 
-                   String studentPhone, String studentPassword) {
+                   String studentPhone, String studentPassword,String bloodGroup) {
         this.admin = admin;
         this.room = room;
         this.studentName = studentName;
@@ -86,5 +91,6 @@ public class Student {
         this.paymentStatus = PaymentStatus.Pending;
         this.isActive = true;
         this.joinDate = LocalDateTime.now();
+        this.bloodGroup = bloodGroup;
     }
 }

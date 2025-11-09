@@ -1,10 +1,16 @@
 package com.example.HostelManagement.controller;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -103,7 +109,21 @@ public class MainPageController {
             return "redirect:/hostel/login";
         }
     }
-
+@GetMapping("/get-session-room-details")
+public ResponseEntity<Map<String, Object>> getSessionRoomDetails(HttpServletRequest request) {
+    HttpSession session = request.getSession(false);
+    if (session != null) {
+        Map<String, Object> sessionData = new HashMap<>();
+        sessionData.put("roomId", session.getAttribute("roomId"));
+        sessionData.put("roomNumber", session.getAttribute("roomNumber"));
+        sessionData.put("floorNumber", session.getAttribute("floorNumber"));
+        sessionData.put("sharingType", session.getAttribute("sharingType"));
+        sessionData.put("sharingTypeId", session.getAttribute("sharingTypeId"));
+        
+        return ResponseEntity.ok(sessionData);
+    }
+    return ResponseEntity.ok(Collections.emptyMap());
+}
     @GetMapping("/admin-profile")
     public String adminProfilePage(HttpServletRequest request, HttpServletResponse response) {
         System.out.println("=== ADMIN PROFILE PAGE CONTROLLER ===");
@@ -118,32 +138,49 @@ public class MainPageController {
             return "redirect:/hostel/login";
         }
     }
-
-    // Session-based logout endpoint
-    // @GetMapping("/logout-session")
-    // public String logoutSession(HttpServletRequest request, HttpServletResponse response) {
-    //     System.out.println("=== SESSION LOGOUT ===");
+@GetMapping("/hosteler-list")
+public String hostlerListPage(
+        @RequestParam(required = false) Integer roomId,
+        @RequestParam(required = false) String roomNumber,
+        @RequestParam(required = false) Integer floorNumber,
+        @RequestParam(required = false) String sharingType,
+        @RequestParam(required = false) Integer sharingTypeId,
+        HttpServletRequest request, 
+        HttpServletResponse response) {
+    
+    System.out.println("=== HOSTLER LIST PAGE CONTROLLER ===");
+    System.out.println("Room Details - ID: " + roomId + ", Number: " + roomNumber + 
+                      ", Floor: " + floorNumber + ", Sharing: " + sharingType);
+    
+    setNoCacheHeaders(response);
+    
+    if (isAuthenticated()) {
+        System.out.println("User authenticated, serving hostler list");
+ 
+        HttpSession session = request.getSession();
+        if (roomId != null) {
+            session.setAttribute("roomId", roomId);
+            session.setAttribute("roomNumber", roomNumber);
+            session.setAttribute("floorNumber", floorNumber);
+            session.setAttribute("sharingType", sharingType);
+            session.setAttribute("sharingTypeId", sharingTypeId);
+            session.setAttribute("lastAccess", System.currentTimeMillis());
+            
+            System.out.println("Room details stored in session for hostler list");
+        }
         
-    //     // Invalidate session
-    //     HttpSession session = request.getSession(false);
-    //     if (session != null) {
-    //         System.out.println("Invalidating session: " + session.getId());
-    //         session.invalidate();
-    //     }
-        
-    //     // Clear security context
-    //     SecurityContextHolder.clearContext();
-        
-    //     System.out.println("Session logout completed");
-    //     return "redirect:/hostel/login";
-    // }
-
+        return "forward:/HostlerList/hostelerList.html";
+    } else {
+        System.out.println("User not authenticated, redirecting to login");
+        return "redirect:/hostel/login";
+    }
+}
     @RequestMapping("/")
     public String rootRedirect(HttpServletRequest request, HttpServletResponse response) {
         System.out.println("=== ROOT REDIRECT ===");
         setNoCacheHeaders(response);
         
-        // Redirect to dashboard if authenticated, otherwise to login
+
         if (isAuthenticated()) {
             return "redirect:/hostel/dashboard";
         } else {
@@ -151,51 +188,6 @@ public class MainPageController {
         }
     }
 
-    // @GetMapping("/health")
-    // public String healthCheck() {
-    //     System.out.println("=== HEALTH CHECK ===");
-    //     return "PageController is working";
-    // }
-
-    // Check session status - for debugging
-    // @GetMapping("/session-status")
-    // public String sessionStatus(HttpServletRequest request) {
-    //     HttpSession session = request.getSession(false);
-    //     StringBuilder status = new StringBuilder();
-    //     status.append("=== SESSION STATUS ===\n");
-        
-    //     if (session != null) {
-    //         status.append("Session ID: ").append(session.getId()).append("\n");
-    //         status.append("Authenticated: ").append(session.getAttribute("authenticated")).append("\n");
-    //         status.append("Email: ").append(session.getAttribute("email")).append("\n");
-    //         status.append("Last Access: ").append(session.getAttribute("lastAccess")).append("\n");
-    //     } else {
-    //         status.append("No active session\n");
-    //     }
-        
-    //     status.append("Security Context Auth: ").append(isAuthenticated()).append("\n");
-        
-    //     // Check authentication details
-    //     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-    //     if (auth != null) {
-    //         status.append("Auth Name: ").append(auth.getName()).append("\n");
-    //         status.append("Auth Principal: ").append(auth.getPrincipal()).append("\n");
-    //         status.append("Auth Details: ").append(auth.getDetails()).append("\n");
-    //     }
-        
-    //     return status.toString();
-    // }
-
-    // Quick session check endpoint
-    // @GetMapping("/check-auth")
-    // public String checkAuth() {
-    //     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-    //     if (isAuthenticated()) {
-    //         return "Authenticated as: " + auth.getPrincipal();
-    //     } else {
-    //         return "Not authenticated";
-    //     }
-    // }
 
     private boolean isAuthenticated() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();

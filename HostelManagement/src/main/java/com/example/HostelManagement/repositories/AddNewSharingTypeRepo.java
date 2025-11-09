@@ -1,6 +1,7 @@
 package com.example.HostelManagement.repositories;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -11,7 +12,6 @@ public class AddNewSharingTypeRepo {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    // Updated: Check if sharing type NAME exists for specific admin (not just capacity)
     public boolean isSharingTypeExists(Integer adminId, Integer capacity) {
         System.out.println(" Checking sharing type uniqueness for Admin " + adminId + ": Capacity " + capacity);
 
@@ -30,7 +30,7 @@ public class AddNewSharingTypeRepo {
 
             return exists;
 
-        } catch (Exception e) {
+        } catch (DataAccessException e) {
             System.out.println("Error checking sharing type uniqueness: " + e.getMessage());
             return false;
         }
@@ -39,8 +39,6 @@ public class AddNewSharingTypeRepo {
     public boolean saveSharingType(SharingDetailsDTO sharingDTO) {
         System.out.println(" NewSharingTypeRepo.saveSharingType() called for Admin " + sharingDTO.getAdminId() + 
                          ": " + sharingDTO.getSharingCapacity() + "-Sharing");
-
-        // First check if sharing type name already exists for this admin
         if (isSharingTypeExists(sharingDTO.getAdminId(), sharingDTO.getSharingCapacity())) {
             System.out.println(" Sharing type " + sharingDTO.getSharingCapacity() + "-Sharing already exists for admin " + sharingDTO.getAdminId());
             return false;
@@ -52,7 +50,6 @@ public class AddNewSharingTypeRepo {
             VALUES (?, ?, ?, ?, ?, NOW())
             """;
 
-            // Generate type name from capacity
             String typeName = sharingDTO.getSharingCapacity() + "-Sharing";
 
             System.out.println(" Executing sharing type insert SQL for Admin " + sharingDTO.getAdminId() + ": " + typeName);
@@ -75,14 +72,12 @@ public class AddNewSharingTypeRepo {
         } catch (org.springframework.dao.DuplicateKeyException e) {
             System.out.println(" Sharing type name already exists for admin " + sharingDTO.getAdminId() + ": " + sharingDTO.getSharingCapacity() + "-Sharing");
             return false;
-        } catch (Exception e) {
+        } catch (DataAccessException e) {
             System.out.println(" Error saving sharing type: " + e.getMessage());
-            e.printStackTrace();
             return false;
         }
     }
 
-    // Method to get all sharing types for an admin
     public java.util.List<SharingDetailsDTO> getSharingTypesByAdmin(Integer adminId) {
         System.out.println(" NewSharingTypeRepo.getSharingTypesByAdmin() called for admin: " + adminId);
 
@@ -102,8 +97,7 @@ public class AddNewSharingTypeRepo {
                 sharingType.setSharingCapacity(rs.getInt("capacity"));
                 sharingType.setSharingFee(rs.getBigDecimal("sharing_fee"));
                 sharingType.setDescription(rs.getString("description"));
-                
-                // Handle created_at timestamp
+
                 java.sql.Timestamp createdAt = rs.getTimestamp("created_at");
                 if (createdAt != null) {
                     sharingType.setCreatedAt(createdAt.toLocalDateTime());
@@ -122,7 +116,6 @@ public class AddNewSharingTypeRepo {
         }
     }
 
-    // NEW: Method to validate if sharing type belongs to admin
     public boolean isSharingTypeBelongsToAdmin(Integer sharingTypeId, Integer adminId) {
         System.out.println(" Checking if sharing type " + sharingTypeId + " belongs to admin " + adminId);
 
@@ -146,7 +139,6 @@ public class AddNewSharingTypeRepo {
         }
     }
 
-    // NEW: Method to get sharing type by ID with admin validation
     public SharingDetailsDTO getSharingTypeByIdAndAdmin(Integer sharingTypeId, Integer adminId) {
         System.out.println("Getting sharing type by ID: " + sharingTypeId + " for admin: " + adminId);
 

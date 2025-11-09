@@ -22,7 +22,8 @@
       "default",
       {
         "ignore": [
-          "backdrop-filter"
+          "backdrop-filter",
+          "user-select"
         ]
       }
     ],
@@ -30,6 +31,12 @@
       "default",
       {
         "aria-valid-attr-value": "off"
+      }
+    ],
+    "axe/forms": [
+      "default",
+      {
+        "select-name": "off"
       }
     ]
   }

@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room Students - Hostel Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #3b82f6; 
+            --accent-color: #8b5cf6; 
+            --secondary-color: #10b981; 
+            --danger-color: #ef4444; 
+            --text-primary: #1f2937; 
+            --text-secondary: #6b7280; 
+            --border-color: #e5e7eb; 
+            --shadow-light: 0 1px 3px rgba(0, 0, 0, 0.08);
+
+            --header-height: 120px;
+            --bottom-action-area: 80px; 
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f4f6f9; 
+            height: 100vh;
+            overflow: hidden; 
+        }
+
+        .room-students-container {
+            width: 100vw; 
+            max-width: none;
+            height: 100vh;
+            margin: 0;
+            background: #fcfafa;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .room-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            
+            background: #1150a9;
+            border-bottom: 1px solid var(--border-color);
+            padding: 30px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); 
+            height: var(--header-height); 
+        }
+
+        .room-basic-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .room-icon {
+            width: 50px; height: 50px; border-radius: 50%; background: var(--primary-color); 
+            display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.5); 
+        }
+
+        .room-details h1 {
+            font-size: 1.8rem; font-weight: 700; color: white; margin-bottom: 4px;
+        }
+
+        .room-meta {
+            display: flex; gap: 15px; align-items: center; flex-wrap: wrap;
+        }
+
+        .sharing-type {
+            background: #eff6ff; color: var(--primary-color); padding: 4px 12px; border-radius: 9999px; 
+            font-size: 0.8rem; font-weight: 600;
+        }
+
+        .room-status {
+            display: flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 500; 
+            padding: 4px 12px; border-radius: 9999px;
+            transition: all 0.3s;
+        }
+
+        .room-status i {
+            font-size: 0.5rem;
+        }
+
+        .room-status.available {
+            background: #d1fae5; color: #065f46;
+        }
+        
+        .room-status.full {
+            background: #fee2e2; 
+            color: #991b1b; 
+        }
+
+        .room-occupancy {
+            display: flex; flex-direction: row; gap: 20px; padding: 0; border: none; box-shadow: none;
+        }
+
+        .occupancy-info {
+            display: flex; gap: 30px; text-align: right; border: 1px solid var(--border-color); 
+            border-radius: 8px; padding: 10px 20px; background-color: #f9fafb;
+            transition: box-shadow 0.3s, background-color 0.3s;
+        }
+
+        .occupancy-info:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+        }
+
+        .occupancy-item {
+            display: flex; flex-direction: column; padding: 0 10px;
+        }
+
+        .occupancy-item:not(:last-child) {
+            border-right: 1px solid var(--border-color);
+        }
+
+        .occupancy-item .label {
+            font-size: 0.7rem; font-weight: 500; color: var(--text-secondary); text-transform: uppercase;
+        }
+
+        .occupancy-item .value {
+            font-size: 1.8rem; font-weight: 700; color: var(--text-primary); line-height: 1.2;
+        }
+
+        .occupancy-item .value.available {
+            color: var(--secondary-color);
+        }
+
+        .main-content-scroll {
+            padding-top: var(--header-height); 
+            padding-bottom: var(--bottom-action-area); 
+            flex-grow: 1;
+            overflow-y: auto; 
+            width: 100%;
+        }
+
+        .students-section {
+            padding: 40px 40px; 
+        }
+
+        .students-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* --- Empty State Styling --- */
+        .empty-state-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 60px 20px;
+            margin-top: 30px;
+            background: #ffffff;
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            box-shadow: var(--shadow-light);
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            opacity: 0.6;
+        }
+
+        .empty-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .empty-message {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            max-width: 400px;
+        }
+
+        .empty-action-btn {
+            background: var(--secondary-color);
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+        }
+        
+        .empty-action-btn:hover {
+            background: #059669;
+            box-shadow: 0 6px 15px rgba(16, 185, 129, 0.6);
+            transform: translateY(-2px); 
+        }
+
+        .fixed-footer-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 150;
+            height: var(--bottom-action-area); 
+            padding: 0 40px; 
+            background: rgba(255, 255, 255, 0.85); 
+            backdrop-filter: blur(10px); 
+            -webkit-backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(229, 231, 235, 0.7); 
+            box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.1); 
+            display: flex;
+            justify-content: space-between; 
+            align-items: center;
+        }
+        
+        .action-btn {
+            border: none;
+            padding: 10px 20px; 
+            border-radius: 9999px; 
+            cursor: pointer;
+            font-size: 0.95rem; 
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+            position: static; 
+        }
+        
+        .floating-action-btn {
+            background: var(--accent-color); 
+            color: white;
+            padding: 12px 25px; 
+            box-shadow: 0 4px 10px rgba(139, 92, 246, 0.5); 
+        }
+
+        .floating-action-btn:hover {
+            background: #7c3aed; 
+            box-shadow: 0 6px 15px rgba(139, 92, 246, 0.7);
+            transform: translateY(-2px); 
+        }
+
+        .back-floating-btn {
+            background: #e0f2fe; 
+            color: var(--primary-color); 
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+        }
+
+        .back-floating-btn:hover {
+            background: #bae6fd; 
+            color: #1e40af; 
+            transform: translateY(-1px);
+        }
+
+        .student-card {
+            background: #f8f8f8;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--shadow-light);
+            transition: box-shadow 0.3s, border-color 0.3s;
+        }
+
+        .student-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-color: #cfd8e3;
+        }
+
+        .student-card-header {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+
+        .student-card-header:hover:not(.empty-bed .student-card-header) {
+            background-color: #f9fafb;
+        }
+
+        .profile-icon {
+            width: 40px; height: 40px; border-radius: 50%; background: var(--primary-color);
+            display: flex; align-items: center; justify-content: center; color: white;
+            font-size: 1.2rem; 
+            margin-right: 15px; flex-shrink: 0; 
+        }
+
+        .student-basic-info {
+            flex-grow: 1;
+        }
+
+        .student-name {
+            font-size: 1.1rem; font-weight: 600; color: var(--text-primary);
+        }
+
+        .student-meta {
+            display: flex; align-items: center; gap: 15px; margin-top: 2px;
+        }
+
+        .student-id {
+            font-size: 0.85rem; color: var(--text-secondary);
+        }
+
+        .dropdown-arrow {
+            margin-left: auto; color: var(--text-secondary); font-size: 0.9rem;
+            transition: transform 0.3s;
+        }
+
+        .dropdown-arrow.rotated {
+            transform: rotate(180deg); color: var(--primary-color);
+        }
+
+        .student-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
+            padding: 0 20px;
+            background: #e4e5e6;
+        }
+
+        .student-details.expanded {
+            max-height: 500px;
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px 30px;
+        }
+
+        .detail-item {
+            display: flex; flex-direction: column;
+        }
+
+        .detail-item.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .detail-label {
+            font-size: 0.7rem; font-weight: 600; color: var(--text-secondary);
+            text-transform: uppercase; margin-bottom: 4px;
+        }
+
+        .detail-value {
+            font-size: 0.95rem; font-weight: 500; color: var(--text-primary);
+        }
+
+        .detail-value a {
+            text-decoration: none; color: var(--primary-color); font-weight: 500;
+        }
+
+        .contact-info {
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        .detail-value.status-present {
+            color: var(--secondary-color); 
+            font-weight: 700;
+        }
+
+        .detail-value.status-absent {
+            color: var(--danger-color); 
+            font-weight: 700;
+        }
+        
+        .detail-value.status-pending {
+            color: #f59e0b; 
+            font-weight: 700;
+        }
+        
+        .detail-value.status-active {
+            color: var(--secondary-color);
+            font-weight: 500;
+        }
+        
+        .detail-value.status-inactive {
+            color: var(--danger-color);
+            font-weight: 500;
+        }
+
+        .student-card.empty-bed .profile-icon {
+            background: #f3f4f6 !important; color: #9ca3af !important;
+        }
+
+        .student-card.empty-bed .student-card-header {
+            cursor: default; background-color: #fafbfd;
+        }
+
+        .student-card.empty-bed .student-name {
+            color: #9ca3af !important; font-style: italic;
+        }
+
+        .student-card.empty-bed .dropdown-arrow {
+            display: none;
+        }
+
+        .loading-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #666;
+        }
+
+        .loading-state i {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .notification-success { background: #28a745; }
+        .notification-error { background: #dc3545; }
+        .notification-info { background: #17a2b8; }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @media (max-width: 768px) {
+            :root {
+                --header-height: 140px; 
+                --bottom-action-area: 70px; 
+            }
+
+            .room-header {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 15px 20px;
+                height: auto; 
+            }
+
+            .main-content-scroll {
+                 padding-top: var(--header-height); 
+                 padding-bottom: var(--bottom-action-area);
+            }
+            
+            .students-section {
+                padding: 20px;
+            }
+
+            .fixed-footer-bar {
+                padding: 0 20px; 
+            }
+
+            .action-btn {
+                padding: 10px 18px; 
+                font-size: 0.9rem;
+            }
+
+            .floating-action-btn {
+                padding: 10px 20px;
+            }
+            
+            .room-occupancy {
+                justify-content: space-between;
+                width: 100%;
+                margin-top: 10px;
+            }
+
+            .occupancy-info {
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="room-students-container">
+        
+        <div class="room-header" id="roomHeader">
+            <div class="room-basic-info">
+                <div class="room-icon">
+                    <i class="fas fa-door-open"></i>
+                </div>
+                <div class="room-details">
+                    <h1 class="room-number" id="roomNumberDisplay">Loading...</h1>
+                    <div class="room-meta">
+                        <span class="sharing-type" id="sharingTypeDisplay"></span>
+                        <span class="room-status available" id="roomStatusDisplay"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="room-occupancy">
+                <div class="occupancy-info">
+                    <div class="occupancy-item">
+                        <span class="label">Total Capacity</span>
+                        <span class="value total-capacity" id="totalCapacity">0</span>
+                    </div>
+                    <div class="occupancy-item">
+                        <span class="label">Occupied</span>
+                        <span class="value occupied-count" id="occupiedCount">0</span>
+                    </div>
+                    <div class="occupancy-item">
+                        <span class="label">Available</span>
+                        <span class="value available available-count" id="availableCount">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content-scroll">
+            <div class="students-section">
+                <!-- Loading State -->
+                <div id="loadingState" class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <h3>Loading Student Information...</h3>
+                    <p>Please wait while we fetch the details</p>
+                </div>
+
+                <!-- Students List -->
+                <div class="students-list" id="studentsList" style="display: none;">
+                    <!-- Dynamic content will be injected here -->
+                </div>
+            </div>
+        </div>
+
+        <div class="fixed-footer-bar">
+            <button class="action-btn back-floating-btn" onclick="goBack()">
+                <i class="fas fa-arrow-left"></i> Back to Rooms List
+            </button>
+
+            <button class="action-btn floating-action-btn" onclick="addStudent()">
+                <i class="fas fa-user-plus"></i> Add Student
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let roomData = {};
+        let studentsData = [];
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded, fetching room data...');
+            loadRoomData();
+        });
+
+        // Load room data from URL parameters and fetch hosteler list
+        async function loadRoomData() {
+            try {
+                // Get room details from URL parameters
+                const urlParams = new URLSearchParams(window.location.search);
+                roomData = {
+                    roomId: urlParams.get('roomId'),
+                    roomNumber: urlParams.get('roomNumber'),
+                    floorNumber: urlParams.get('floorNumber'),
+                    sharingType: urlParams.get('sharingType'),
+                    sharingTypeId: urlParams.get('sharingTypeId')
+                };
+
+                console.log('Room details from URL:', roomData);
+
+                if (!roomData.roomId) {
+                    throw new Error('No room information provided');
+                }
+
+                // Update room header immediately
+                updateRoomHeader(roomData);
+                
+                // Fetch hosteler data from API
+                await fetchHostelerData();
+
+            } catch (error) {
+                console.error('Error loading room data:', error);
+                showError('Failed to load room information: ' + error.message);
+            }
+        }
+
+        // Fetch hosteler data from API
+        async function fetchHostelerData() {
+            try {
+                console.log('Fetching hosteler data from API...');
+                
+                const queryParams = new URLSearchParams({
+                    roomId: roomData.roomId,
+                    roomNumber: roomData.roomNumber,
+                    floorNumber: roomData.floorNumber,
+                    sharingType: roomData.sharingType,
+                    sharingTypeId: roomData.sharingTypeId
+                }).toString();
+
+                const response = await fetch(`/api/auth/hostler-lists?${queryParams}`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                console.log('API Response status:', response.status);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const responseData = await response.json();
+                console.log('API Response data:', responseData);
+
+                if (responseData.status === 'success') {
+                    // Process the response data
+                    processApiResponse(responseData);
+                    showNotification('Student data loaded successfully', 'success');
+                } else {
+                    throw new Error(responseData.message || 'Failed to load student data');
+                }
+
+            } catch (error) {
+                console.error('Error fetching hosteler data:', error);
+                showError('Error loading student details: ' + error.message);
+            }
+        }
+
+        // Process API response and update UI
+        function processApiResponse(responseData) {
+            const roomInfo = responseData.roomInfo;
+            studentsData = responseData.hostlers || [];
+            
+            // Update room information with API data
+            if (roomInfo) {
+                roomData = { ...roomData, ...roomInfo };
+                updateRoomHeader(roomData);
+            }
+
+            // Hide loading state
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('studentsList').style.display = 'flex';
+
+            // Render students
+            renderStudents();
+        }
+
+        // Update room header with current data
+        function updateRoomHeader(roomInfo) {
+            document.getElementById('roomNumberDisplay').textContent = `Room ${roomInfo.roomNumber || roomInfo.roomNumber}`;
+            document.getElementById('sharingTypeDisplay').textContent = `${roomInfo.sharingTypeName || roomInfo.sharingType} (${roomInfo.sharingCapacity || 0} Beds)`;
+            
+            // Update occupancy
+            const occupied = studentsData.length;
+            const totalCapacity = roomInfo.sharingCapacity || 0;
+            const available = totalCapacity - occupied;
+
+            document.getElementById('totalCapacity').textContent = totalCapacity;
+            document.getElementById('occupiedCount').textContent = occupied;
+            document.getElementById('availableCount').textContent = available;
+
+            // Update room status
+            const statusElement = document.getElementById('roomStatusDisplay');
+            statusElement.classList.remove('available', 'full');
+            
+            if (available > 0) {
+                statusElement.classList.add('available');
+                statusElement.innerHTML = '<i class="fas fa-circle"></i> Available';
+            } else {
+                statusElement.classList.add('full');
+                statusElement.innerHTML = '<i class="fas fa-circle"></i> Full';
+            }
+        }
+
+        // Create student card HTML
+        function createStudentCard(student) {
+            // Determine class and icon based on payment status
+            let feeClass = '';
+            let feeIcon = '';
+            if (student.paymentStatus === "Paid") {
+                feeClass = 'status-present';
+                feeIcon = 'fas fa-check-circle';
+            } else if (student.paymentStatus === "Pending") {
+                feeClass = 'status-pending';
+                feeIcon = 'fas fa-clock';
+            } else {
+                 feeClass = 'status-absent';
+                 feeIcon = 'fas fa-times-circle';
+            }
+            
+            // Determine class and icon for active status
+            const activeStatusText = student.isActive ? 'Active' : 'Inactive';
+            const activeStatusClass = student.isActive ? 'status-active' : 'status-inactive';
+            const activeStatusIcon = student.isActive ? 'fas fa-user-check' : 'fas fa-user-times';
+            
+            // Format dates
+            const joinDate = student.joinDate ? new Date(student.joinDate).toLocaleDateString() : 'N/A';
+            const dob = student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString() : 'N/A';
+            
+            return `
+                <div class="student-card">
+                    <div class="student-card-header" onclick="toggleStudentDetails(this)">
+                        <div class="profile-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="student-basic-info">
+                            <div class="student-name">${student.studentName || 'N/A'}</div>
+                            <div class="student-meta">
+                                <span class="student-id">ID: ${student.studentId || 'N/A'}</span>
+                            </div>
+                        </div>
+                        <div class="dropdown-arrow">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+                    <div class="student-details">
+                        <div class="details-grid">
+                            <div class="detail-item">
+                                <span class="detail-label">Student ID</span>
+                                <span class="detail-value">${student.studentId || 'N/A'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Date of Birth</span>
+                                <span class="detail-value">${dob}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Join Date</span>
+                                <span class="detail-value">${joinDate}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Payment Status</span>
+                                <span class="detail-value ${feeClass}">
+                                    <i class="${feeIcon}"></i> ${student.paymentStatus || 'Pending'}
+                                </span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Active Status</span>
+                                <span class="detail-value ${activeStatusClass}">
+                                    <i class="${activeStatusIcon}"></i> ${activeStatusText}
+                                </span>
+                            </div>
+                            ${student.bloodGroup ? `
+                            <div class="detail-item">
+                                <span class="detail-label">Blood Group</span>
+                                <span class="detail-value">${student.bloodGroup}</span>
+                            </div>` : ''}
+                            
+                            <div class="detail-item full-width">
+                                <span class="detail-label">Email</span>
+                                <a href="mailto:${student.studentEmail}" class="detail-value contact-info">
+                                    <i class="fas fa-envelope"></i> ${student.studentEmail || 'N/A'}
+                                </a>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Student Phone</span>
+                                <a href="tel:${student.studentPhone ? student.studentPhone.replace(/[^0-9+]/g, '') : ''}" class="detail-value contact-info">
+                                    <i class="fas fa-mobile-alt"></i> ${student.studentPhone || 'N/A'}
+                                </a>
+                            </div>
+                            ${student.parentName ? `
+                            <div class="detail-item">
+                                <span class="detail-label">Parent Name</span>
+                                <span class="detail-value contact-info">
+                                    <i class="fas fa-users"></i> ${student.parentName}
+                                </span>
+                            </div>` : ''}
+                            ${student.parentPhone ? `
+                            <div class="detail-item">
+                                <span class="detail-label">Parent Phone</span>
+                                <a href="tel:${student.parentPhone.replace(/[^0-9+]/g, '')}" class="detail-value contact-info">
+                                    <i class="fas fa-phone-alt"></i> ${student.parentPhone}
+                                </a>
+                            </div>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Create empty bed card
+        function createEmptyBedCard() {
+            return `
+                <div class="student-card empty-bed">
+                    <div class="student-card-header">
+                        <div class="profile-icon">
+                            <i class="fas fa-bed"></i>
+                        </div>
+                        <div class="student-basic-info">
+                            <div class="student-name">Available Bed</div>
+                            <div class="student-meta">
+                                <span class="student-id">Status: Vacant</span>
+                            </div>
+                        </div>
+                        <div class="dropdown-arrow">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Render students list
+        function renderStudents() {
+            const listContainer = document.getElementById('studentsList');
+            const totalCapacity = roomData.sharingCapacity || 0;
+            const occupiedCount = studentsData.length;
+            const availableBeds = totalCapacity - occupiedCount;
+            let listHTML = '';
+
+            if (occupiedCount === 0) {
+                // Render empty state
+                listHTML = `
+                    <div class="empty-state-card">
+                        <i class="fas fa-users-slash empty-icon"></i>
+                        <h2 class="empty-title">No Students Assigned to Room ${roomData.roomNumber}</h2>
+                        <p class="empty-message">This room is completely vacant. Click the button below to assign the first student.</p>
+                        <button class="action-btn floating-action-btn empty-action-btn" onclick="addStudent()">
+                            <i class="fas fa-user-plus"></i> Add First Student
+                        </button>
+                    </div>
+                `;
+            } else {
+                // Render student cards
+                studentsData.forEach(student => {
+                    listHTML += createStudentCard(student);
+                });
+
+                // Render available bed cards
+                for (let i = 0; i < availableBeds; i++) {
+                    listHTML += createEmptyBedCard();
+                }
+            }
+            
+            listContainer.innerHTML = listHTML;
+        }
+
+        // Toggle student details
+        function toggleStudentDetails(header) {
+            const card = header.parentElement;
+            
+            if (card.classList.contains('empty-bed')) {
+                return;
+            }
+
+            const details = card.querySelector('.student-details');
+            const arrow = header.querySelector('.dropdown-arrow');
+            const isExpanded = details.classList.contains('expanded');
+            
+            // Collapse all other expanded cards
+            document.querySelectorAll('.student-details.expanded').forEach(expandedDetails => {
+                if (expandedDetails !== details) {
+                    expandedDetails.classList.remove('expanded');
+                    expandedDetails.parentElement.querySelector('.dropdown-arrow').classList.remove('rotated');
+                }
+            });
+            
+            // Toggle current card
+            if (!isExpanded) {
+                details.classList.add('expanded');
+                arrow.classList.add('rotated');
+            } else {
+                details.classList.remove('expanded');
+                arrow.classList.remove('rotated');
+            }
+        }
+
+        // Navigation functions
+        function goBack() {
+            window.location.href = '/hostel/dashboard';
+        }
+
+        function addStudent() {
+            showNotification(`Add student functionality for Room ${roomData.roomNumber} would open here`, 'info');
+        }
+
+        // Utility functions
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        function showError(message) {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('studentsList').style.display = 'block';
+            document.getElementById('studentsList').innerHTML = `
+                <div class="empty-state-card">
+                    <i class="fas fa-exclamation-triangle empty-icon"></i>
+                    <h2 class="empty-title">Error Loading Data</h2>
+                    <p class="empty-message">${message}</p>
+                    <button class="action-btn floating-action-btn empty-action-btn" onclick="loadRoomData()">
+                        <i class="fas fa-redo"></i> Try Again
+                    </button>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
