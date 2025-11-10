@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book New Hosteler - Hostel Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary-blue: #4a90e2;
+            --primary-dark: #2c3e50;
+            --secondary-blue: #3498db;
+            --accent-green: #27ae60;
+            --accent-red: #e74c3c;
+            --accent-orange: #f39c12;
+            --text-dark: #2c3e50;
+            --text-gray: #7f8c8d;
+            --text-light: #95a5a6;
+            --bg-light: #f8f9fa;
+            --bg-white: #ffffff;
+            --border-light: #dee2e6;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            --shadow-hover: 0 5px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 0;
+            margin: 0;
+        }
+
+        .booking-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--bg-white);
+            box-shadow: var(--shadow-hover);
+            overflow: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        .booking-header {
+            background: rgb(4, 4, 67);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            border-bottom: 3px solid var(--primary-blue);
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .booking-header h1 {
+            font-size: 1.6em;
+            font-weight: 600;
+        }
+
+        .back-button {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .booking-content {
+            padding: 100px 30px 40px 30px;
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 30px;
+            align-items: start;
+            background: var(--bg-white);
+        }
+
+        .booking-form-section {
+            background: var(--bg-white);
+            padding: 0;
+        }
+
+        .room-info-card {
+            background: linear-gradient(135deg, #20379d 0%, #2228da 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: var(--shadow);
+        }
+
+        .room-info-card h2 {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .room-details-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .room-detail {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .room-detail label {
+            font-size: 0.85em;
+            opacity: 0.9;
+        }
+
+        .room-detail span {
+            font-size: 1em;
+            font-weight: 600;
+        }
+
+        .form-section {
+            margin-bottom: 25px;
+            padding: 25px;
+            background: var(--bg-white);
+            border-radius: 10px;
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--primary-blue);
+        }
+
+        .section-header i {
+            color: var(--primary-blue);
+            font-size: 1.2em;
+        }
+
+        .section-header h3 {
+            color: var(--primary-dark);
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 0.9em;
+        }
+
+        .form-group label.required::after {
+            content: " *";
+            color: var(--accent-red);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 12px 15px;
+            border: 2px solid var(--border-light);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: var(--bg-white);
+            width: 100%;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+        }
+
+        .form-group small {
+            color: var(--text-light);
+            font-size: 0.8em;
+        }
+
+        .summary-section {
+            background: var(--bg-white);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 120px;
+        }
+
+        .summary-section h3 {
+            color: var(--primary-dark);
+            margin-bottom: 20px;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--primary-blue);
+        }
+
+        .summary-details {
+            background: var(--bg-light);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0px 0;
+          
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .summary-item .label {
+            color: var(--text-gray);
+            font-weight: 500;
+            font-size: 0.9em;
+        }
+
+        .summary-item .value {
+            color: var(--text-dark);
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .summary-item.total {
+            border-top: 2px solid var(--primary-blue);
+            margin-top: 10px;
+            padding-top: 12px;
+        }
+
+        .summary-item.total .value {
+            color: var(--primary-blue);
+            font-size: 1.1em;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 14px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .btn-secondary {
+            background: var(--bg-light);
+            color: var(--text-dark);
+            border: 2px solid var(--border-light);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-light);
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-green) 0%, #2ecc71 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .payment-options {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .payment-options h4 {
+            margin-bottom: 15px;
+            color: var(--text-dark);
+            font-size: 1em;
+            font-weight: 600;
+        }
+
+        .payment-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            border: 2px solid var(--border-light);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--bg-white);
+        }
+
+        .payment-option:hover {
+            border-color: var(--primary-blue);
+            background: rgba(74, 144, 226, 0.05);
+        }
+
+        .payment-option.selected {
+            border-color: var(--primary-blue);
+            background: rgba(74, 144, 226, 0.1);
+        }
+
+        .payment-option input {
+            margin: 0;
+        }
+
+        .payment-option label {
+            cursor: pointer;
+            font-weight: 500;
+            margin: 0;
+            font-size: 0.9em;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .booking-content {
+                grid-template-columns: 1fr;
+                gap: 25px;
+                padding: 100px 25px 30px 25px;
+            }
+
+            .summary-section {
+                position: static;
+                margin-top: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .booking-container {
+                min-height: 100vh;
+            }
+
+            .booking-header {
+                padding: 15px 20px;
+            }
+
+            .booking-header h1 {
+                font-size: 1.4em;
+            }
+
+            .back-button {
+                padding: 6px 12px;
+                font-size: 0.85em;
+            }
+
+            .booking-content {
+                padding: 90px 20px 25px 20px;
+                gap: 20px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .room-details-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .form-section {
+                padding: 20px;
+                margin-bottom: 20px;
+            }
+
+            .room-info-card {
+                padding: 20px;
+                margin-bottom: 20px;
+            }
+
+            .summary-section {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .booking-content {
+                padding: 85px 15px 20px 15px;
+            }
+
+            .form-section {
+                padding: 15px;
+            }
+
+            .section-header h3 {
+                font-size: 1.1em;
+            }
+
+            .form-group input,
+            .form-group select {
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+
+            .btn {
+                padding: 12px 16px;
+                font-size: 0.9em;
+            }
+        }
+
+        /* Loading States */
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .loading-spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Validation Styles */
+        .form-group.error input,
+        .form-group.error select,
+        .form-group.error textarea {
+            border-color: var(--accent-red);
+            background-color: #fff5f5;
+        }
+
+        .error-message {
+            color: var(--accent-red);
+            font-size: 0.8em;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .form-group.error .error-message {
+            display: block;
+        }
+
+        /* Success State */
+        .success-state {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .success-state i {
+            font-size: 4em;
+            color: var(--accent-green);
+            margin-bottom: 20px;
+        }
+
+        .success-state h2 {
+            color: var(--accent-green);
+            margin-bottom: 10px;
+        }
+
+        .success-state p {
+            color: var(--text-gray);
+            margin-bottom: 30px;
+        }
+
+        /* Ensure white background throughout */
+        .booking-container,
+        .booking-content,
+        .booking-form-section,
+        .form-section,
+        .summary-section,
+        .payment-option {
+            background: var(--bg-white);
+        }
+
+        /* Remove any gaps and ensure proper spacing */
+        .booking-content {
+            gap: 30px;
+        }
+
+        .summary-section {
+            margin-left: 0;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+  
+        <div class="booking-header">
+            <h1><i class="fas fa-user-plus"></i> Book New Hosteler</h1>
+            <a href="/hostel/dashboard" class="back-button">
+                <i class="fas fa-arrow-left"></i>
+                Back to Dashboard
+            </a>
+        </div>
+
+        <div class="booking-content">
+            <div class="booking-form-section">
+                <div class="room-info-card">
+                    <h2><i class="fas fa-door-open"></i> Room Details</h2>
+                    <div class="room-details-grid" id="roomDetails">
+                    </div>
+                </div>
+
+                <form id="hostelerBookingForm">
+                    <div class="form-section">
+                        <div class="section-header">
+                            <i class="fas fa-user-graduate"></i>
+                            <h3>Student Information</h3>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="required">Full Name</label>
+                                <input type="text" id="studentName" name="studentName" required placeholder="Enter full name">
+                                <div class="error-message">Please enter student's full name</div>
+                            </div>
+                            <div class="form-group">
+                                <label class="required">Email Address</label>
+                                <input type="email" id="studentEmail" name="studentEmail" required placeholder="student@example.com">
+                                <div class="error-message">Please enter a valid email address</div>
+                            </div>
+                            <div class="form-group">
+                                <label class="required">Phone Number</label>
+                                <input type="tel" id="studentPhone" name="studentPhone" required placeholder="10-digit mobile number">
+                                <div class="error-message">Please enter a valid phone number</div>
+                            </div>
+                            <div class="form-group">
+                                <label class="required">Date of Birth</label>
+                                <input type="date" id="dateOfBirth" name="dateOfBirth" required>
+                                <div class="error-message">Please select date of birth</div>
+                            </div>
+                            <div class="form-group">
+                                <label class="required">Password</label>
+                                <input type="password" id="studentPassword" name="studentPassword" required placeholder="Minimum 6 characters">
+                                <div class="error-message">Password must be at least 6 characters</div>
+                            </div>
+                            <div class="form-group">
+                                <label>Blood Group</label>
+                                <select id="bloodGroup" name="bloodGroup">
+                                    <option value="">Select Blood Group</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Parent Information -->
+                    <div class="form-section">
+                        <div class="section-header">
+                            <i class="fas fa-users"></i>
+                            <h3>Parent/Guardian Information</h3>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="required">Parent Name</label>
+                                <input type="text" id="parentName" name="parentName" required placeholder="Parent or guardian full name">
+                                <div class="error-message">Please enter parent/guardian name</div>
+                            </div>
+                            <div class="form-group">
+                                <label class="required">Parent Phone</label>
+                                <input type="tel" id="parentPhone" name="parentPhone" required placeholder="10-digit mobile number">
+                                <div class="error-message">Please enter parent phone number</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Booking Details -->
+                    <div class="form-section">
+                        <div class="section-header">
+                            <i class="fas fa-calendar-check"></i>
+                            <h3>Booking Details</h3>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="required">Join Date</label>
+                                <input type="date" id="joinDate" name="joinDate" required>
+                                <div class="error-message">Please select join date</div>
+                            </div>
+                            <div class="form-group">
+                                <label class="required">Payment Status</label>
+                                <select id="paymentStatus" name="paymentStatus" required>
+                                    <option value="">Select Payment Status</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Paid">Paid</option>
+                                    <option value="Partial">Partial Payment</option>
+                                </select>
+                                <div class="error-message">Please select payment status</div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Summary Section -->
+            <div class="summary-section">
+                <h3><i class="fas fa-receipt"></i> Booking Summary</h3>
+                
+                <div class="summary-details">
+                    <div class="summary-item">
+                        <span class="label">Room Charges</span>
+                        <span class="value" id="summaryRoomPrice">₹0</span>
+                    </div>
+                    <div class="summary-item total">
+                        <span class="label">Total Amount</span>
+                        <span class="value" id="summaryTotal">₹0</span>
+                    </div>
+                </div>
+
+                <div class="payment-options">
+                    <h4>Payment Method</h4>
+                    <div class="payment-option" onclick="selectPayment('cash')">
+                        <input type="radio" id="cash" name="paymentMethod" value="cash" checked>
+                        <label for="cash">Cash Payment</label>
+                    </div>
+                    <div class="payment-option" onclick="selectPayment('online')">
+                        <input type="radio" id="online" name="paymentMethod" value="online">
+                        <label for="online">Online Transfer</label>
+                    </div>
+                    <div class="payment-option" onclick="selectPayment('card')">
+                        <input type="radio" id="card" name="paymentMethod" value="card">
+                        <label for="card">Credit/Debit Card</label>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button type="button" class="btn btn-success" onclick="submitBooking()">
+                        <i class="fas fa-check-circle"></i>
+                        Confirm Booking
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="clearForm()">
+                        <i class="fas fa-undo"></i>
+                        Clear Form
+                    </button>
+                    <a href="/hostel/dashboard" class="btn btn-secondary">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </a>
+                </div>
+            </div>
+        </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadRoomDetails();
+            setDefaultDates();
+            updateSummary();
+        });
+
+        function loadRoomDetails() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const roomId = urlParams.get('roomId');
+            const storedRoomDetails = sessionStorage.getItem('bookingRoomDetails');
+            
+            if (storedRoomDetails) {
+                try {
+                    const roomDetails = JSON.parse(storedRoomDetails);
+                    displayRoomDetails(roomDetails);
+                } catch (error) {
+                    console.error('Error parsing room details:', error);
+                    redirectToDashboard();
+                }
+            } else if (roomId) {
+                fetchRoomDetails(roomId);
+            } else {
+                redirectToDashboard();
+            }
+        }
+
+        function fetchRoomDetails(roomId) {
+            fetch(`/api/auth/room-details/${roomId}`, {
+                method: 'GET',
+                credentials: 'include'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch room details');
+                }
+                return response.json();
+            })
+            .then(roomDetails => {
+                displayRoomDetails(roomDetails);
+            })
+            .catch(error => {
+                console.error('Error fetching room details:', error);
+                showNotification('Error loading room details', 'error');
+                redirectToDashboard();
+            });
+        }
+
+        function redirectToDashboard() {
+            showNotification('No room selected for booking', 'error');
+            setTimeout(() => {
+                window.location.href = '/hostel/dashboard';
+            }, 2000);
+        }
+
+        function displayRoomDetails(roomDetails) {
+            const roomDetailsContainer = document.getElementById('roomDetails');
+            const roomPrice = roomDetails.price || 5000;
+
+            const totalAmount = roomPrice;
+
+            if (roomDetailsContainer) {
+                roomDetailsContainer.innerHTML = `
+                    <div class="room-detail">
+                        <label>Room Number</label>
+                        <span>${roomDetails.roomDisplay || roomDetails.roomNumber || 'N/A'}</span>
+                    </div>
+                    <div class="room-detail">
+                        <label>Sharing Type</label>
+                        <span>${roomDetails.sharingTypeName || 'N/A'}</span>
+                    </div>
+                    <div class="room-detail">
+                        <label>Floor</label>
+                        <span>${roomDetails.floorNumber || 'N/A'}</span>
+                    </div>
+                    <div class="room-detail">
+                        <label>Available Spots</label>
+                        <span>${roomDetails.availableSpots || 'N/A'}</span>
+                    </div>
+                    <div class="room-detail">
+                        <label>Price per Bed</label>
+                        <span>₹${roomPrice}/month</span>
+                    </div>
+                    <div class="room-detail">
+                        <label>Capacity</label>
+                        <span>${roomDetails.sharingCapacity || 'N/A'} Sharing</span>
+                    </div>
+                `;
+            }
+
+            // Update summary only if elements exist
+            const summaryRoomPrice = document.getElementById('summaryRoomPrice');
+            const summaryTotal = document.getElementById('summaryTotal');
+            
+            if (summaryRoomPrice) {
+                summaryRoomPrice.textContent = `₹${roomPrice}`;
+            }
+            if (summaryTotal) {
+                summaryTotal.textContent = `₹${totalAmount}`;
+            }
+
+            // Store room details for submission
+            window.currentRoomDetails = roomDetails;
+        }
+
+        function setDefaultDates() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('joinDate').value = today;
+
+            const maxBirthDate = new Date();
+            maxBirthDate.setFullYear(maxBirthDate.getFullYear() - 16);
+            document.getElementById('dateOfBirth').max = maxBirthDate.toISOString().split('T')[0];
+        }
+
+        function selectPayment(method) {
+            document.querySelectorAll('.payment-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            document.querySelector(`.payment-option input[value="${method}"]`).parentElement.classList.add('selected');
+        }
+
+        function updateSummary() {
+        }
+
+        function validateForm() {
+            let isValid = true;
+            const form = document.getElementById('hostelerBookingForm');
+            const inputs = form.querySelectorAll('input[required], select[required]');
+
+            document.querySelectorAll('.form-group').forEach(group => {
+                group.classList.remove('error');
+            });
+
+            // Validate each required field
+            inputs.forEach(input => {
+                if (!input.value.trim()) {
+                    input.closest('.form-group').classList.add('error');
+                    isValid = false;
+                }
+            });
+
+            const email = document.getElementById('studentEmail');
+            if (email.value && !isValidEmail(email.value)) {
+                email.closest('.form-group').classList.add('error');
+                isValid = false;
+            }
+
+            const phone = document.getElementById('studentPhone');
+            if (phone.value && !isValidPhone(phone.value)) {
+                phone.closest('.form-group').classList.add('error');
+                isValid = false;
+            }
+
+            const password = document.getElementById('studentPassword');
+            if (password.value && password.value.length < 6) {
+                password.closest('.form-group').classList.add('error');
+                isValid = false;
+            }
+
+            const birthDate = new Date(document.getElementById('dateOfBirth').value);
+            const today = new Date();
+            const age = today.getFullYear() - birthDate.getFullYear();
+            if (age < 16) {
+                document.getElementById('dateOfBirth').closest('.form-group').classList.add('error');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
+        function isValidPhone(phone) {
+            const phoneRegex = /^[0-9]{10}$/;
+            return phoneRegex.test(phone.replace(/\D/g, ''));
+        }
+
+  async function submitBooking() {
+    if (!window.currentRoomDetails || !window.currentRoomDetails.roomId) {
+        showNotification('Room information is missing. Please select a room again.', 'error');
+        redirectToDashboard();
+        return;
+    }
+
+    if (!validateForm()) {
+        showNotification('Please fill all required fields correctly', 'error');
+        return;
+    }
+
+    const submitBtn = document.querySelector('.btn-success');
+    if (!submitBtn) {
+        showNotification('Submit button not found', 'error');
+        return;
+    }
+
+    submitBtn.innerHTML = '<div class="loading-spinner"></div> Processing...';
+    submitBtn.disabled = true;
+
+    const formData = {
+        student_id: generateStudentId(),
+        admin_id: getCurrentAdminId(),
+        room_id: window.currentRoomDetails.roomId,
+        student_name: document.getElementById('studentName').value,
+        student_email: document.getElementById('studentEmail').value,
+        student_phone: document.getElementById('studentPhone').value,
+        student_password: document.getElementById('studentPassword').value,
+        date_of_birth: document.getElementById('dateOfBirth').value,
+        parent_name: document.getElementById('parentName').value,
+        parent_phone: document.getElementById('parentPhone').value,
+        join_date: document.getElementById('joinDate').value,
+        payment_status: document.getElementById('paymentStatus').value,
+        payment_method: document.querySelector('input[name="paymentMethod"]:checked').value,
+        is_active: true,
+        last_login: null,
+        blood_group: document.getElementById('bloodGroup').value,
+        total_amount: calculateTotalAmount()
+    };
+
+    try {
+        const response = await fetch('/api/auth/book-hosteler', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const result = await response.json();
+        console.log("Book-Details:", result);
+
+        if (response.ok && result.success) {
+            showNotification('Student booked successfully!', 'success');
+            submitBtn.innerHTML = '<i class="fas fa-check"></i> Booking Confirmed!';
+            submitBtn.style.background = 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)';
+
+            sessionStorage.removeItem('bookingRoomDetails');
+
+            setTimeout(() => {
+                window.location.href = '/hostel/dashboard';
+            }, 2000);
+        } else {
+            // Handle specific error cases with user-friendly messages
+            let errorMessage = result.message || 'Error processing booking';
+            
+            // Format the "Student already exists" error message
+            if (errorMessage.includes('Student already exists')) {
+                // Extract the clean error message without the technical details
+                const cleanMessage = errorMessage.split('Matching records found:')[0].trim();
+                showNotification(cleanMessage, 'error');
+                
+                // Highlight the duplicate fields
+                highlightDuplicateFields();
+            } else if (errorMessage.includes('Room is already full')) {
+                showNotification('This room is already full. Please select another room.', 'error');
+                setTimeout(() => {
+                    window.location.href = '/hostel/dashboard';
+                }, 3000);
+            } else if (errorMessage.includes('Admin ID mismatch')) {
+                showNotification('Session error. Please log in again.', 'error');
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 3000);
+            } else {
+                showNotification(errorMessage, 'error');
+            }
+            
+            submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Confirm Booking';
+            submitBtn.disabled = false;
+        }
+    } catch (error) {
+        console.error('Error submitting booking:', error);
+        showNotification('Network error. Please check your connection and try again.', 'error');
+        submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Confirm Booking';
+        submitBtn.disabled = false;
+    }
+}
+
+        function calculateTotalAmount() {
+            const roomPrice = window.currentRoomDetails?.price || 5000;
+            return roomPrice;
+        }
+
+        function generateStudentId() {
+            const timestamp = new Date().getTime().toString().slice(-6);
+            const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+            return `STU${timestamp}${random}`;
+        }
+
+        function getCurrentAdminId() {
+            return sessionStorage.getItem('adminId') || '1';
+        }
+
+        function clearForm() {
+            document.getElementById('hostelerBookingForm').reset();
+            setDefaultDates();
+            document.querySelectorAll('.form-group').forEach(group => {
+                group.classList.remove('error');
+            });
+            showNotification('Form cleared', 'info');
+        }
+
+      function showNotification(message, type = 'info') {
+    // Remove existing notifications
+    const existingNotifications = document.querySelectorAll('.notification');
+    existingNotifications.forEach(notification => notification.remove());
+
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    
+    // Set appropriate colors based on type
+    let backgroundColor, icon;
+    switch(type) {
+        case 'success':
+            backgroundColor = '#27ae60';
+            icon = '✓';
+            break;
+        case 'error':
+            backgroundColor = '#e74c3c';
+            icon = '✗';
+            break;
+        case 'warning':
+            backgroundColor = '#f39c12';
+            icon = '⚠';
+            break;
+        case 'info':
+            backgroundColor = '#3498db';
+            icon = 'ℹ';
+            break;
+        default:
+            backgroundColor = '#3498db';
+            icon = 'ℹ';
+    }
+
+    notification.style.cssText = `
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        padding: 15px 20px;
+        background: ${backgroundColor};
+        color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        z-index: 10000;
+        font-weight: 500;
+        font-size: 14px;
+        max-width: 400px;
+        word-wrap: break-word;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-left: 4px solid ${type === 'success' ? '#2ecc71' : type === 'error' ? '#c0392b' : type === 'warning' ? '#e67e22' : '#2980b9'};
+    `;
+    
+    notification.innerHTML = `
+        <span style="font-weight: bold; font-size: 16px;">${icon}</span>
+        <span>${message}</span>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after delay
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => notification.remove(), 300);
+        }
+    }, 5000);
+}
+        function highlightDuplicateFields() {
+    // Highlight fields that might have duplicates
+    const emailField = document.getElementById('studentEmail');
+    const phoneField = document.getElementById('studentPhone');
+    
+    if (emailField) {
+        emailField.style.borderColor = '#e74c3c';
+        emailField.style.backgroundColor = '#fff5f5';
+    }
+    
+    if (phoneField) {
+        phoneField.style.borderColor = '#e74c3c';
+        phoneField.style.backgroundColor = '#fff5f5';
+    }
+    
+    // Show suggestion to user
+    setTimeout(() => {
+        showNotification('Please use different email or phone number', 'info');
+    }, 1000);
+}
+function setupFieldListeners() {
+    const emailField = document.getElementById('studentEmail');
+    const phoneField = document.getElementById('studentPhone');
+    
+    if (emailField) {
+        emailField.addEventListener('input', function() {
+            this.style.borderColor = '';
+            this.style.backgroundColor = '';
+        });
+    }
+    
+    if (phoneField) {
+        phoneField.addEventListener('input', function() {
+            this.style.borderColor = '';
+            this.style.backgroundColor = '';
+        });
+    }
+}
+
+// Call this when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadRoomDetails();
+    setDefaultDates();
+    updateSummary();
+    setupFieldListeners(); // Add this line
+});
+        selectPayment('cash');
+    </script>
+</body>
+</html>

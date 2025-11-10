@@ -1,6 +1,5 @@
 package com.example.HostelManagement.rest;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -17,11 +16,11 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.HostelManagement.config.JwtUtil;
 import com.example.HostelManagement.dao.RoomCardDetailsFetch;
+import com.example.HostelManagement.dto.BookHostler;
 import com.example.HostelManagement.dto.CreateNewSharingType;
 import com.example.HostelManagement.dto.DashboardAdminDTO;
 import com.example.HostelManagement.dto.HostlerDto;
@@ -29,12 +28,14 @@ import com.example.HostelManagement.dto.HostlerListResponseDto;
 import com.example.HostelManagement.dto.RoomDTO;
 import com.example.HostelManagement.dto.RoomInfoDto;
 import com.example.HostelManagement.dto.SharingDetailsDTO;
+import com.example.HostelManagement.entities.hostel.Student;
 import com.example.HostelManagement.entities.hostel.admin.Admin;
 import com.example.HostelManagement.entities.hostel.admin.LoginRequestDAO;
 import com.example.HostelManagement.repositories.AddNewSharingTypeRepo;
 import com.example.HostelManagement.repositories.RoomRepository;
 import com.example.HostelManagement.service.AdminAuthService;
 import com.example.HostelManagement.service.RoomService;
+import com.example.HostelManagement.service.StudentService;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -45,21 +46,166 @@ import jakarta.servlet.http.HttpSession;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-
     private final AdminAuthService authService;
     private final JwtUtil jwtUtil;
     private final RoomService roomService;
     private final AddNewSharingTypeRepo newSharingTypeRepo;
     private final RoomRepository roomRepository;
+    private final StudentService studentService;
 
-    public AuthController(AdminAuthService authService, JwtUtil jwtUtil, RoomService roomService, AddNewSharingTypeRepo newSharingTypeRepo,RoomRepository repository) {
+    public AuthController(AdminAuthService authService, JwtUtil jwtUtil, RoomService roomService, 
+                         AddNewSharingTypeRepo newSharingTypeRepo, RoomRepository repository,
+                         StudentService studentService) {
         this.authService = authService;
         this.jwtUtil = jwtUtil;
         this.roomService = roomService;
         this.newSharingTypeRepo = newSharingTypeRepo;
         this.roomRepository = repository;
-       
+        this.studentService = studentService;
     }
+
+    @PostMapping("/book-hosteler")
+public ResponseEntity<?> bookHostler(@RequestBody BookHostler bookHostler) {
+    
+    System.out.println("============== Book Hostler ==============");
+    System.out.println("Hostler Details: " + bookHostler);
+    
+    Map<String, Object> response = new HashMap<>();
+    
+    try {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = getEmailFromSecurityContext(auth);
+
+        if (email == null) {
+            System.out.println("Unauthorized: No email found in security context");
+            response.put("success", false);
+            response.put("message", "Authentication required");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+
+        Admin admin = authService.getAdminByEmail(email);
+        if (admin == null) {
+            System.out.println("Admin not found for email: " + email);
+            response.put("success", false);
+            response.put("message", "Admin not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+
+        // Use the authenticated admin's ID instead of the one from request
+        Integer adminId = admin.getAdminId();
+        Integer roomId = parseInteger(bookHostler.room_id(), "Room ID");
+        
+        if (roomId == null) {
+            response.put("success", false);
+            response.put("message", "Valid Room ID is required");
+            return ResponseEntity.badRequest().body(response);
+        }
+        
+        if (bookHostler.student_name() == null || bookHostler.student_name().trim().isEmpty()) {
+            response.put("success", false);
+            response.put("message", "Student name is required");
+            return ResponseEntity.badRequest().body(response);
+        }
+        
+        if (bookHostler.student_email() == null || bookHostler.student_email().trim().isEmpty()) {
+            response.put("success", false);
+            response.put("message", "Student email is required");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        Student.PaymentStatus paymentStatus = parsePaymentStatus(bookHostler.payment_status());
+
+        Student student = new Student();
+        student.setAdminId(adminId); // Use authenticated admin ID
+        student.setRoomId(roomId);
+        student.setStudentName(bookHostler.student_name());
+        student.setStudentEmail(bookHostler.student_email());
+        student.setStudentPhone(bookHostler.student_phone());
+        student.setStudentPassword(bookHostler.student_password());
+        student.setDateOfBirth(bookHostler.date_of_birth());
+        student.setParentName(bookHostler.parent_name());
+        student.setParentPhone(bookHostler.parent_phone());
+        student.setJoinDate(bookHostler.join_date() != null ? 
+            bookHostler.join_date().atStartOfDay() : java.time.LocalDateTime.now());
+        student.setPaymentStatus(paymentStatus);
+        student.setPaymentMethod(bookHostler.payment_method());
+        student.setIsActive(bookHostler.is_active());
+        student.setLastLogin(bookHostler.last_login() != null ? 
+            bookHostler.last_login().atStartOfDay() : null);
+        student.setBloodGroup(bookHostler.blood_group());
+        student.setTotalAmount(bookHostler.total_amount());
+
+        System.out.println("Creating student entity: " + student.getStudentName() + " for room: " + roomId + " with admin ID: " + adminId);
+
+        String result = studentService.addHostlerToRoom(student);
+
+        if (result.startsWith("Success:")) {
+            response.put("success", true);
+            response.put("message", result);
+            response.put("status", "BOOKED");
+            
+            if (result.contains("Student ID:")) {
+                String[] parts = result.split("Student ID: ");
+                if (parts.length > 1) {
+                    String studentIdStr = parts[1].split(",")[0].trim();
+                    try {
+                        Integer studentId = Integer.parseInt(studentIdStr);
+                        response.put("studentId", studentId);
+                        System.out.println("Student ID generated: " + studentId);
+                    } catch (NumberFormatException e) {
+                        System.out.println("Could not parse student ID from success message");
+                    }
+                }
+            }
+            
+            System.out.println("Hostler booked successfully: " + result);
+            return ResponseEntity.ok().body(response);
+        } else {
+            response.put("success", false);
+            response.put("message", result);
+            response.put("status", "FAILED");
+            
+            System.out.println("Hostler booking failed: " + result);
+            return ResponseEntity.badRequest().body(response);
+        }
+
+    } catch (Exception e) {
+        System.err.println("Error booking hostler: " + e.getMessage());
+        e.printStackTrace();
+        
+        response.put("success", false);
+        response.put("message", "Internal server error: " + e.getMessage());
+        response.put("status", "ERROR");
+        
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+}
+
+    private Integer parseInteger(String value, String fieldName) {
+        if (value == null || value.trim().isEmpty()) {
+            System.err.println(fieldName + " is null or empty");
+            return null;
+        }
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            System.err.println("Invalid " + fieldName + " format: " + value);
+            return null;
+        }
+    }
+
+    private Student.PaymentStatus parsePaymentStatus(String paymentStatus) {
+        if (paymentStatus == null || paymentStatus.trim().isEmpty()) {
+            return Student.PaymentStatus.Pending;
+        }
+        try {
+            return Student.PaymentStatus.valueOf(paymentStatus.trim());
+        } catch (IllegalArgumentException e) {
+            System.err.println("Invalid payment status: " + paymentStatus + ", defaulting to Pending");
+            return Student.PaymentStatus.Pending;
+        }
+    }
+
     @PostMapping("/add-sharing-type")
     public ResponseEntity<Map<String, Object>> addSharingType(@RequestBody CreateNewSharingType request,
                                                               HttpServletRequest httpRequest) {
@@ -69,12 +215,11 @@ public class AuthController {
         Map<String, Object> response = new HashMap<>();
 
         try {
-            // Get admin from security context
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             String email = getEmailFromSecurityContext(auth);
 
             if (email == null) {
-                System.out.println(" Unauthorized: No email found in security context");
+                System.out.println("Unauthorized: No email found in security context");
                 response.put("success", false);
                 response.put("message", "Authentication required");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
@@ -88,7 +233,6 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             }
 
-            // Create SharingDetailsDTO from request
             SharingDetailsDTO sharingDTO = new SharingDetailsDTO();
             sharingDTO.setAdminId(admin.getAdminId());
             sharingDTO.setSharingCapacity(request.getCapacity());
@@ -97,9 +241,8 @@ public class AuthController {
 
             System.out.println("Admin ID set: " + sharingDTO.getAdminId());
 
-            // Validate required fields
             if (sharingDTO.getSharingCapacity() == null || sharingDTO.getSharingCapacity() <= 0) {
-                System.out.println(" Capacity validation failed");
+                System.out.println("Capacity validation failed");
                 response.put("success", false);
                 response.put("message", "Valid capacity is required");
                 return ResponseEntity.badRequest().body(response);
@@ -112,7 +255,6 @@ public class AuthController {
                 return ResponseEntity.badRequest().body(response);
             }
 
-            // Create the sharing type
             System.out.println("Creating sharing type with details:");
             System.out.println("   - Capacity: " + sharingDTO.getSharingCapacity());
             System.out.println("   - Fee: " + sharingDTO.getSharingFee());
@@ -123,7 +265,7 @@ public class AuthController {
             if (isCreated) {
                 response.put("success", true);
                 response.put("message", sharingDTO.getSharingCapacity() + "-Sharing type added successfully!");
-                System.out.println(" Sharing type created successfully: " + sharingDTO.getSharingCapacity() + "-Sharing");
+                System.out.println("Sharing type created successfully: " + sharingDTO.getSharingCapacity() + "-Sharing");
                 return ResponseEntity.ok(response);
             } else {
                 response.put("success", false);
@@ -134,13 +276,12 @@ public class AuthController {
 
         } catch (Exception e) {
             System.out.println("Error in add-sharing-type endpoint: " + e.getMessage());
-            
+            e.printStackTrace();
             response.put("success", false);
             response.put("message", "Internal server error: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
-
 
     @GetMapping("/room-details")
     public ResponseEntity<List<RoomDTO>> getRoomDetails() {
@@ -151,7 +292,7 @@ public class AuthController {
         System.out.println("Room details - email from SecurityContext: " + email);
 
         if (email == null) {
-            System.out.println(" Unauthorized: No email found in security context");
+            System.out.println("Unauthorized: No email found in security context");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.emptyList());
         }
 
@@ -164,13 +305,11 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
             }
 
-            // 1. Fetches all rooms (flat list) for the specific admin.
             List<RoomDTO> roomDetails = roomService.getAllRooms(admin.getAdminId());
             System.out.println("Found rooms: " + roomDetails.size());
 
-            // 2. Enhanced debugging: Print room details to see what's being returned
             if (!roomDetails.isEmpty()) {
-                System.out.println(" DEBUG - Room Details Returned:");
+                System.out.println("DEBUG - Room Details Returned:");
                 for (RoomDTO room : roomDetails) {
                     System.out.println(" Room: " + room.getRoomNumber() +
                             " | SharingType: " + room.getSharingTypeName() +
@@ -180,16 +319,15 @@ public class AuthController {
                             " | Status: " + room.getRoomStatus());
                 }
             } else {
-                System.out.println(" No rooms found for admin ID: " + admin.getAdminId());
+                System.out.println("No rooms found for admin ID: " + admin.getAdminId());
             }
 
             System.out.println("Returning room details: " + roomDetails.size() + " rooms");
-            // 3. Return the flat list. The frontend handles the rest.
             return ResponseEntity.ok(roomDetails);
 
         } catch (Exception e) {
-            e.getMessage();
-            System.out.println("Error in room-details: " + e.getMessage());
+            System.err.println("Error in room-details: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
         }
     }
@@ -199,15 +337,14 @@ public class AuthController {
                                                        HttpServletRequest request) {
         System.out.println("=== ADD ROOM API CALLED ===");
     
-    // Detailed logging
-    System.out.println("Room data received:");
-    System.out.println("   - Room Number: " + roomDTO.getRoomNumber());
-    System.out.println("   - Floor: " + roomDTO.getFloorNumber());
-    System.out.println("   - Sharing Type ID: " + roomDTO.getSharingTypeId());
-    System.out.println("   - Price: " + roomDTO.getPrice());
-    System.out.println("   - Capacity: " + roomDTO.getSharingCapacity());
-    System.out.println("   - Admin ID: " + roomDTO.getAdminId());
-    System.out.println("   - Room Status: " + roomDTO.getRoomStatus());
+        System.out.println("Room data received:");
+        System.out.println("   - Room Number: " + roomDTO.getRoomNumber());
+        System.out.println("   - Floor: " + roomDTO.getFloorNumber());
+        System.out.println("   - Sharing Type ID: " + roomDTO.getSharingTypeId());
+        System.out.println("   - Price: " + roomDTO.getPrice());
+        System.out.println("   - Capacity: " + roomDTO.getSharingCapacity());
+        System.out.println("   - Admin ID: " + roomDTO.getAdminId());
+        System.out.println("   - Room Status: " + roomDTO.getRoomStatus());
 
         Map<String, Object> response = new HashMap<>();
 
@@ -231,27 +368,25 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             }
 
-            // Set admin ID to the room DTO
             roomDTO.setAdminId(admin.getAdminId());
             System.out.println("Admin ID set: " + roomDTO.getAdminId());
 
-            // Validate required fields
             if (roomDTO.getRoomNumber() == null || roomDTO.getRoomNumber().trim().isEmpty()) {
-                System.out.println(" Room number validation failed");
+                System.out.println("Room number validation failed");
                 response.put("success", false);
                 response.put("message", "Room number is required");
                 return ResponseEntity.badRequest().body(response);
             }
 
             if (roomDTO.getFloorNumber() == null) {
-                System.out.println(" Floor number validation failed");
+                System.out.println("Floor number validation failed");
                 response.put("success", false);
                 response.put("message", "Floor number is required");
                 return ResponseEntity.badRequest().body(response);
             }
 
             if (roomDTO.getSharingTypeId() == null) {
-                System.out.println(" Sharing type ID validation failed");
+                System.out.println("Sharing type ID validation failed");
                 response.put("success", false);
                 response.put("message", "Sharing type is required");
                 return ResponseEntity.badRequest().body(response);
@@ -282,7 +417,7 @@ public class AuthController {
             } else {
                 response.put("success", false);
                 response.put("message", "Failed to create room. Room might already exist on this floor.");
-                System.out.println(" Failed to create room: " + roomDTO.getRoomNumber());
+                System.out.println("Failed to create room: " + roomDTO.getRoomNumber());
                 return ResponseEntity.badRequest().body(response);
             }
 
@@ -443,7 +578,7 @@ public class AuthController {
             return ResponseEntity.ok(adminDTO);
         } catch (Exception e) {
             e.getMessage();
-            System.out.println(" Error fetching admin details: " + e.getMessage());
+            System.out.println("Error fetching admin details: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Error fetching admin details"));
         }
@@ -499,7 +634,7 @@ public class AuthController {
         System.out.println("Refresh token - email from SecurityContext: " + email);
 
         if (email == null) {
-            System.out.println(" Unauthorized: Cannot refresh token");
+            System.out.println("Unauthorized: Cannot refresh token");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Cannot refresh token: not authenticated"));
         }
@@ -522,7 +657,7 @@ public class AuthController {
             System.out.println("Token refreshed successfully for: " + email);
             return ResponseEntity.ok(responseBody);
         } catch (Exception e) {
-            System.out.println(" Error refreshing token: " + e.getMessage());
+            System.out.println("Error refreshing token: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Failed to refresh token"));
         }
@@ -537,167 +672,160 @@ public class AuthController {
         response.put("timestamp", java.time.LocalDateTime.now().toString());
         return ResponseEntity.ok(response);
     }
-@GetMapping("/hostler-lists")
-public ResponseEntity<HostlerListResponseDto> fetchHostlerList(
-        @ModelAttribute RoomCardDetailsFetch roomDetails) {
-    
-    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-    String email = getEmailFromSecurityContext(auth);
-    Admin admin = authService.getAdminByEmail(email);
-    Integer adminId = admin.getAdminId();
-    
-    try {
-        System.out.println("=== DEBUG START ===");
-        System.out.println("Fetching hostler list for room: " + roomDetails + ", adminId: " + adminId);
+
+    @GetMapping("/hostler-lists")
+    public ResponseEntity<HostlerListResponseDto> fetchHostlerList(
+            @ModelAttribute RoomCardDetailsFetch roomDetails) {
         
-        // Fetch raw data from database
-        List<Map<String, Object>> rawData = roomRepository.fetchRoomWithHostlers(
-            roomDetails.getRoomId(),
-            roomDetails.getFloorNumber(),
-            roomDetails.getSharingTypeId(),
-            adminId
-        );
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = getEmailFromSecurityContext(auth);
+        Admin admin = authService.getAdminByEmail(email);
+        Integer adminId = admin.getAdminId();
         
-        System.out.println("Raw data size: " + rawData.size());
-        
-        // DEBUG: Check what's in the raw data
-        if (!rawData.isEmpty()) {
-            System.out.println("=== RAW DATA ANALYSIS ===");
-            for (int i = 0; i < Math.min(rawData.size(), 5); i++) { // Check first 5 records
-                Map<String, Object> row = rawData.get(i);
-                System.out.println("--- Row " + i + " ---");
-                System.out.println("Available columns: " + row.keySet());
-                
-                // Check student info
-                System.out.println("student_id: " + row.get("student_id"));
-                System.out.println("student_name: " + row.get("student_name"));
-                
-                // Check join_date specifically
-                Object joinDateValue = row.get("join_date");
-                System.out.println("join_date value: " + joinDateValue);
-                System.out.println("join_date type: " + 
-                    (joinDateValue != null ? joinDateValue.getClass().getName() : "null"));
-                
-                // Check all date-related fields
-                String[] dateFields = {"join_date", "date_of_birth", "last_login"};
-                for (String field : dateFields) {
-                    Object fieldValue = row.get(field);
-                    if (fieldValue != null) {
-                        System.out.println(field + ": " + fieldValue + " (type: " + fieldValue.getClass().getName() + ")");
+        try {
+            System.out.println("=== DEBUG START ===");
+            System.out.println("Fetching hostler list for room: " + roomDetails + ", adminId: " + adminId);
+            
+            List<Map<String, Object>> rawData = roomRepository.fetchRoomWithHostlers(
+                roomDetails.getRoomId(),
+                roomDetails.getFloorNumber(),
+                roomDetails.getSharingTypeId(),
+                adminId
+            );
+            
+            System.out.println("Raw data size: " + rawData.size());
+            
+            if (!rawData.isEmpty()) {
+                System.out.println("=== RAW DATA ANALYSIS ===");
+                for (int i = 0; i < Math.min(rawData.size(), 5); i++) {
+                    Map<String, Object> row = rawData.get(i);
+                    System.out.println("--- Row " + i + " ---");
+                    System.out.println("Available columns: " + row.keySet());
+                    
+                    System.out.println("student_id: " + row.get("student_id"));
+                    System.out.println("student_name: " + row.get("student_name"));
+                    
+                    Object joinDateValue = row.get("join_date");
+                    System.out.println("join_date value: " + joinDateValue);
+                    System.out.println("join_date type: " + 
+                        (joinDateValue != null ? joinDateValue.getClass().getName() : "null"));
+                    
+                    String[] dateFields = {"join_date", "date_of_birth", "last_login"};
+                    for (String field : dateFields) {
+                        Object fieldValue = row.get(field);
+                        if (fieldValue != null) {
+                            System.out.println(field + ": " + fieldValue + " (type: " + fieldValue.getClass().getName() + ")");
+                        }
                     }
+                    System.out.println("-------------------");
                 }
-                System.out.println("-------------------");
             }
+            
+            if (rawData.isEmpty()) {
+                System.out.println("No data found for the given criteria");
+                return ResponseEntity.ok(HostlerListResponseDto.notFound(roomDetails));
+            }
+            
+            RoomInfoDto roomInfo = RoomInfoDto.fromMap(rawData.get(0));
+            
+            System.out.println("=== PROCESSING HOSTLERS ===");
+            List<HostlerDto> hostlers = rawData.stream()
+                .map(row -> {
+                    System.out.println("Processing row for student: " + row.get("student_name"));
+                    HostlerDto hostler = HostlerDto.fromMap(row);
+                    if (hostler != null) {
+                        System.out.println("Created HostlerDto - JoinDate: " + hostler.getJoinDate());
+                        System.out.println("Formatted JoinDate: " + hostler.getFormattedJoinDate());
+                    }
+                    return hostler;
+                })
+                .filter(hostler -> hostler != null)
+                .collect(Collectors.toList());
+            
+            System.out.println("Successfully processed " + hostlers.size() + " hostlers");
+            
+            System.out.println("=== FINAL VERIFICATION ===");
+            for (HostlerDto hostler : hostlers) {
+                System.out.println("Hostler: " + hostler.getStudentName() + 
+                    " | Join Date: " + hostler.getJoinDate() +
+                    " | Formatted: " + hostler.getFormattedJoinDate());
+            }
+            
+            HostlerListResponseDto response = HostlerListResponseDto.success(roomDetails, roomInfo, hostlers);
+            System.out.println("=== DEBUG END ===");
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            System.err.println("Error fetching hostler list: " + e.getMessage());
+            e.printStackTrace();
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(HostlerListResponseDto.error(roomDetails, "Failed to fetch hostler list: " + e.getMessage()));
         }
-        
+    }
+
+    private RoomInfoDto extractRoomInfoFromRawData(List<Map<String, Object>> rawData) {
         if (rawData.isEmpty()) {
-            System.out.println("No data found for the given criteria");
-            return ResponseEntity.ok(HostlerListResponseDto.notFound(roomDetails));
+            return null;
         }
         
-        // Extract room info from first row
-        RoomInfoDto roomInfo = RoomInfoDto.fromMap(rawData.get(0));
+        Map<String, Object> firstRow = rawData.get(0);
         
-        // Process hostlers with detailed debugging
-        System.out.println("=== PROCESSING HOSTLERS ===");
-        List<HostlerDto> hostlers = rawData.stream()
-            .map(row -> {
-                System.out.println("Processing row for student: " + row.get("student_name"));
-                HostlerDto hostler = HostlerDto.fromMap(row);
-                if (hostler != null) {
-                    System.out.println("Created HostlerDto - JoinDate: " + hostler.getJoinDate());
-                    System.out.println("Formatted JoinDate: " + hostler.getFormattedJoinDate());
-                }
-                return hostler;
-            })
-            .filter(hostler -> hostler != null)
+        RoomInfoDto roomInfo = new RoomInfoDto();
+        roomInfo.setRoomId(getInteger(firstRow, "room_id"));
+        roomInfo.setRoomNumber(getString(firstRow, "room_number"));
+        roomInfo.setFloorNumber(getInteger(firstRow, "floor_number"));
+        roomInfo.setRoomStatus(getString(firstRow, "room_status"));
+        roomInfo.setCurrentOccupancy(getInteger(firstRow, "current_occupancy"));
+        roomInfo.setSharingCapacity(getInteger(firstRow, "sharing_capacity"));
+        roomInfo.setAvailableBeds(getInteger(firstRow, "available_beds"));
+        roomInfo.setSharingTypeName(getString(firstRow, "sharing_type_name"));
+        roomInfo.setSharingTypeId(getInteger(firstRow, "sharing_type_id"));
+        
+        return roomInfo;
+    }
+
+    private List<HostlerDto> extractHostlersFromRawData(List<Map<String, Object>> rawData) {
+        return rawData.stream()
+            .filter(row -> row.get("student_id") != null)
+            .map(this::mapToHostlerDto)
             .collect(Collectors.toList());
-        
-        System.out.println("Successfully processed " + hostlers.size() + " hostlers");
-        
-        // Final verification
-        System.out.println("=== FINAL VERIFICATION ===");
-        for (HostlerDto hostler : hostlers) {
-            System.out.println("Hostler: " + hostler.getStudentName() + 
-                " | Join Date: " + hostler.getJoinDate() +
-                " | Formatted: " + hostler.getFormattedJoinDate());
+    }
+
+    private HostlerDto mapToHostlerDto(Map<String, Object> row) {
+        HostlerDto hostler = new HostlerDto();
+        hostler.setStudentId(getInteger(row, "student_id"));
+        hostler.setStudentName(getString(row, "student_name"));
+        hostler.setStudentEmail(getString(row, "student_email"));
+        hostler.setStudentPhone(getString(row, "student_phone"));
+        hostler.setDateOfBirth(row.get("date_of_birth") != null ? row.get("date_of_birth").toString() : null);
+        hostler.setParentName(getString(row, "parent_name"));
+        hostler.setParentPhone(getString(row, "parent_phone"));
+        hostler.setPaymentStatus(getString(row, "payment_status"));
+        hostler.setIsActive(getBoolean(row, "is_active"));
+
+        if (row.get("join_date") instanceof java.sql.Timestamp) {
+            hostler.setJoinDate(((java.sql.Timestamp) row.get("join_date")).toLocalDateTime());
         }
         
-        HostlerListResponseDto response = HostlerListResponseDto.success(roomDetails, roomInfo, hostlers);
-        System.out.println("=== DEBUG END ===");
-        return ResponseEntity.ok(response);
-        
-    } catch (Exception e) {
-        System.err.println("Error fetching hostler list: " + e.getMessage());
-        e.printStackTrace();
-        
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(HostlerListResponseDto.error(roomDetails, "Failed to fetch hostler list: " + e.getMessage()));
+        return hostler;
     }
-}
 
-private RoomInfoDto extractRoomInfoFromRawData(List<Map<String, Object>> rawData) {
-    if (rawData.isEmpty()) {
-        return null;
+    private Integer getInteger(Map<String, Object> row, String key) {
+        Object value = row.get(key);
+        return value != null ? ((Number) value).intValue() : null;
     }
-    
-    // Get room info from first row (room details are same in all rows)
-    Map<String, Object> firstRow = rawData.get(0);
-    
-    RoomInfoDto roomInfo = new RoomInfoDto();
-    roomInfo.setRoomId(getInteger(firstRow, "room_id"));
-    roomInfo.setRoomNumber(getString(firstRow, "room_number"));
-    roomInfo.setFloorNumber(getInteger(firstRow, "floor_number"));
-    roomInfo.setRoomStatus(getString(firstRow, "room_status"));
-    roomInfo.setCurrentOccupancy(getInteger(firstRow, "current_occupancy"));
-    roomInfo.setSharingCapacity(getInteger(firstRow, "sharing_capacity"));
-    roomInfo.setAvailableBeds(getInteger(firstRow, "available_beds"));
-    roomInfo.setSharingTypeName(getString(firstRow, "sharing_type_name"));
-    roomInfo.setSharingTypeId(getInteger(firstRow, "sharing_type_id"));
-    
-    return roomInfo;
-}
 
-private List<HostlerDto> extractHostlersFromRawData(List<Map<String, Object>> rawData) {
-    return rawData.stream()
-        .filter(row -> row.get("student_id") != null) // Only rows with students
-        .map(this::mapToHostlerDto)
-        .collect(Collectors.toList());
-}
-
-private HostlerDto mapToHostlerDto(Map<String, Object> row) {
-    HostlerDto hostler = new HostlerDto();
-    hostler.setStudentId(getInteger(row, "student_id"));
-    hostler.setStudentName(getString(row, "student_name"));
-    hostler.setStudentEmail(getString(row, "student_email"));
-    hostler.setStudentPhone(getString(row, "student_phone"));
-    hostler.setDateOfBirth(row.get("date_of_birth") != null ? row.get("date_of_birth").toString() : null);
-    hostler.setParentName(getString(row, "parent_name"));
-    hostler.setParentPhone(getString(row, "parent_phone"));
-    hostler.setPaymentStatus(getString(row, "payment_status"));
-    hostler.setIsActive(getBoolean(row, "is_active"));
-
-    if (row.get("join_date") instanceof java.sql.Timestamp) {
-        hostler.setJoinDate(((java.sql.Timestamp) row.get("join_date")).toLocalDateTime());
+    private String getString(Map<String, Object> row, String key) {
+        Object value = row.get(key);
+        return value != null ? value.toString() : null;
     }
-    
-    return hostler;
-}
 
-private Integer getInteger(Map<String, Object> row, String key) {
-    Object value = row.get(key);
-    return value != null ? ((Number) value).intValue() : null;
-}
+    private Boolean getBoolean(Map<String, Object> row, String key) {
+        Object value = row.get(key);
+        return value != null ? (Boolean) value : null;
+    }
 
-private String getString(Map<String, Object> row, String key) {
-    Object value = row.get(key);
-    return value != null ? value.toString() : null;
-}
-
-private Boolean getBoolean(Map<String, Object> row, String key) {
-    Object value = row.get(key);
-    return value != null ? (Boolean) value : null;
-}
     private String getEmailFromSecurityContext(Authentication auth) {
         if (auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)) {
             String email = auth.getName();

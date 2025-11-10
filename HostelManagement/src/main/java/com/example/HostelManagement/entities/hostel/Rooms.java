@@ -10,7 +10,7 @@ import com.example.HostelManagement.entities.hostel.admin.Admin;
 
 @Data
 @Entity
-@Table(name = "Rooms", 
+@Table(name = "rooms", 
        uniqueConstraints = @UniqueConstraint(
            name = "unique_admin_room_floor", 
            columnNames = {"admin_id", "room_number", "floor_number"}

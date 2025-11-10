@@ -197,6 +197,13 @@ public String hostlerListPage(
                auth.getPrincipal() instanceof String;
     }
 
+
+    @GetMapping("/room-booking")
+    public String bookRoom()
+    {
+           return "forward:/RoomBooking/roomBooking.html";
+    }
+
     private void setNoCacheHeaders(HttpServletResponse response) {
         response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         response.setHeader("Pragma", "no-cache");

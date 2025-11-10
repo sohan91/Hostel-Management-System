@@ -533,7 +533,6 @@ function initializeRoomCardInteractions() {
         });
     });
 
-    // Details button handlers
     document.querySelectorAll('.details-btn').forEach(button => {
         button.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -543,11 +542,11 @@ function initializeRoomCardInteractions() {
         });
     });
 
-    // Book now button handlers
     document.querySelectorAll('.book-now-btn').forEach(button => {
         button.addEventListener('click', function(e) {
             e.stopPropagation();
             if (!this.disabled) {
+                console.log("In book now btn..");
                 const roomDetails = getRoomDetailsFromCard(this.closest('.room-card'));
                 console.log('Book Now clicked:', roomDetails);
                 initiateBooking(roomDetails);
@@ -571,12 +570,8 @@ function redirectToHostelerList(roomDetails) {
 
 function initiateBooking(roomDetails) {
     console.log('Initiating booking for room:', roomDetails);
-    
-    // Store room details in session storage for booking process
     sessionStorage.setItem('bookingRoomDetails', JSON.stringify(roomDetails));
-    
-    // Redirect to booking page
-    window.location.href = `/hostel/booking?roomId=${roomDetails.roomId}`;
+    window.location.href = `/hostel/room-booking`;
 }
 
 function showGlobalEmptyState() {
@@ -717,11 +712,7 @@ function showAddSharingTypeModal() {
     `;
 
     document.body.appendChild(modal);
-
-    // Prevent background scrolling when modal is open
     document.body.style.overflow = 'hidden';
-
-    // Close modal function
     const closeModal = () => {
         modal.classList.remove('active');
         document.body.style.overflow = '';
@@ -753,7 +744,6 @@ function showAddSharingTypeModal() {
     const submitBtn = modal.querySelector('#submitSharingBtn');
     const form = modal.querySelector('#addSharingTypeForm');
 
-    // Store current admin's sharing types for validation
     let currentAdminSharingTypes = [];
 
     // Function to load current admin's sharing types
@@ -810,7 +800,6 @@ function showAddSharingTypeModal() {
         }
     });
 
-    // Form submission with server-side validation as backup
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const capacity = capacitySelect.value;
