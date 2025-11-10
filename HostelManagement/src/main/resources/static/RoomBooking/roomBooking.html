@@ -492,24 +492,50 @@
         }
 
         /* Validation Styles */
-        .form-group.error input,
-        .form-group.error select,
-        .form-group.error textarea {
-            border-color: var(--accent-red);
-            background-color: #fff5f5;
-        }
+     .form-group.error input,
+.form-group.error select,
+.form-group.error textarea {
+    border-color: #e74c3c !important;
+    background-color: #fff5f5 !important;
+}
+.form-group.blinking input,
+.form-group.blinking select,
+.form-group.blinking textarea {
+    animation: blinkRed 0.5s ease-in-out 4;
+}
+@keyframes blinkRed {
+    0%, 100% { border-color: #e74c3c; }
+    50% { border-color: #ff9999; }
+}
+.password-strength {
+    font-size: 0.8em;
+    margin-top: 5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
 
-        .error-message {
-            color: var(--accent-red);
-            font-size: 0.8em;
-            margin-top: 5px;
-            display: none;
-        }
+.password-strength.weak {
+    color: #e74c3c;
+    background-color: #fff5f5;
+}
 
-        .form-group.error .error-message {
-            display: block;
-        }
+.password-strength.strong {
+    color: #27ae60;
+    background-color: #f0fff4;
+}
 
+.error-message {
+    color: #e74c3c;
+    font-size: 0.8em;
+    margin-top: 5px;
+    display: none;
+}
+
+.form-group.error .error-message {
+    display: block;
+}
+      
         /* Success State */
         .success-state {
             text-align: center;
@@ -600,8 +626,8 @@
                             </div>
                             <div class="form-group">
                                 <label class="required">Password</label>
-                                <input type="password" id="studentPassword" name="studentPassword" required placeholder="Minimum 6 characters">
-                                <div class="error-message">Password must be at least 6 characters</div>
+                                <input type="password" id="studentPassword" name="studentPassword" required placeholder="Minimum 8 characters">
+                                <div class="error-message">Password must be at least 8 characters</div>
                             </div>
                             <div class="form-group">
                                 <label>Blood Group</label>
@@ -961,17 +987,10 @@
                 window.location.href = '/hostel/dashboard';
             }, 2000);
         } else {
-            // Handle specific error cases with user-friendly messages
             let errorMessage = result.message || 'Error processing booking';
             
-            // Format the "Student already exists" error message
             if (errorMessage.includes('Student already exists')) {
-                // Extract the clean error message without the technical details
-                const cleanMessage = errorMessage.split('Matching records found:')[0].trim();
-                showNotification(cleanMessage, 'error');
-                
-                // Highlight the duplicate fields
-                highlightDuplicateFields();
+                showNotification('Student already exists', 'error');
             } else if (errorMessage.includes('Room is already full')) {
                 showNotification('This room is already full. Please select another room.', 'error');
                 setTimeout(() => {
@@ -996,7 +1015,163 @@
         submitBtn.disabled = false;
     }
 }
+function validateForm() {
+    let isValid = true;
+    const form = document.getElementById('hostelerBookingForm');
+    const inputs = form.querySelectorAll('input[required], select[required]');
 
+    document.querySelectorAll('.form-group').forEach(group => {
+        group.classList.remove('error');
+        group.classList.remove('blinking');
+    });
+
+    inputs.forEach(input => {
+        if (!input.value.trim()) {
+            input.closest('.form-group').classList.add('error', 'blinking');
+            isValid = false;
+        }
+    });
+
+    const email = document.getElementById('studentEmail');
+    if (email.value && !isValidEmail(email.value)) {
+        email.closest('.form-group').classList.add('error', 'blinking');
+        isValid = false;
+    }
+
+    const phone = document.getElementById('studentPhone');
+    if (phone.value && !isValidPhone(phone.value)) {
+        phone.closest('.form-group').classList.add('error', 'blinking');
+        isValid = false;
+    }
+
+    const password = document.getElementById('studentPassword');
+    if (password.value && password.value.length < 8) {
+        password.closest('.form-group').classList.add('error', 'blinking');
+        isValid = false;
+    }
+
+    const birthDate = new Date(document.getElementById('dateOfBirth').value);
+    const today = new Date();
+    const age = today.getFullYear() - birthDate.getFullYear();
+    if (age < 16) {
+        document.getElementById('dateOfBirth').closest('.form-group').classList.add('error', 'blinking');
+        isValid = false;
+    }
+
+    if (!isValid) {
+        setTimeout(() => {
+            document.querySelectorAll('.form-group.blinking').forEach(group => {
+                group.classList.remove('blinking');
+            });
+        }, 2000);
+    }
+
+    return isValid;
+}
+
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+function isValidPhone(phone) {
+    const phoneRegex = /^[0-9]{10}$/;
+    return phoneRegex.test(phone.replace(/\D/g, ''));
+}function setupFieldListeners() {
+    const emailField = document.getElementById('studentEmail');
+    const phoneField = document.getElementById('studentPhone');
+    const passwordField = document.getElementById('studentPassword');
+    
+    if (emailField) {
+        emailField.addEventListener('input', function() {
+            this.style.borderColor = '';
+            this.style.backgroundColor = '';
+            this.closest('.form-group').classList.remove('error', 'blinking');
+        });
+    }
+    
+    if (phoneField) {
+        phoneField.addEventListener('input', function() {
+            this.style.borderColor = '';
+            this.style.backgroundColor = '';
+            this.closest('.form-group').classList.remove('error', 'blinking');
+        });
+    }
+    
+    if (passwordField) {
+        passwordField.addEventListener('input', function() {
+            this.style.borderColor = '';
+            this.style.backgroundColor = '';
+            this.closest('.form-group').classList.remove('error', 'blinking');
+            
+            const password = this.value;
+            const strengthIndicator = document.getElementById('passwordStrength') || createPasswordStrengthIndicator();
+            
+            if (password.length === 0) {
+                strengthIndicator.textContent = '';
+                strengthIndicator.className = 'password-strength';
+            } else if (password.length < 8) {
+                strengthIndicator.textContent = 'Weak - Minimum 8 characters required';
+                strengthIndicator.className = 'password-strength weak';
+            } else if (password.length >= 8) {
+                strengthIndicator.textContent = 'Strong';
+                strengthIndicator.className = 'password-strength strong';
+            }
+        });
+    }
+    
+    const allInputs = document.querySelectorAll('input, select');
+    allInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            this.closest('.form-group').classList.remove('error', 'blinking');
+        });
+        input.addEventListener('change', function() {
+            this.closest('.form-group').classList.remove('error', 'blinking');
+        });
+    });
+}
+function createPasswordStrengthIndicator() {
+    const passwordGroup = document.getElementById('studentPassword').closest('.form-group');
+    const strengthIndicator = document.createElement('div');
+    strengthIndicator.id = 'passwordStrength';
+    strengthIndicator.className = 'password-strength';
+    passwordGroup.appendChild(strengthIndicator);
+    return strengthIndicator;
+}
+
+function highlightDuplicateFields() {
+    const emailField = document.getElementById('studentEmail');
+    const phoneField = document.getElementById('studentPhone');
+    
+    if (emailField) {
+        emailField.style.borderColor = '#e74c3c';
+        emailField.style.backgroundColor = '#fff5f5';
+        emailField.closest('.form-group').classList.add('blinking');
+    }
+    
+    if (phoneField) {
+        phoneField.style.borderColor = '#e74c3c';
+        phoneField.style.backgroundColor = '#fff5f5';
+        phoneField.closest('.form-group').classList.add('blinking');
+    }
+    
+    setTimeout(() => {
+        document.querySelectorAll('.form-group.blinking').forEach(group => {
+            group.classList.remove('blinking');
+        });
+    }, 2000);
+    
+    setTimeout(() => {
+        showNotification('Please use different email or phone number', 'info');
+    }, 1000);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadRoomDetails();
+    setDefaultDates();
+    updateSummary();
+    setupFieldListeners();
+});
         function calculateTotalAmount() {
             const roomPrice = window.currentRoomDetails?.price || 5000;
             return roomPrice;
@@ -1021,36 +1196,34 @@
             showNotification('Form cleared', 'info');
         }
 
-      function showNotification(message, type = 'info') {
-    // Remove existing notifications
+ function showNotification(message, type = 'info') {
     const existingNotifications = document.querySelectorAll('.notification');
     existingNotifications.forEach(notification => notification.remove());
 
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
     
-    // Set appropriate colors based on type
     let backgroundColor, icon;
     switch(type) {
         case 'success':
             backgroundColor = '#27ae60';
-            icon = '✓';
+            icon = '<i class="fas fa-check-circle"></i>';
             break;
         case 'error':
             backgroundColor = '#e74c3c';
-            icon = '✗';
+            icon = '<i class="fas fa-exclamation-circle"></i>';
             break;
         case 'warning':
             backgroundColor = '#f39c12';
-            icon = '⚠';
+            icon = '<i class="fas fa-exclamation-triangle"></i>';
             break;
         case 'info':
             backgroundColor = '#3498db';
-            icon = 'ℹ';
+            icon = '<i class="fas fa-info-circle"></i>';
             break;
         default:
             backgroundColor = '#3498db';
-            icon = 'ℹ';
+            icon = '<i class="fas fa-info-circle"></i>';
     }
 
     notification.style.cssText = `
@@ -1074,13 +1247,12 @@
     `;
     
     notification.innerHTML = `
-        <span style="font-weight: bold; font-size: 16px;">${icon}</span>
+        <span style="font-size: 18px;">${icon}</span>
         <span>${message}</span>
     `;
     
     document.body.appendChild(notification);
     
-    // Auto remove after delay
     setTimeout(() => {
         if (notification.parentNode) {
             notification.style.opacity = '0';
